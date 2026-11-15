@@ -173,6 +173,189 @@
 
 .evidence-row {
   margin-bottom: 0.75rem;
+  border-radius: 8px;
+  padding: 0.15rem 0.35rem;
+}
+
+.evidence-row:focus {
+  outline: none;
+}
+
+.evidence-row.is-selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.evidence-select {
+  margin-top: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+/* Process-lane diagram: hand-built SVG, classes only (no inline <style>). */
+
+.process-lanes {
+  margin: 0.5rem 0 1rem;
+}
+
+.process-lanes-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.9rem;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.lane-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.lane-legend {
+  display: inline-block;
+  width: 1rem;
+  height: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+}
+
+.lane-legend-problem {
+  background: #fdecea;
+  border-color: #c0504a;
+}
+
+.lane-legend-path {
+  height: 0;
+  border: 0;
+  border-top: 3px solid var(--accent);
+  border-radius: 0;
+  background: none;
+}
+
+.lane-legend-missing {
+  height: 0;
+  border: 0;
+  border-top: 2px dashed var(--highlight);
+  border-radius: 0;
+  background: none;
+}
+
+.lane-legend-quantity {
+  width: auto;
+  padding: 0 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: none;
+}
+
+.process-lanes-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+.process-lanes-missing {
+  margin: 0.4rem 0 0.5rem;
+}
+
+.process-lane-bg {
+  fill: #f7f9fc;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.process-lane-title {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--muted);
+}
+
+.process-edge-line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.process-edge-missing .process-edge-line {
+  stroke: var(--highlight);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 3;
+}
+
+.process-edge-end {
+  fill: var(--panel);
+  stroke: var(--highlight);
+  stroke-width: 1.4;
+}
+
+.process-edge.is-on-path .process-edge-line {
+  stroke: var(--accent);
+  stroke-width: 2.6;
+}
+
+.process-node {
+  cursor: pointer;
+}
+
+.process-node-box {
+  fill: var(--panel);
+  stroke: var(--line);
+  stroke-width: 1.2;
+}
+
+.process-node:focus {
+  outline: none;
+}
+
+.process-node:focus-visible .process-node-box {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+
+.process-node.is-problem .process-node-box {
+  fill: #fdecea;
+  stroke: #c0504a;
+}
+
+.process-node.is-selected .process-node-box {
+  stroke: var(--accent);
+  stroke-width: 2.6;
+}
+
+.process-node-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+
+.process-node-meta {
+  font-size: 9px;
+  fill: var(--muted);
+}
+
+.process-node-qty {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.process-node-qty.qty-pos {
+  fill: #1d6b2f;
+}
+
+.process-node-qty.qty-neg {
+  fill: #a3261c;
+}
+
+.process-node-qty.qty-zero {
+  fill: var(--muted);
 }
 
 .fact-list {

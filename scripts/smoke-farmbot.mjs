@@ -18,6 +18,7 @@ import { basename, extname, join, resolve, sep } from 'node:path';
 import { chromium } from 'playwright';
 
 import { summaryLine } from '../src/farmbot/findings-view.mjs';
+import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const liveBase = process.env.SMOKE_BASE_URL?.trim();
@@ -285,9 +286,9 @@ async function readLiveEntryInfo() {
 
 // --- browser helpers --------------------------------------------------------
 
-async function prepareContext(browser, label) {
+async function prepareContext(browser, label, viewport = { width: 1280, height: 900 }) {
   const context = await browser.newContext({
-    viewport: { width: 1280, height: 900 },
+    viewport,
     locale: 'en-US',
   });
   await context.addInitScript(() => {
@@ -395,6 +396,57 @@ async function readTable(page) {
   });
 }
 
+/** The drawn diagram, read back from its `data-` attributes. */
+async function readDiagram(page) {
+  return page.evaluate(() => {
+    const root = document.querySelector('[data-testid="process-lanes"]');
+    const svg = root?.querySelector('svg') ?? null;
+    const nodes = [...(root?.querySelectorAll('[data-node-id]') ?? [])].map((element) => ({
+      id: element.getAttribute('data-node-id') ?? '',
+      lane: element.getAttribute('data-lane') ?? '',
+      evidenceIndexes: (element.getAttribute('data-evidence-index') ?? '')
+        .split(',')
+        .filter((value) => value !== '')
+        .map(Number),
+      problem: element.getAttribute('data-problem'),
+      selected: element.getAttribute('data-selected'),
+    }));
+    const edges = [...(root?.querySelectorAll('[data-kind]') ?? [])].map((element) => ({
+      from: element.getAttribute('data-from') ?? '',
+      to: element.getAttribute('data-to') ?? '',
+      kind: element.getAttribute('data-kind') ?? '',
+    }));
+    const rows = [...document.querySelectorAll('[data-testid="evidence-row"]')].map((element) => ({
+      index: Number(element.getAttribute('data-evidence-index')),
+      selected: element.getAttribute('data-selected'),
+    }));
+    return {
+      present: Boolean(root),
+      nodes,
+      edges,
+      rows,
+      svgWidth: svg ? svg.getBoundingClientRect().width : null,
+      viewportWidth: window.innerWidth,
+    };
+  });
+}
+
+/** The diagram the layout function says a finding has. */
+function expectedDiagram(finding) {
+  const layout = layoutFinding(finding);
+  return {
+    nodeIds: layout.nodes.map((node) => node.id).sort(),
+    lanes: layout.nodes.map((node) => `${node.id}\u0000${node.lane}`).sort(),
+    problems: layout.nodes
+      .filter((node) => node.problem)
+      .map((node) => node.id)
+      .sort(),
+    edges: layout.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+    missing: layout.edges.filter((edge) => edge.kind === 'missing').length,
+    rows: layout.nodes.reduce((total, node) => total + node.evidenceIndexes.length, 0),
+  };
+}
+
 async function main() {
   const committedSeedBytes = readFileSync(committedSeedPath);
   const committedSeedSha = sha256Hex(committedSeedBytes);
@@ -462,6 +514,7 @@ async function main() {
     budgets: budgetRecords,
     findings: null,
     deepLink: null,
+    processLanes: null,
     unknownFinding: null,
     malformedHashes: [],
     tamperedSeed: null,
@@ -1029,6 +1082,224 @@ async function main() {
       ...deepClean,
     };
 
+    // Process lanes: one deep link per rule in the committed file. The drawn
+    // nodes and edges must equal the layout function's output for that finding,
+    // a node click selects its evidence rows, and a row click selects its node.
+    const ruleFindings = [...new Set(findings.map((finding) => finding.rule))]
+      .sort()
+      .map(
+        (rule) =>
+          [...findings]
+            .filter((finding) => finding.rule === rule)
+            .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0],
+      );
+    const processLaneFixtures = [];
+    summary.processLanes = { rules: [], r2ManyStructures: null, phone: null };
+
+    for (const finding of ruleFindings) {
+      const expected = expectedDiagram(finding);
+      const fixture = await prepareContext(browser, `process-lanes-${finding.rule}`);
+      await fixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(finding.id)}`, {
+        waitUntil: 'load',
+        timeout: 60000,
+      });
+      await fixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+        timeout: 180000,
+      });
+      const diagram = await readDiagram(fixture.page);
+      assert(diagram.present, `${finding.rule}: the process-lane diagram is missing`);
+      assert(
+        JSON.stringify(diagram.nodes.map((node) => node.id).sort()) ===
+          JSON.stringify(expected.nodeIds),
+        `${finding.rule}: drawn nodes ` +
+          `${JSON.stringify(diagram.nodes.map((node) => node.id).sort())} != ` +
+          `${JSON.stringify(expected.nodeIds)}`,
+      );
+      assert(
+        JSON.stringify(diagram.nodes.map((node) => `${node.id}\u0000${node.lane}`).sort()) ===
+          JSON.stringify(expected.lanes),
+        `${finding.rule}: a node is drawn in the wrong lane`,
+      );
+      assert(
+        JSON.stringify(
+          diagram.nodes
+            .filter((node) => node.problem === 'true')
+            .map((node) => node.id)
+            .sort(),
+        ) === JSON.stringify(expected.problems),
+        `${finding.rule}: the problem nodes differ from the layout`,
+      );
+      assert(
+        JSON.stringify(
+          diagram.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+        ) === JSON.stringify(expected.edges),
+        `${finding.rule}: the drawn edges differ from the layout`,
+      );
+      assert(
+        diagram.edges.filter((edge) => edge.kind === 'missing').length === expected.missing,
+        `${finding.rule}: expected ${expected.missing} missing link(s)`,
+      );
+      assert(
+        diagram.rows.length === expected.rows,
+        `${finding.rule}: the evidence table has ${diagram.rows.length} rows, ` +
+          `expected ${expected.rows}`,
+      );
+
+      const firstNode = diagram.nodes[0];
+      assert(firstNode, `${finding.rule}: the diagram has no node`);
+      await fixture.page.locator('[data-testid="process-lanes"] [data-node-id]').first().click();
+      const afterNodeClick = await readDiagram(fixture.page);
+      const selectedRows = afterNodeClick.rows
+        .filter((row) => row.selected === 'true')
+        .map((row) => row.index)
+        .sort((left, right) => left - right);
+      assert(
+        JSON.stringify(selectedRows) ===
+          JSON.stringify([...firstNode.evidenceIndexes].sort((left, right) => left - right)),
+        `${finding.rule}: clicking the node selected rows ${JSON.stringify(selectedRows)}`,
+      );
+      assert(
+        JSON.stringify(
+          afterNodeClick.nodes.filter((node) => node.selected === 'true').map((node) => node.id),
+        ) === JSON.stringify([firstNode.id]),
+        `${finding.rule}: the clicked node is not the only selected node`,
+      );
+
+      const otherRow =
+        afterNodeClick.rows.find((row) => !firstNode.evidenceIndexes.includes(row.index)) ??
+        afterNodeClick.rows[0];
+      assert(otherRow, `${finding.rule}: the evidence table has no row to click`);
+      await fixture.page
+        .locator('[data-testid="evidence-row"]')
+        .nth(otherRow.index)
+        .click({ position: { x: 4, y: 4 } });
+      const afterRowClick = await readDiagram(fixture.page);
+      const rowNode = afterRowClick.nodes.find((node) =>
+        node.evidenceIndexes.includes(otherRow.index),
+      );
+      assert(rowNode, `${finding.rule}: no node represents evidence row ${otherRow.index}`);
+      assert(
+        rowNode.selected === 'true',
+        `${finding.rule}: clicking evidence row ${otherRow.index} did not select its node`,
+      );
+      assert(
+        afterRowClick.nodes.filter((node) => node.selected === 'true').length === 1,
+        `${finding.rule}: more than one node is selected after a row click`,
+      );
+
+      const clean = await assertContextClean(fixture);
+      processLaneFixtures.push({ fixture, clean });
+      summary.processLanes.rules.push({
+        id: finding.id,
+        rule: finding.rule,
+        nodes: diagram.nodes.length,
+        edges: diagram.edges.length,
+        missingEdges: expected.missing,
+        evidenceRows: diagram.rows.length,
+        selectedFromNode: selectedRows.length,
+        selectedFromRow: rowNode.id,
+        ...clean,
+      });
+    }
+
+    // R2 goes to the finding with the most structure rows: its links must follow
+    // the shared source file, so an all-pairs cross product would show up here.
+    const structureCount = (finding) =>
+      new Set(
+        finding.evidence
+          .filter((row) => row.role === 'structure')
+          .map((row) => row.nodeId),
+      ).size;
+    const r2Finding = findings
+      .filter((finding) => finding.rule === 'R2')
+      .sort(
+        (left, right) =>
+          structureCount(right) - structureCount(left) ||
+          (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
+      )[0];
+    assert(r2Finding, 'the committed file has no R2 finding');
+
+    const r2Expected = expectedDiagram(r2Finding);
+    const r2Fixture = await prepareContext(browser, 'process-lanes-r2-many-structures');
+    await r2Fixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(r2Finding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await r2Fixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const r2Diagram = await readDiagram(r2Fixture.page);
+    assert(r2Diagram.present, 'the R2 process-lane diagram is missing');
+    assert(
+      JSON.stringify(r2Diagram.nodes.map((node) => node.id).sort()) ===
+        JSON.stringify(r2Expected.nodeIds),
+      `the R2 diagram shows different nodes from the layout: ` +
+        `${JSON.stringify(r2Diagram.nodes.map((node) => node.id).sort())} != ` +
+        `${JSON.stringify(r2Expected.nodeIds)}`,
+    );
+    assert(
+      JSON.stringify(
+        r2Diagram.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+      ) === JSON.stringify(r2Expected.edges),
+      'the R2 diagram draws different edges from the layout',
+    );
+    assert(
+      r2Diagram.edges.filter((edge) => edge.kind === 'missing').length === r2Expected.missing,
+      `the R2 diagram draws a different number of missing links than ${r2Expected.missing}`,
+    );
+    const r2Clean = await assertContextClean(r2Fixture);
+    processLaneFixtures.push({ fixture: r2Fixture, clean: r2Clean });
+    summary.processLanes.r2ManyStructures = {
+      id: r2Finding.id,
+      structures: structureCount(r2Finding),
+      nodes: r2Diagram.nodes.length,
+      edges: r2Diagram.edges.length,
+      missingEdges: r2Expected.missing,
+      ...r2Clean,
+    };
+
+    // Phone viewport: the diagram must not exceed a 375px-wide screen.
+    const phone = await prepareContext(browser, 'process-lanes-phone', {
+      width: 375,
+      height: 812,
+    });
+    await phone.page.goto(`${entryUrl}#finding=${encodeURIComponent(deepLinkFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await phone.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const phoneDiagram = await readDiagram(phone.page);
+    assert(
+      typeof phoneDiagram.svgWidth === 'number',
+      'the phone context drew no process-lane SVG',
+    );
+    assert(
+      phoneDiagram.viewportWidth === 375,
+      `the phone viewport is ${phoneDiagram.viewportWidth}px wide`,
+    );
+    assert(
+      phoneDiagram.svgWidth <= phoneDiagram.viewportWidth,
+      `the diagram is ${phoneDiagram.svgWidth}px wide in a ` +
+        `${phoneDiagram.viewportWidth}px viewport`,
+    );
+    const phoneExpected = expectedDiagram(deepLinkFinding);
+    assert(
+      JSON.stringify(phoneDiagram.nodes.map((node) => node.id).sort()) ===
+        JSON.stringify(phoneExpected.nodeIds),
+      'the phone diagram shows different nodes from the layout',
+    );
+    const phoneClean = await assertContextClean(phone);
+    processLaneFixtures.push({ fixture: phone, clean: phoneClean });
+    summary.processLanes.phone = {
+      id: deepLinkFinding.id,
+      viewportWidth: phoneDiagram.viewportWidth,
+      svgWidth: Number(phoneDiagram.svgWidth.toFixed(2)),
+      nodes: phoneDiagram.nodes.length,
+      ...phoneClean,
+    };
+
     // A well-formed but unknown id may run the checks; it opens nothing and
     // shows no error.
     const unknown = await prepareContext(browser, 'unknown-finding');
@@ -1091,6 +1362,7 @@ async function main() {
       happy: happyCsp.length,
       tampered: tamperCsp.length,
       deepLink: summary.deepLink.cspViolations,
+      processLanes: processLaneFixtures.map((entry) => entry.clean.cspViolations),
       unknown: summary.unknownFinding.cspViolations,
       malformed: summary.malformedHashes.map((entry) => entry.cspViolations),
     };
@@ -1098,6 +1370,7 @@ async function main() {
       ...happy.pageErrors,
       ...tamper.pageErrors,
       ...deep.pageErrors,
+      ...processLaneFixtures.flatMap((entry) => entry.fixture.pageErrors),
       ...unknown.pageErrors,
       ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
     ];
@@ -1106,6 +1379,7 @@ async function main() {
         ...happyExternal,
         ...tamperExternal,
         ...deepClean.external,
+        ...processLaneFixtures.flatMap((entry) => entry.clean.external),
         ...unknownClean.external,
         ...summary.malformedHashes.flatMap((entry) => entry.external),
       ]),

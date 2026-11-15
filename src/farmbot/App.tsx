@@ -15,12 +15,13 @@ import { canonicalJson } from './agent/canonical.mjs';
 import { collectFindings } from './agent/index.mjs';
 import {
   countBySeverity,
-  evidenceRows,
   orderFindings,
   parseFindingHash,
   summaryLine,
 } from './findings-view.mjs';
 import { planQuestion } from './plan.mjs';
+import { ProcessLanes } from './ProcessLanes';
+import { orderEvidenceRows } from './process-lanes.mjs';
 import { formatSeedDigest, SEED_DIGEST, sha256Hex } from './seed-digest.mjs';
 import {
   STORE_DIGEST,
@@ -194,6 +195,8 @@ export function App() {
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     initialFindingId,
   );
+  const [selectedEvidence, setSelectedEvidence] = useState<number[]>([]);
+  const evidenceRowRefs = useRef<Map<number, HTMLLIElement | null>>(new Map());
 
   const sessionRef = useRef<RelateSession | null>(null);
   const sessionPromise = useRef<Promise<RelateSession> | null>(null);
@@ -548,6 +551,32 @@ export function App() {
     window.history.replaceState(null, '', `#finding=${id}`);
   };
 
+  /**
+   * The diagram and the evidence table share one selection: a list of evidence
+   * row indexes. A node selects every row it represents; a row selects the node
+   * that represents it. The first selected row is scrolled into view and
+   * focused so a keyboard reader lands on it; a selection made inside the table
+   * leaves the focus where the user put it.
+   */
+  const selectEvidence = (indexes: number[], options: { focusRow?: boolean } = {}) => {
+    setSelectedEvidence(indexes);
+    if (options.focusRow === false) return;
+    const [first] = indexes;
+    if (first === undefined) return;
+    requestAnimationFrame(() => {
+      const row = evidenceRowRefs.current.get(first);
+      if (!row) return;
+      row.scrollIntoView({ block: 'nearest' });
+      row.focus({ preventScroll: true });
+    });
+  };
+
+  // A different finding starts with no selection.
+  useEffect(() => {
+    setSelectedEvidence([]);
+    evidenceRowRefs.current.clear();
+  }, [selectedFindingId]);
+
   const checksResult = checks.status === 'ready' ? checks.result : null;
   const selectedFinding =
     checksResult && selectedFindingId
@@ -804,22 +833,49 @@ export function App() {
             <dd>{selectedFinding.subject.label}</dd>
           </dl>
 
+          <ProcessLanes
+            finding={selectedFinding}
+            selectedEvidence={selectedEvidence}
+            onSelectEvidence={selectEvidence}
+            t={t}
+          />
+
           <h3>
             {t('evidenceHeading')}{' '}
             <span className="count" data-testid="evidence-count">
-              {evidenceRows(selectedFinding).length}
+              {orderEvidenceRows(selectedFinding).length}
             </span>
           </h3>
           <ol className="evidence-list" data-testid="finding-evidence">
-            {evidenceRows(selectedFinding).map((row) => {
+            {orderEvidenceRows(selectedFinding).map((row, index) => {
               const identity = JSON.stringify([
                 row.role,
                 row.nodeId,
                 row.sourceFile,
                 row.line,
               ]);
+              const rowSelected = selectedEvidence.includes(index);
               return (
-                <li key={identity} className="evidence-row" data-testid="evidence-row">
+                <li
+                  key={identity}
+                  className={`evidence-row${rowSelected ? ' is-selected' : ''}`}
+                  data-testid="evidence-row"
+                  data-selected={rowSelected ? 'true' : 'false'}
+                  data-evidence-index={index}
+                  tabIndex={-1}
+                  ref={(element) => {
+                    evidenceRowRefs.current.set(index, element);
+                  }}
+                  onClick={(event) => {
+                    if (
+                      event.target instanceof Element &&
+                      event.target.closest('details, summary, a, button')
+                    ) {
+                      return;
+                    }
+                    selectEvidence([index], { focusRow: false });
+                  }}
+                >
                   <dl className="farmbot-meta">
                     <dt>{t('evidenceRoleLabel')}</dt>
                     <dd>{row.role}</dd>
@@ -862,6 +918,14 @@ export function App() {
                       </div>
                     ))}
                   </details>
+                  <button
+                    type="button"
+                    className="evidence-select"
+                    aria-label={`${t('evidenceSelect')}: ${row.nodeId}`}
+                    onClick={() => selectEvidence([index], { focusRow: false })}
+                  >
+                    {t('evidenceSelect')}
+                  </button>
                 </li>
               );
             })}

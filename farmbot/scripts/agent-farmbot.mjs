@@ -43,6 +43,8 @@ const DEFAULT_EXTRACT = join(ROOT, 'farmbot/dist/farmbot.duckdb');
 const DEFAULT_OUT = join(ROOT, 'farmbot/dist');
 const FINDINGS_NAME = 'farmbot.findings.json';
 const FINDINGS_FORMAT = 'farmbot-findings-v1';
+const PART_SOURCES_NAME = 'farmbot.part-sources.json';
+const PART_SOURCES_FORMAT = 'farmbot-part-sources-v1';
 const GOLD_PATH = join(CHECKS_DIR, 'compiled.gold.json');
 const ONTOGRAPHIA_WASM = join(
   ROOT,
@@ -178,6 +180,16 @@ async function main() {
   const digest = createHash('sha256').update(text).digest('hex');
   writeFileSync(`${outPath}.sha256`, `${FINDINGS_FORMAT} sha256:${digest}\n`);
 
+  // The browser has no extract, so the part page paths become a committed
+  // sidecar of their own. Keys are seed part node ids, one entry per part with
+  // a page path; canonical JSON sorts them.
+  const partSourcesText = canonicalJson({
+    format: PART_SOURCES_FORMAT,
+    sources: Object.fromEntries(sources),
+  });
+  const partSourcesPath = join(outDir, PART_SOURCES_NAME);
+  writeFileSync(partSourcesPath, partSourcesText);
+
   for (const rule of CHECKS) {
     const summary = findings.rules.find((entry) => entry.id === rule.id);
     const levels = Object.entries(summary.severityCounts)
@@ -188,6 +200,7 @@ async function main() {
   console.log(`seed ${findings.seed.digest}`);
   console.log(`wrote ${outPath}`);
   console.log(`${FINDINGS_FORMAT} sha256:${digest}`);
+  console.log(`wrote ${partSourcesPath} (${sources.size} part page paths)`);
 }
 
 await main();

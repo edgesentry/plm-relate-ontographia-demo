@@ -2,14 +2,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { messages, type Lang, type MessageKey } from './i18n';
 import {
   allowedValues,
+  checkIntents,
+  COMMITTED_FINDINGS_DIGEST,
   defaultFilterValue,
   farmbotOntology,
   intents,
+  partSources,
   questions,
   SOURCE_PIN,
 } from './data';
+import { canonicalJson } from './agent/canonical.mjs';
+import { collectFindings } from './agent/index.mjs';
+import {
+  countBySeverity,
+  evidenceRows,
+  orderFindings,
+  parseFindingHash,
+  summaryLine,
+} from './findings-view.mjs';
 import { planQuestion } from './plan.mjs';
-import { formatSeedDigest, SEED_DIGEST } from './seed-digest.mjs';
+import { formatSeedDigest, SEED_DIGEST, sha256Hex } from './seed-digest.mjs';
 import {
   STORE_DIGEST,
   STORE_NODES,
@@ -20,6 +32,10 @@ import { openRelateSession, RelateTrapError, type SessionStep } from './session'
 import { closeTrappedSession } from './session-cleanup.mjs';
 import { loadOntographia, type Ontographia } from '../lib/ontographia';
 import type {
+  Finding,
+  FindingQuery,
+  FindingSeverity,
+  FindingsDocument,
   Intent,
   QuestionId,
   QuestionPlan,
@@ -59,11 +75,45 @@ interface RunResult {
   digest: string;
 }
 
+type SeverityCounts = Record<FindingSeverity, number>;
+
+interface ChecksResult {
+  findings: Finding[];
+  count: number;
+  bySeverity: SeverityCounts;
+  digest: string;
+  matches: boolean;
+  ms: number;
+}
+
+type ChecksState =
+  | { status: 'idle' }
+  | { status: 'running' }
+  | { status: 'ready'; result: ChecksResult }
+  | { status: 'error'; detail: string };
+
 /** Engine timings read by the browser smoke; milliseconds from `performance`. */
 interface ScreenTimings {
   seedLoadMs: number | null;
   queries: Partial<Record<QuestionId, number>>;
+  checks?: {
+    ms: number;
+    count: number;
+    ids: string[];
+    bySeverity: SeverityCounts;
+    digest: string;
+    expectedDigest: string;
+    matches: boolean;
+  };
 }
+
+const SEVERITY_LEVELS: readonly FindingSeverity[] = ['action', 'review', 'info'];
+
+const SEVERITY_LABEL_KEYS: Record<FindingSeverity, MessageKey> = {
+  action: 'severityAction',
+  review: 'severityReview',
+  info: 'severityInfo',
+};
 
 const QUESTION_LABEL_KEYS: Record<QuestionId, MessageKey> = {
   q1: 'q1Label',
@@ -137,12 +187,21 @@ export function App() {
     seedLoadMs: null,
     queries: {},
   });
+  const [checks, setChecks] = useState<ChecksState>({ status: 'idle' });
+  const [initialFindingId] = useState<string | null>(() =>
+    parseFindingHash(window.location.hash),
+  );
+  const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
+    initialFindingId,
+  );
 
   const sessionRef = useRef<RelateSession | null>(null);
   const sessionPromise = useRef<Promise<RelateSession> | null>(null);
   const trappedRef = useRef(false);
   const runToken = useRef(0);
   const timingMarkId = useRef(0);
+  const checksRunningRef = useRef(false);
+  const autoChecksRef = useRef(false);
 
   // Marks around the engine work only: seed fetch/digest/load for the session,
   // and `session.execute` for a query. React render time is outside both.
@@ -262,6 +321,28 @@ export function App() {
     });
   };
 
+  /** Map a failure to open the session onto the shared error box. */
+  const reportSessionFailure = (openError: unknown) => {
+    if (openError instanceof SeedRejectedError) {
+      setError({
+        kind: 'seed-digest',
+        expected: SEED_DIGEST,
+        actual: formatSeedDigest(openError.actualHex),
+      });
+    } else if (openError instanceof SeedFetchError) {
+      setError({ kind: 'seed-fetch', detail: openError.message });
+    } else if (openError instanceof RelateTrapError) {
+      trappedRef.current = true;
+      sessionPromise.current = null;
+      setRelate({ status: 'trapped' });
+      setError({ kind: 'wasm-trap', detail: openError.message });
+    } else if (trappedRef.current) {
+      setError({ kind: 'wasm-trap', detail: detailText(openError) });
+    } else {
+      setError({ kind: 'relate-load', detail: detailText(openError) });
+    }
+  };
+
   const run = async () => {
     if (engine.status !== 'ready' || running) return;
     const questionToRun = question;
@@ -291,24 +372,7 @@ export function App() {
         session = await ensureSession();
       } catch (openError) {
         if (runToken.current !== token) return;
-        if (openError instanceof SeedRejectedError) {
-          setError({
-            kind: 'seed-digest',
-            expected: SEED_DIGEST,
-            actual: formatSeedDigest(openError.actualHex),
-          });
-        } else if (openError instanceof SeedFetchError) {
-          setError({ kind: 'seed-fetch', detail: openError.message });
-        } else if (openError instanceof RelateTrapError) {
-          trappedRef.current = true;
-          sessionPromise.current = null;
-          setRelate({ status: 'trapped' });
-          setError({ kind: 'wasm-trap', detail: openError.message });
-        } else if (trappedRef.current) {
-          setError({ kind: 'wasm-trap', detail: detailText(openError) });
-        } else {
-          setError({ kind: 'relate-load', detail: detailText(openError) });
-        }
+        reportSessionFailure(openError);
         return;
       }
       if (runToken.current !== token) return;
@@ -359,6 +423,133 @@ export function App() {
     }
   };
 
+  /**
+   * Run every check Intent in this tab. The caller supplies the compiled
+   * ontology, the committed check Intents, the committed part page paths, the
+   * verified seed digest and the same Relate session the questions use.
+   */
+  const runChecks = async () => {
+    if (engine.status !== 'ready' || checksRunningRef.current) return;
+    const checkEngine = engine.engine;
+    checksRunningRef.current = true;
+    setChecks({ status: 'running' });
+    setError(null);
+
+    try {
+      let session: RelateSession;
+      try {
+        session = await ensureSession();
+      } catch (openError) {
+        reportSessionFailure(openError);
+        setChecks({ status: 'error', detail: detailText(openError) });
+        return;
+      }
+
+      const mark = startTiming('farmbot:checks');
+      let document: FindingsDocument;
+      try {
+        document = collectFindings({
+          engine: checkEngine,
+          ontology: farmbotOntology,
+          checks: checkIntents,
+          sources: partSources.sources,
+          seed: { digest: session.digest, bytes: session.byteLength },
+          execute(query: string, params: Record<string, unknown>) {
+            const envelope = session.execute(query, params);
+            if (envelope.error) throw new Error(envelope.error);
+            return envelope.rows ?? [];
+          },
+        }) as unknown as FindingsDocument;
+      } catch (checkError) {
+        finishTiming('farmbot:checks', mark);
+        if (session.isTrap(checkError)) {
+          trapSession(session, checkError);
+        }
+        setChecks({ status: 'error', detail: detailText(checkError) });
+        return;
+      }
+      const ms = finishTiming('farmbot:checks', mark);
+
+      // The committed document is not bundled; its sidecar digest is. A match
+      // means the browser produced the same canonical bytes.
+      const hex = await sha256Hex(new TextEncoder().encode(canonicalJson(document)));
+      const digest = `farmbot-findings-v1 sha256:${hex}`;
+      const findings = orderFindings(document.findings) as Finding[];
+      const counts = countBySeverity(document.findings);
+      const bySeverity: SeverityCounts = {
+        action: counts.action,
+        review: counts.review,
+        info: counts.info,
+      };
+      const matches = hex === COMMITTED_FINDINGS_DIGEST;
+
+      setChecks({
+        status: 'ready',
+        result: { findings, count: findings.length, bySeverity, digest, matches, ms },
+      });
+      setTimings((current) => ({
+        ...current,
+        checks: {
+          ms,
+          count: findings.length,
+          ids: findings.map((finding) => finding.id),
+          bySeverity,
+          digest,
+          expectedDigest: `farmbot-findings-v1 sha256:${COMMITTED_FINDINGS_DIGEST}`,
+          matches,
+        },
+      }));
+    } finally {
+      checksRunningRef.current = false;
+    }
+  };
+
+  // A well-formed deep link runs the checks once, after the engine is ready.
+  // Any other hash does nothing: no session, no request, no error.
+  useEffect(() => {
+    if (autoChecksRef.current) return;
+    if (engine.status !== 'ready' || initialFindingId === null) return;
+    autoChecksRef.current = true;
+    void runChecks();
+  }, [engine.status, initialFindingId]);
+
+  // After load, a hash change opens the matching finding when it is available.
+  // Malformed hashes and other keys are ignored.
+  useEffect(() => {
+    const onHashChange = () => {
+      const id = parseFindingHash(window.location.hash);
+      if (id === null) return;
+      setSelectedFindingId(id);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  const openFinding = (id: string) => {
+    setSelectedFindingId(id);
+    // replaceState updates the address without a navigation request.
+    window.history.replaceState(null, '', `#finding=${id}`);
+  };
+
+  const checksResult = checks.status === 'ready' ? checks.result : null;
+  const selectedFinding =
+    checksResult && selectedFindingId
+      ? (checksResult.findings.find((finding) => finding.id === selectedFindingId) ?? null)
+      : null;
+
+  const checksStatus = (): string => {
+    switch (checks.status) {
+      case 'idle':
+        return t('checksIdle');
+      case 'running':
+        return t('checksRunning');
+      case 'ready':
+        return t('checksReady');
+      case 'error':
+        return t('checksFailed');
+    }
+  };
+
   const relateStatus = (): string => {
     switch (relate.status) {
       case 'idle':
@@ -378,6 +569,11 @@ export function App() {
 
   const runDisabled =
     engine.status !== 'ready' || running || relate.status === 'trapped';
+
+  const checksDisabled =
+    engine.status !== 'ready' ||
+    checks.status === 'running' ||
+    relate.status === 'trapped';
 
   return (
     <main>
@@ -476,6 +672,207 @@ export function App() {
           </span>
         </div>
       </section>
+
+      <section className="panel farmbot-findings" aria-labelledby="findings-heading">
+        <h2 id="findings-heading">{t('findingsHeading')}</h2>
+        <p className="muted small">{t('findingsHint')}</p>
+        <div className="farmbot-actions">
+          <button
+            type="button"
+            className="primary"
+            data-testid="run-checks"
+            onClick={() => void runChecks()}
+            disabled={checksDisabled}
+          >
+            {checks.status === 'running' ? t('runningChecks') : t('runChecks')}
+          </button>
+          <span className="muted small" role="status">
+            {checksStatus()}
+          </span>
+        </div>
+
+        {checks.status === 'error' && (
+          <div role="alert" className="error-box" data-testid="checks-error">
+            <p>{t('checksFailed')}</p>
+            <pre>{checks.detail}</pre>
+          </div>
+        )}
+
+        {checksResult && (
+          <>
+            <div className="severity-counts">
+              {SEVERITY_LEVELS.map((level) => (
+                <span key={level} className={`severity-chip severity-${level}`}>
+                  {t(SEVERITY_LABEL_KEYS[level])}{' '}
+                  <span className="count" data-testid={`severity-${level}`}>
+                    {checksResult.bySeverity[level]}
+                  </span>
+                </span>
+              ))}
+              <span className="muted small">
+                {t('findingsTotal')}{' '}
+                <span className="count" data-testid="findings-count">
+                  {checksResult.count}
+                </span>
+              </span>
+            </div>
+
+            <p
+              className={checksResult.matches ? 'muted small' : 'finding-mismatch small'}
+              data-testid="findings-digest"
+            >
+              {checksResult.matches ? t('findingsMatch') : t('findingsMismatch')}{' '}
+              <code>{checksResult.digest}</code>
+            </p>
+
+            <ol className="finding-list" data-testid="finding-list">
+              {checksResult.findings.map((finding) => (
+                <li key={finding.id}>
+                  <button
+                    type="button"
+                    className={`finding-row severity-${finding.severity}${
+                      finding.id === selectedFindingId ? ' is-selected' : ''
+                    }`}
+                    data-testid={`finding-row-${finding.id}`}
+                    data-finding-id={finding.id}
+                    onClick={() => openFinding(finding.id)}
+                  >
+                    <span className={`severity-badge severity-${finding.severity}`}>
+                      {t(SEVERITY_LABEL_KEYS[finding.severity])}
+                    </span>{' '}
+                    <span className="finding-row-summary">
+                      {summaryLine(finding, lang)}
+                    </span>{' '}
+                    <code className="finding-row-id">{finding.id}</code>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+      </section>
+
+      {selectedFinding && (
+        <section className="panel farmbot-finding" data-testid="finding-view">
+          <div className="finding-view-head">
+            <h2>{t('findingHeading')}</h2>
+            <button
+              type="button"
+              className="chip"
+              data-testid="close-finding"
+              onClick={() => setSelectedFindingId(null)}
+            >
+              {t('closeFinding')}
+            </button>
+          </div>
+          <p className="finding-summary" data-testid="finding-summary">
+            {summaryLine(selectedFinding, lang)}
+          </p>
+          <dl className="farmbot-meta">
+            <dt>{t('findingIdLabel')}</dt>
+            <dd>
+              <code data-testid="finding-open-id">{selectedFinding.id}</code>
+            </dd>
+            <dt>{t('ruleLabel')}</dt>
+            <dd>{selectedFinding.rule}</dd>
+            <dt>{t('severityLabel')}</dt>
+            <dd>
+              <span className={`severity-badge severity-${selectedFinding.severity}`}>
+                {t(SEVERITY_LABEL_KEYS[selectedFinding.severity])}
+              </span>
+            </dd>
+            <dt>{t('severityScoreLabel')}</dt>
+            <dd data-testid="finding-score">{selectedFinding.severityScore}</dd>
+            <dt>{t('subjectLabel')}</dt>
+            <dd>{selectedFinding.subject.label}</dd>
+          </dl>
+
+          <h3>
+            {t('evidenceHeading')}{' '}
+            <span className="count" data-testid="evidence-count">
+              {evidenceRows(selectedFinding).length}
+            </span>
+          </h3>
+          <ol className="evidence-list" data-testid="finding-evidence">
+            {evidenceRows(selectedFinding).map((row) => {
+              const identity = JSON.stringify([
+                row.role,
+                row.nodeId,
+                row.sourceFile,
+                row.line,
+              ]);
+              return (
+                <li key={identity} className="evidence-row" data-testid="evidence-row">
+                  <dl className="farmbot-meta">
+                    <dt>{t('evidenceRoleLabel')}</dt>
+                    <dd>{row.role}</dd>
+                    <dt>{t('evidenceNodeLabel')}</dt>
+                    <dd>
+                      <code>{row.nodeId}</code>
+                    </dd>
+                    {row.sourceFile !== null && (
+                      <>
+                        <dt>{t('evidenceSourceLabel')}</dt>
+                        <dd>{row.sourceFile}</dd>
+                      </>
+                    )}
+                    {row.line !== null && (
+                      <>
+                        <dt>{t('evidenceLineLabel')}</dt>
+                        <dd>{row.line}</dd>
+                      </>
+                    )}
+                  </dl>
+                  <ul className="fact-list">
+                    {Object.entries(row.facts ?? {}).map(([key, value]) => (
+                      <li key={key}>
+                        <code>{key}</code>: {cellText(value)}
+                      </li>
+                    ))}
+                  </ul>
+                  <details className="evidence-queries">
+                    <summary>{t('evidenceQueriesLabel')}</summary>
+                    {row.queries.map((query: FindingQuery) => (
+                      <div key={query.intent} className="evidence-query">
+                        <p>
+                          <strong>{t('intentLabel')}</strong>: <code>{query.intent}</code>
+                        </p>
+                        <pre>{query.cypher}</pre>
+                        <p>
+                          <strong>{t('paramsLabel')}</strong>
+                        </p>
+                        <pre>{JSON.stringify(query.params, null, 2)}</pre>
+                      </div>
+                    ))}
+                  </details>
+                </li>
+              );
+            })}
+          </ol>
+
+          <h3>{t('causesHeading')}</h3>
+          <ul className="cause-list" data-testid="finding-causes">
+            {selectedFinding.causes.map((cause, index) => (
+              <li key={index}>
+                <span className={`fact-label fact-label-${cause.kind}`}>
+                  {cause.kind === 'fact' ? t('factLabel') : t('inferenceLabel')}
+                </span>{' '}
+                <span>{cause.text}</span>
+                {cause.rule && <span className="muted small"> ({cause.rule})</span>}
+              </li>
+            ))}
+          </ul>
+
+          <h3>{t('countermeasuresHeading')}</h3>
+          <ul className="countermeasure-list" data-testid="finding-countermeasures">
+            {selectedFinding.countermeasures.map((countermeasure, index) => (
+              <li key={index}>{countermeasure}</li>
+            ))}
+          </ul>
+
+          <p className="muted small">{t('causeDataNote')}</p>
+        </section>
+      )}
 
       {error && (
         <div role="alert" className="error-box" data-testid="error">

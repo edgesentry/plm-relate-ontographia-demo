@@ -91,3 +91,72 @@ export interface RelateSession {
   isTrap(error: unknown): boolean;
   close(): void;
 }
+
+/** UI severity levels; the stored level of R3/R4 is always `info`. */
+export type FindingSeverity = 'action' | 'review' | 'info';
+
+export interface FindingEvidence {
+  role: string;
+  nodeId: string;
+  sourceFile: string | null;
+  line: number | null;
+  facts: Record<string, unknown>;
+}
+
+export interface FindingQuery {
+  intent: string;
+  cypher: string;
+  params: Record<string, unknown>;
+}
+
+export interface FindingCause {
+  kind: 'fact' | 'inference';
+  rule: string | null;
+  text: string;
+}
+
+export interface FindingSubject {
+  key: string;
+  kind: string;
+  label: string;
+  nodeId: string | null;
+}
+
+export interface Finding {
+  id: string;
+  rule: string;
+  severity: FindingSeverity;
+  severityScore: number;
+  severityFactors: {
+    processesReached: number;
+    productVariantsReached: number;
+    quantityDifference: number;
+    overlap: number;
+  };
+  subject: FindingSubject;
+  summary: string;
+  evidence: FindingEvidence[];
+  queries: FindingQuery[];
+  causes: FindingCause[];
+  countermeasures: string[];
+}
+
+export interface FindingsDocument {
+  format: string;
+  seed: { digest: string; bytes: number };
+  rules: Array<{
+    direction: string;
+    findingCount: number;
+    id: string;
+    intents: string[];
+    severityCounts: Record<string, number>;
+    title: string;
+  }>;
+  findings: Finding[];
+}
+
+/** Committed part page paths, keyed by `part:<name>`. */
+export interface PartSourcesFile {
+  format: string;
+  sources: Record<string, string>;
+}

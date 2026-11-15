@@ -50,3 +50,162 @@
 .farmbot-about {
   margin-top: 1rem;
 }
+
+/* Notification panel and finding view. */
+
+.farmbot-findings,
+.farmbot-finding {
+  margin-top: 1rem;
+}
+
+.severity-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.severity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 0.82rem;
+}
+
+.severity-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.severity-chip.severity-action,
+.severity-badge.severity-action {
+  background: #fdecea;
+  color: #a3261c;
+  border-color: #f0b3ae;
+}
+
+.severity-chip.severity-review,
+.severity-badge.severity-review {
+  background: #fff4d6;
+  color: #7a5b00;
+  border-color: #f0d48c;
+}
+
+.severity-chip.severity-info,
+.severity-badge.severity-info {
+  background: #eef3f8;
+  color: #3d5566;
+  border-color: #c9d8e4;
+}
+
+.finding-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.finding-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finding-row.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.finding-row-summary {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.finding-row-id {
+  font-size: 0.78rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.finding-mismatch {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.finding-view-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.finding-summary {
+  font-weight: 700;
+}
+
+.evidence-list,
+.cause-list,
+.countermeasure-list {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.evidence-row {
+  margin-bottom: 0.75rem;
+}
+
+.fact-list {
+  margin: 0.25rem 0 0.5rem;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.evidence-queries summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.evidence-query pre {
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.fact-label {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.fact-label-fact {
+  background: #eef7ee;
+  color: #24622a;
+}
+
+.fact-label-inference {
+  background: #fdf3e4;
+  color: #7a4b00;
+}

@@ -82,11 +82,23 @@ The screen provides five preset questions with localized labels (`src/farmbot/i1
 
 *Note on query compilation*: Ontographia 0.1.9 cannot express `DISTINCT`; Q2 and Q3 receive a documented post-compile `RETURN DISTINCT` step. Q1, Q4, and Q5 are not modified. Q1 projects only `part` and `packing_minus_part`. Quantity differences are reported, not corrected.
 
+### Check findings panel
+
+**Run checks** compiles the twelve check Intents in `farmbot/checks/`, executes them in the same in-memory Relate session, and evaluates rules R1–R5 in the browser (`src/farmbot/agent/`). The panel shows the finding count and the per-severity counts (action needed / check / info), ordered by severity, then severity score, then id. Its result is compared with the committed findings sidecar by canonical-JSON SHA-256, and a match line names the digest. Nothing is sent to any host.
+
+Opening a finding shows the one-line summary for its rule, one row per evidence entry with the values taken from that seed node, and — for each row — the Intent, Cypher and bound parameters that produced it. Cause candidates and countermeasures carry `fact` / `inferred` labels. Cause and countermeasure text is stored in English; the labels, headings and summary follow the selected language. All document text is rendered as text nodes.
+
+### Finding deep links
+
+`/farmbot/#finding=<id>` opens one finding after the checks finish. Ids come from `farmbot/dist/farmbot.findings.json` and match `^[A-Za-z0-9-]+$`. A malformed hash, or a hash with another key, is ignored: no Relate session, no request and no error. A well-formed id that does not exist runs the checks but opens nothing.
+
 ## Where the data lives
 
 The committed seed and sidecar digests live in `farmbot/dist/`:
 
 - Seed file: `farmbot/dist/farmbot.seed.json` (364867 bytes) and sidecar `farmbot/dist/farmbot.seed.json.sha256`
+- Findings document: `farmbot/dist/farmbot.findings.json` (format `farmbot-findings-v1`) and sidecar `farmbot/dist/farmbot.findings.json.sha256`
+- Part page paths: `farmbot/dist/farmbot.part-sources.json` (format `farmbot-part-sources-v1`), written by `npm run agent:farmbot`
 - DuckDB extract sidecar: `farmbot/dist/farmbot.duckdb.sha256` (the DuckDB file itself is a build output and is gitignored)
 - Release manifest: `farmbot/dist/farmbot.release.json` (format `farmbot-release-manifest-v1`)
 
@@ -189,7 +201,7 @@ npm run verify
 npm run test:farmbot
 ```
 
-Tests the SHA-256 digest guard, shared `RETURN DISTINCT` step, ontology endpoint parser, seed loader, and default questions against `farmbot/oracle/default-results.gold.json`.
+Tests the SHA-256 digest guard, shared `RETURN DISTINCT` step, ontology endpoint parser, seed loader, default questions against `farmbot/oracle/default-results.gold.json`, the check engine and its SQL oracles, the browser-equivalent findings run (no DuckDB extract), the committed part-sources file, and the panel helpers (deep-link hashing, summary lines, ordering, per-severity counts, evidence-row uniqueness).
 
 ### FarmBot browser smoke
 
@@ -204,8 +216,11 @@ Drives headless Playwright Chromium to verify `/farmbot/`:
 3. The page displays the committed seed digest, matching the SHA-256 of `/farmbot/farmbot.seed.json`.
 4. All five preset questions execute with default selectors and match `farmbot/oracle/default-results.gold.json` row-for-row (12 / 2 / 7 / 24 / 17 rows).
 5. Relate WASM is requested same-origin on the first successful Run.
-6. A single-byte-tampered seed is rejected with expected and actual digests, loads no rows, and never requests Relate.
-7. Zero CSP violations, zero non-same-origin network requests, and zero uncaught page errors.
+6. The notification panel's finding count, ids and per-severity counts equal `farmbot/dist/farmbot.findings.json`, and the digest line reports a match.
+7. `/farmbot/#finding=<id>` opens that finding with its summary, evidence rows and per-row Intent/Cypher/parameters; a well-formed but unknown id opens nothing and shows no error.
+8. Malformed hashes (`#finding=%E0%A4%A`, `#foo`) run nothing, request no Relate asset, and show no error.
+9. A single-byte-tampered seed is rejected with expected and actual digests, loads no rows, and never requests Relate.
+10. Zero CSP violations, zero non-same-origin network requests, and zero uncaught page errors in every context.
 
 ### Local measurements and performance budgets
 
@@ -218,8 +233,10 @@ Artifact sizes (raw / `gzip -9 -n` bytes):
 | `dist/assets/ontographia_wasm-BOJRSUvY.wasm` | 512627 | 173885 |
 | `dist/assets/relate_bg-9Q1Zsp67.wasm` | 6932319 | 2424791 |
 | `dist/assets/relate-loader-C129q4jF.js` | 12367 | 4579 |
-| `dist/assets/farmbot-DcVRHk05.js` | 38730 | 11896 |
+| `dist/assets/farmbot-B-U5mcmi.js` | 84626 | 22715 |
 | `dist/farmbot/farmbot.seed.json` | 364867 | 18135 |
+
+The `farmbot-B-U5mcmi.js` row was re-measured on 2026-11-15 with the same tooling after the check panel was added; the other rows are unchanged from the 2026-11-13 build.
 
 Timings from that local run:
 

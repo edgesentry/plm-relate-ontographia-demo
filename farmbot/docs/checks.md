@@ -10,8 +10,8 @@ deterministic rule in `src/farmbot/agent/`.
 The same ESM modules run in Node and in the browser. `src/farmbot/agent/` has no
 Node-only import: the caller supplies the compiler, the executor, the check
 Intent JSON, the seed digest and a map from node id to source file.
-`farmbot/scripts/agent-farmbot.mjs` is the Node entry; a browser screen will
-supply the same values later.
+`farmbot/scripts/agent-farmbot.mjs` is the Node entry; the `/farmbot/` screen
+supplies the same values from committed files (see [Browser entry](#browser-entry)).
 
 ## Rules
 
@@ -123,8 +123,99 @@ The Node entry reads part page paths from the DuckDB extract
 not committed; in CI a test builds a private extract and passes `--extract`.
 The rule evaluation itself never reads the extract.
 
+The same run writes `farmbot/dist/farmbot.part-sources.json`
+(format `farmbot-part-sources-v1`, canonical JSON with sorted keys and one
+trailing newline). It maps `part:<name>` to the part page path for every part
+that has one, and it is the only caller input the browser cannot derive from
+the seed. The findings document and its sidecar do not include this file; only
+the part evidence `sourceFile` values depend on it.
+
 `node farmbot/scripts/agent-farmbot.mjs --write-compiled-gold` regenerates the
 compiled-Intent gold file.
+
+## Browser entry
+
+`src/farmbot/data.ts` imports every committed file the browser needs; nothing
+under `farmbot/checks/` is copied:
+
+| Input | Where it comes from |
+|---|---|
+| compiler | `@edgesentry/ontographia-wasm` through `src/lib/ontographia.ts` |
+| ontology text | `farmbot/ontology/farmbot.native.yaml?raw` |
+| check Intents | one JSON import per file in `INTENT_FILES`, keyed by file name |
+| part page paths | `farmbot/dist/farmbot.part-sources.json` |
+| seed digest and bytes | the verified fetch in `src/farmbot/session.ts` |
+| executor | the same in-memory Relate session the preset questions use |
+
+The screen does not bundle `farmbot.findings.json`. It imports only the
+sidecar `farmbot.findings.json.sha256?raw` so it can compare the browser result
+with the committed digest.
+
+Checks run when the reader presses **Run checks**, or automatically once after
+load when the URL carries a well-formed finding deep link. Both paths open (or
+reuse) the Relate session; the seed is fetched and its SHA-256 checked before
+Relate is imported, exactly as for a preset question.
+
+## Notification panel
+
+The panel is computed in the browser after the verified seed loads. It shows
+the total number of findings and one count per severity level, ordered by
+severity, then by `severityScore` descending, then by id ascending. The order
+does not depend on the order of the inputs. The UI severity labels are:
+
+| Stored level | English label | Japanese label |
+|---|---|---|
+| `action` | Action needed | 対応が必要 |
+| `review` | Check | 確認 |
+| `info` | Info | 情報 |
+
+The panel also shows whether the result matches the committed document: the
+browser canonicalizes its findings with sorted keys, takes the SHA-256 of those
+bytes, and compares the hex with the committed sidecar. A match line names the
+digest; a mismatch is shown as an error instead. The computed count, ids,
+per-severity counts and digest are also written to the debug hook that the
+browser smoke reads.
+
+## Finding view
+
+Opening a finding from the panel, or loading a deep link, shows:
+
+- a one-line summary from the per-rule template filled from `subject`,
+  `severityFactors` and evidence `facts` / `sourceFile` (Japanese and English);
+- one row per evidence entry: role, seed node id, source file and, when the
+  row has one, the line number; the values from that node; and a collapsible
+  list of the Intent, Cypher and bound parameters that produced the row;
+- cause candidates, each labelled `fact` or `inferred` (`inference` in the
+  data), and the countermeasures.
+
+Cause and countermeasure texts come from `src/farmbot/agent/templates.mjs` and
+are stored in English. They are rendered as-is in both languages; the labels,
+the headings and the one-line summary follow the selected language. Every
+value is a React text node, so FarmBot document text is never interpreted as
+HTML.
+
+Evidence rows are unique per finding by role, node id, source file and line.
+`evidenceRows` in `src/farmbot/findings-view.mjs` drops a repeated row and
+attaches the finding's queries, so a row never appears twice.
+
+## Deep link
+
+The format is `#finding=<id>`, where `<id>` is a finding id from the committed
+document.
+
+- Accepted ids match `^[A-Za-z0-9-]+$` after one safe percent-decode and are at
+  most 64 characters. The id scheme itself is shorter.
+- A hash with another key, an empty payload, an invalid escape, an unsupported
+  character or an overlong payload is ignored: no session is opened, no request
+  is made and no error is shown.
+- A well-formed id that does not exist runs the checks but opens nothing and
+  shows no error.
+- `hashchange` after load opens a matching finding once the checks have
+  finished. Selecting a finding in the panel updates the address with
+  `history.replaceState`, which sends no request.
+
+`parseFindingHash` in `src/farmbot/findings-view.mjs` implements these rules
+and is covered by `farmbot/test/findings-view.test.mjs`.
 
 ## Finding id
 
@@ -243,11 +334,21 @@ which keeps one row per reference line):
 ## Verification
 
 ```sh
-npm run agent:farmbot      # rebuild the findings and the sidecar
+npm run agent:farmbot      # rebuild the findings, the sidecar and the part sources
 npm run test:farmbot       # compile gold, oracle equality, two-run byte match
+npm run smoke:farmbot      # browser: panel counts, deep link, no external request
 ```
 
-The test rebuilds the findings in two private directories, compares them byte
-for byte with the committed file, checks the sidecar digest, confirms that every
-evidence node id exists in the committed seed, and confirms that the check
-Intents are the only Cypher inputs recorded in the findings.
+The test rebuilds the findings and the part-sources file in two private
+directories, compares them byte for byte with the committed files, checks the
+sidecar digest, confirms that every evidence node id exists in the committed
+seed, and confirms that the check Intents are the only Cypher inputs recorded
+in the findings.
+
+`farmbot/test/findings-browser-parity.test.mjs` runs the engine with the exact
+inputs the browser supplies — the committed seed, the committed check Intents
+and the part-sources file, with no DuckDB extract — and requires the canonical
+output to equal the committed findings bytes. It also requires the same result
+for reversed and shuffled check-Intent records and source maps.
+`farmbot/test/findings-view.test.mjs` covers the hash rules, the summary
+templates, ordering, per-severity counts and evidence-row uniqueness.

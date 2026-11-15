@@ -34,6 +34,8 @@ const SEED_PATH = resolve(ROOT, 'farmbot/dist/farmbot.seed.json');
 const SEED_DIGEST_PATH = `${SEED_PATH}.sha256`;
 const FINDINGS_PATH = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
 const FINDINGS_DIGEST_PATH = `${FINDINGS_PATH}.sha256`;
+const PART_SOURCES_PATH = resolve(ROOT, 'farmbot/dist/farmbot.part-sources.json');
+const PART_SOURCES_FORMAT = 'farmbot-part-sources-v1';
 const GOLD_PATH = resolve(CHECKS_DIR, 'compiled.gold.json');
 const ONTOGRAPHIA_WASM = resolve(
   ROOT,
@@ -354,6 +356,18 @@ test('two agent runs are byte-identical and match the committed findings', () =>
     committed.equals(firstBytes),
     'the committed findings are stale; run `npm run agent:farmbot`',
   );
+
+  const firstSources = readFileSync(join(first, 'farmbot.part-sources.json'));
+  const secondSources = readFileSync(join(second, 'farmbot.part-sources.json'));
+  assert.ok(firstSources.equals(secondSources), 'two runs produced different part sources');
+  const committedSources = readFileSync(PART_SOURCES_PATH);
+  assert.ok(
+    committedSources.equals(firstSources),
+    'the committed part sources are stale; run `npm run agent:farmbot`',
+  );
+  const sourcesDocument = JSON.parse(committedSources.toString('utf8'));
+  assert.equal(sourcesDocument.format, PART_SOURCES_FORMAT);
+  assert.equal(committedSources.toString('utf8'), canonicalJson(sourcesDocument));
 
   const digest = createHash('sha256').update(committed).digest('hex');
   assert.equal(

@@ -125,8 +125,8 @@ The `farmbot-release-assets` job also checks out the submodule on Node 22 and
 runs `npm run release:assets -- --out release-assets` followed by
 `npm run release:verify -- release-assets`. It uploads the four release files
 (the DuckDB file, the store archive, the release manifest and `SHA256SUMS`) as
-the `farmbot-release-assets` artifact with 90 days of retention. Both artifacts
-expire, so neither is the lasting distribution channel.
+the `farmbot-release-assets-v2` artifact with 90 days of retention. Both
+artifacts expire, so neither is the lasting distribution channel.
 
 ## Lasting distribution: GitHub Releases
 

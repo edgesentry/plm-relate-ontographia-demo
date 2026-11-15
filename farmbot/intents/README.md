@@ -46,6 +46,7 @@ arrays:
 | `part_names` | every `part.name` |
 | `part_names_in_assembly_chapters` | distinct `assembly_reference.resolved_part` |
 | `part_names_in_preassemblies` | distinct `preassembly_reference.resolved_part`, excluding `Accessory bag BOM` rows (their owning structure is a bag) |
+| `part_names_in_service_procedures` | distinct `service_reference.resolved_part` |
 | `part_names_in_kits` | distinct `packing_item.resolved_part` on kit pages (main carton and `pallet-stacking.md` excluded) |
 | `part_names_in_all_three_structure_kinds` | intersection of the three domains above |
 | `category_slugs` | every `bom_category.slug` |

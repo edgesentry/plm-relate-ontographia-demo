@@ -210,6 +210,168 @@ test('service UnmatchedName nodes equal the unresolved service display names', (
   }
 });
 
+test('an unresolved service name merges into an existing UnmatchedName', () => {
+  const unresolvedServiceNames = new Set(
+    tables.service_reference
+      .filter((row) => !row.resolved_part)
+      .map((row) => row.display_name),
+  );
+  const target = [...tables.unmatched_name]
+    .sort((left, right) =>
+      left.display_name < right.display_name
+        ? -1
+        : left.display_name > right.display_name
+          ? 1
+          : 0,
+    )
+    .find((row) => !unresolvedServiceNames.has(row.display_name));
+  assert.ok(target, 'the extract has no unmatched name without a service collision');
+
+  const splitList = (value) =>
+    value
+      ? value
+          .split(', ')
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
+
+  const existingCandidates = new Set(splitList(target.candidates));
+  const candidatePart = [...tables.part]
+    .map((part) => part.name)
+    .sort()
+    .find((name) => !existingCandidates.has(name));
+  assert.ok(candidatePart, 'every part is already a candidate');
+
+  const servicePage = [...tables.service_page]
+    .map((page) => page.path)
+    .sort()[0];
+  assert.ok(servicePage, 'the extract has no service page');
+
+  const injected = [
+    {
+      page_path: servicePage,
+      line_number: 9001,
+      occurrence: 0,
+      display_name: target.display_name,
+      normalized_name: target.normalized_name,
+      resolved_part: null,
+      match_method: 'unmatched',
+      candidates: null,
+    },
+    {
+      page_path: servicePage,
+      line_number: 9002,
+      occurrence: 1,
+      display_name: target.display_name,
+      normalized_name: target.normalized_name,
+      resolved_part: null,
+      match_method: 'ambiguous',
+      candidates: candidatePart,
+    },
+  ];
+  const fixture = {
+    ...tables,
+    service_reference: [...tables.service_reference, ...injected],
+  };
+  const seed = buildFullGraph(fixture, ontology);
+  const id = `unmatched:${target.display_name}`;
+
+  const matchingServiceRows = fixture.service_reference.filter(
+    (row) => !row.resolved_part && row.display_name === target.display_name,
+  );
+  const nodesWithId = seed.nodes.filter((node) => node.id === id);
+  assert.equal(nodesWithId.length, 1, `${id} is not exactly one node`);
+  const node = nodesWithId[0];
+  assert.ok(node.labels.includes('UnmatchedName'));
+
+  assert.equal(
+    node.properties.reference_count,
+    target.reference_count + matchingServiceRows.length,
+  );
+  const expectedKinds = [
+    ...new Set([...splitList(target.source_kinds), 'service']),
+  ].sort();
+  assert.equal(node.properties.source_kinds, expectedKinds.join(', '));
+  assert.equal(
+    node.properties.status,
+    target.status === 'ambiguous' ||
+      matchingServiceRows.some((row) => row.match_method === 'ambiguous')
+      ? 'ambiguous'
+      : 'unmatched',
+  );
+
+  const expectedPages = new Set([
+    ...splitList(target.source_pages),
+    ...matchingServiceRows.map((row) => row.page_path),
+  ]);
+  const structureIdByPath = new Map();
+  for (const candidate of seed.nodes) {
+    if (!candidate.labels.includes('Structure')) continue;
+    if (candidate.properties.path === undefined) continue;
+    structureIdByPath.set(candidate.properties.path, candidate.id);
+  }
+  const expectedSeenIn = [...expectedPages].map((page) => {
+    const structure = structureIdByPath.get(page);
+    assert.ok(structure, `page ${page} is not a Structure in the fixture`);
+    return structure;
+  });
+  const seenIn = seed.edges
+    .filter((edge) => edge.type === 'SEEN_IN' && edge.from === id)
+    .map((edge) => edge.to)
+    .sort();
+  assert.deepEqual(seenIn, expectedSeenIn.sort());
+
+  const expectedCandidates = new Set([
+    ...splitList(target.candidates),
+    ...matchingServiceRows.flatMap((row) => splitList(row.candidates)),
+  ]);
+  const candidateEdges = seed.edges
+    .filter((edge) => edge.type === 'CANDIDATE' && edge.from === id)
+    .map((edge) => edge.to)
+    .sort();
+  assert.deepEqual(
+    candidateEdges,
+    [...expectedCandidates].map((name) => `part:${name}`).sort(),
+  );
+
+  const nodeIds = new Set();
+  for (const candidate of seed.nodes) {
+    assert.ok(!nodeIds.has(candidate.id), `duplicate node id ${candidate.id}`);
+    nodeIds.add(candidate.id);
+  }
+  const edgeKeys = new Set();
+  for (const edge of seed.edges) {
+    const key = `${edge.type}\u0000${edge.from}\u0000${edge.to}`;
+    assert.ok(!edgeKeys.has(key), `duplicate edge ${key}`);
+    edgeKeys.add(key);
+  }
+
+  const reversed = Object.fromEntries(
+    Object.entries(fixture).map(([name, rows]) => [name, [...rows].reverse()]),
+  );
+  const shuffled = Object.fromEntries(
+    Object.entries(fixture).map(([name, rows]) => [
+      name,
+      seededShuffle(rows, 20261116),
+    ]),
+  );
+  const canonical = serializeSeed(seed);
+  for (const [label, candidate] of [
+    ['reversed', reversed],
+    ['shuffled', shuffled],
+  ]) {
+    const candidateSeed = buildFullGraph(candidate, ontology);
+    assert.ok(
+      serializeSeed(candidateSeed).equals(canonical),
+      `${label} input changed the seed bytes`,
+    );
+    assert.deepEqual(
+      candidateSeed.nodes.find((candidateNode) => candidateNode.id === id),
+      node,
+    );
+  }
+});
+
 // A deterministic shuffle (32-bit LCG seeded with a fixed value).
 function seededShuffle(items, seedValue) {
   let seed = seedValue;

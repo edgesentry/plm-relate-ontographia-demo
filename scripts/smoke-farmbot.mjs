@@ -1190,15 +1190,58 @@ async function main() {
         `${finding.rule}: more than one node is selected after a row click`,
       );
 
+      // Clear the selection through the existing finding controls, so the
+      // keyboard check starts from an unselected row even when the finding has
+      // a single evidence row. Closing the finding and reopening it resets the
+      // shared selection.
+      await fixture.page.locator('[data-testid="close-finding"]').click();
+      await fixture.page
+        .locator(`[data-testid="finding-row-${finding.id}"]`)
+        .click();
+      await fixture.page.waitForSelector(
+        '[data-testid="process-lanes"] [data-node-id]',
+      );
+      const clearedDiagram = await readDiagram(fixture.page);
+      assert(
+        clearedDiagram.rows.every((row) => row.selected === 'false'),
+        `${finding.rule}: reopening the finding kept an evidence row selected`,
+      );
+
       // Keyboard: focus a "Select node" button and press Enter. The button
       // selects its row and node, exposes aria-pressed, and keeps focus.
       const keyboardRow =
-        afterRowClick.rows.find((row) => row.index !== otherRow.index) ?? otherRow;
+        clearedDiagram.rows.find((row) => row.index !== otherRow.index) ??
+        clearedDiagram.rows[0];
+      assert(keyboardRow, `${finding.rule}: the evidence table has no keyboard row`);
       const keyboardButton = fixture.page
         .locator('[data-testid="evidence-row"]')
         .nth(keyboardRow.index)
         .locator('button.evidence-select');
       await keyboardButton.focus();
+      const beforeEnter = await fixture.page.evaluate((index) => {
+        const row = document.querySelector(
+          `[data-testid="evidence-row"][data-evidence-index="${index}"]`,
+        );
+        const button = row?.querySelector('button.evidence-select') ?? null;
+        return {
+          rowSelected: row?.getAttribute('data-selected') ?? null,
+          pressed: button?.getAttribute('aria-pressed') ?? null,
+          focusOnButton: document.activeElement === button,
+        };
+      }, keyboardRow.index);
+      assert(
+        beforeEnter.rowSelected === 'false',
+        `${finding.rule}: evidence row ${keyboardRow.index} was already selected before Enter`,
+      );
+      assert(
+        beforeEnter.pressed === 'false',
+        `${finding.rule}: aria-pressed is ${JSON.stringify(beforeEnter.pressed)} before Enter`,
+      );
+      assert(
+        beforeEnter.focusOnButton,
+        `${finding.rule}: focus is not on the Select node button before Enter`,
+      );
+
       await fixture.page.keyboard.press('Enter');
       await fixture.page.waitForFunction(
         (index) => {

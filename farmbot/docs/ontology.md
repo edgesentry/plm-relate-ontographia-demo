@@ -219,11 +219,11 @@ The extract stores versions as a column value, not as a table. The generation
 code therefore creates exactly two `ProductVariant` nodes and resolves the
 `version` column to `code`.
 
-### Structure, AssemblyChapter, PreAssembly
+### Structure, AssemblyChapter, ServiceProcedure, PreAssembly
 
-`path` and `title` are owned by `Structure` and are present in all three page
-tables (`assembly_page`, `preassembly_page`, `packing_page`) under the same
-names.
+`path` and `title` are owned by `Structure` and are present in all four page
+tables (`assembly_page`, `preassembly_page`, `packing_page`, `service_page`)
+under the same names.
 
 | Class | Property | Datatype | Source column |
 |---|---|---|---|
@@ -286,7 +286,7 @@ repeats the same rows and adds the signed difference. One node per row of
 `quantity_difference`, with both `COMPARES_PART` and `COMPARED_IN` set from
 the row's keys.
 
-### UnmatchedName (`unmatched_name`)
+### UnmatchedName (`unmatched_name`, unresolved `service_reference`)
 
 | Property | Datatype | Column |
 |---|---|---|
@@ -296,6 +296,12 @@ the row's keys.
 | reference_count | integer | `reference_count` |
 | source_kinds | string | `source_kinds` |
 | status | string | `status` |
+
+An unresolved service display name is grouped from `service_reference` by the
+same `display_name`, so it shares this node shape. When that name already has an
+`unmatched_name` row, the service occurrences add to `reference_count`, add
+`service` to `source_kinds`, and contribute their candidates to `CANDIDATE`
+instead of creating a second node.
 
 Service references share the `Usage` shape. `source_kind` is `service`, and
 `line_number` comes from `service_reference.line_number`; a service row has no

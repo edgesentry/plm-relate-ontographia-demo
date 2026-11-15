@@ -27,7 +27,7 @@ classes:
   - name: Structure
     description: >-
       Abstract superclass for the things that own usage lines: assembly
-      chapters and manufacturing containers.
+      chapters, manufacturing containers, and service procedures.
   - name: Part
     super_classes: [Item]
     description: >-
@@ -87,9 +87,10 @@ classes:
       `main-carton.md`.
   - name: Usage
     description: >-
-      One resolved reference line, from `assembly_reference`,
-      `preassembly_reference` or `packing_item`. Carries the quantity and
-      the resolution result, because relationships have no properties.
+      One reference line, from `assembly_reference`, `preassembly_reference`,
+      `packing_item` or `service_reference`, whether or not it resolved to a
+      part. Carries the quantity and the resolution result, because
+      relationships have no properties.
   - name: Correspondence
     description: >-
       Abstract superclass for nodes derived by comparing the extract with

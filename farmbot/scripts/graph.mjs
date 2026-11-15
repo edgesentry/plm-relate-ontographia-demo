@@ -399,11 +399,13 @@ export function buildFullGraph(sourceTables, ontology) {
   const addNode = (className, id, properties) => {
     if (nodeIds.has(id)) throw new Error(`duplicate node id ${id}`);
     nodeIds.add(id);
-    nodes.push({
+    const node = {
       id,
       labels: ontology.labelsFor(className),
       properties: compact(properties),
-    });
+    };
+    nodes.push(node);
+    return node;
   };
 
   const addEdge = (type, from, to) => {
@@ -728,9 +730,10 @@ export function buildFullGraph(sourceTables, ontology) {
     addEdge('AFFECTS_PART', change, part);
   }
 
+  const unmatchedById = new Map();
   for (const unmatched of tables.unmatched_name) {
     const id = `unmatched:${unmatched.display_name}`;
-    addNode('UnmatchedName', id, {
+    const node = addNode('UnmatchedName', id, {
       display_name: unmatched.display_name,
       normalized_name: unmatched.normalized_name,
       singular_name: unmatched.singular_name,
@@ -738,6 +741,7 @@ export function buildFullGraph(sourceTables, ontology) {
       source_kinds: unmatched.source_kinds,
       status: unmatched.status,
     });
+    unmatchedById.set(id, node);
     for (const page of splitList(unmatched.source_pages)) {
       const structure = structureId.get(page);
       if (!structure) {
@@ -756,8 +760,11 @@ export function buildFullGraph(sourceTables, ontology) {
 
   // Unresolved service names are not in `unmatched_name`; they are derived from
   // `service_reference` here, grouped by display name, and seen in the service
-  // page that wrote them. An existing node with the same display name is
-  // reused rather than duplicated.
+  // page that wrote them. A name that already has an `unmatched_name` node keeps
+  // that node id and is merged into it: the service occurrences add to
+  // `reference_count`, `service` joins the sorted `source_kinds`, an ambiguous
+  // occurrence makes the name ambiguous, and candidate parts become CANDIDATE
+  // edges just as they do for `unmatched_name.candidates`.
   const serviceUnmatched = new Map();
   for (const reference of tables.service_reference) {
     if (reference.resolved_part) continue;
@@ -768,6 +775,7 @@ export function buildFullGraph(sourceTables, ontology) {
         normalizedName: reference.normalizedName ?? reference.normalized_name ?? null,
         referenceCount: 0,
         pages: new Set(),
+        candidates: new Set(),
         ambiguous: false,
       });
     }
@@ -775,19 +783,30 @@ export function buildFullGraph(sourceTables, ontology) {
     group.referenceCount += 1;
     group.pages.add(reference.page_path);
     if (reference.match_method === 'ambiguous') group.ambiguous = true;
+    for (const candidate of splitList(reference.candidates)) {
+      group.candidates.add(candidate);
+    }
   }
   for (const group of [...serviceUnmatched.values()].sort((left, right) =>
     compareStrings(left.displayName, right.displayName),
   )) {
     const id = `unmatched:${group.displayName}`;
-    if (!nodeIds.has(id)) {
-      addNode('UnmatchedName', id, {
+    const existing = unmatchedById.get(id);
+    if (existing) {
+      const kinds = new Set([...splitList(existing.properties.source_kinds), 'service']);
+      existing.properties.reference_count =
+        (existing.properties.reference_count ?? 0) + group.referenceCount;
+      existing.properties.source_kinds = [...kinds].sort(compareStrings).join(', ');
+      if (group.ambiguous) existing.properties.status = 'ambiguous';
+    } else {
+      const node = addNode('UnmatchedName', id, {
         display_name: group.displayName,
         normalized_name: group.normalizedName,
         reference_count: group.referenceCount,
         source_kinds: 'service',
         status: group.ambiguous ? 'ambiguous' : 'unmatched',
       });
+      unmatchedById.set(id, node);
     }
     for (const page of [...group.pages].sort(compareStrings)) {
       const structure = structureId.get(page);
@@ -795,6 +814,13 @@ export function buildFullGraph(sourceTables, ontology) {
         throw new Error(`unmatched ${id} names unknown page ${page}`);
       }
       addEdge('SEEN_IN', id, structure);
+    }
+    for (const candidate of [...group.candidates].sort(compareStrings)) {
+      const part = partId.get(candidate);
+      if (!part) {
+        throw new Error(`unmatched ${id} names unknown candidate part ${candidate}`);
+      }
+      addEdge('CANDIDATE', id, part);
     }
   }
 

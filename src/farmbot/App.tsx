@@ -555,10 +555,12 @@ export function App() {
    * The diagram and the evidence table share one selection: a list of evidence
    * row indexes. A node selects every row it represents; a row selects the node
    * that represents it. The first selected row is scrolled into view and
-   * focused so a keyboard reader lands on it.
+   * focused so a keyboard reader lands on it; a selection made inside the table
+   * leaves the focus where the user put it.
    */
-  const selectEvidence = (indexes: number[]) => {
+  const selectEvidence = (indexes: number[], options: { focusRow?: boolean } = {}) => {
     setSelectedEvidence(indexes);
+    if (options.focusRow === false) return;
     const [first] = indexes;
     if (first === undefined) return;
     requestAnimationFrame(() => {
@@ -864,7 +866,15 @@ export function App() {
                   ref={(element) => {
                     evidenceRowRefs.current.set(index, element);
                   }}
-                  onClick={() => selectEvidence([index])}
+                  onClick={(event) => {
+                    if (
+                      event.target instanceof Element &&
+                      event.target.closest('details, summary, a, button')
+                    ) {
+                      return;
+                    }
+                    selectEvidence([index], { focusRow: false });
+                  }}
                 >
                   <dl className="farmbot-meta">
                     <dt>{t('evidenceRoleLabel')}</dt>
@@ -908,6 +918,14 @@ export function App() {
                       </div>
                     ))}
                   </details>
+                  <button
+                    type="button"
+                    className="evidence-select"
+                    aria-label={`${t('evidenceSelect')}: ${row.nodeId}`}
+                    onClick={() => selectEvidence([index], { focusRow: false })}
+                  >
+                    {t('evidenceSelect')}
+                  </button>
                 </li>
               );
             })}

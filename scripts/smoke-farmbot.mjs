@@ -1094,7 +1094,7 @@ async function main() {
             .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0],
       );
     const processLaneFixtures = [];
-    summary.processLanes = { rules: [], phone: null };
+    summary.processLanes = { rules: [], r2ManyStructures: null, phone: null };
 
     for (const finding of ruleFindings) {
       const expected = expectedDiagram(finding);
@@ -1201,6 +1201,62 @@ async function main() {
         ...clean,
       });
     }
+
+    // R2 goes to the finding with the most structure rows: its links must follow
+    // the shared source file, so an all-pairs cross product would show up here.
+    const structureCount = (finding) =>
+      new Set(
+        finding.evidence
+          .filter((row) => row.role === 'structure')
+          .map((row) => row.nodeId),
+      ).size;
+    const r2Finding = findings
+      .filter((finding) => finding.rule === 'R2')
+      .sort(
+        (left, right) =>
+          structureCount(right) - structureCount(left) ||
+          (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
+      )[0];
+    assert(r2Finding, 'the committed file has no R2 finding');
+
+    const r2Expected = expectedDiagram(r2Finding);
+    const r2Fixture = await prepareContext(browser, 'process-lanes-r2-many-structures');
+    await r2Fixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(r2Finding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await r2Fixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const r2Diagram = await readDiagram(r2Fixture.page);
+    assert(r2Diagram.present, 'the R2 process-lane diagram is missing');
+    assert(
+      JSON.stringify(r2Diagram.nodes.map((node) => node.id).sort()) ===
+        JSON.stringify(r2Expected.nodeIds),
+      `the R2 diagram shows different nodes from the layout: ` +
+        `${JSON.stringify(r2Diagram.nodes.map((node) => node.id).sort())} != ` +
+        `${JSON.stringify(r2Expected.nodeIds)}`,
+    );
+    assert(
+      JSON.stringify(
+        r2Diagram.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+      ) === JSON.stringify(r2Expected.edges),
+      'the R2 diagram draws different edges from the layout',
+    );
+    assert(
+      r2Diagram.edges.filter((edge) => edge.kind === 'missing').length === r2Expected.missing,
+      `the R2 diagram draws a different number of missing links than ${r2Expected.missing}`,
+    );
+    const r2Clean = await assertContextClean(r2Fixture);
+    processLaneFixtures.push({ fixture: r2Fixture, clean: r2Clean });
+    summary.processLanes.r2ManyStructures = {
+      id: r2Finding.id,
+      structures: structureCount(r2Finding),
+      nodes: r2Diagram.nodes.length,
+      edges: r2Diagram.edges.length,
+      missingEdges: r2Expected.missing,
+      ...r2Clean,
+    };
 
     // Phone viewport: the diagram must not exceed a 375px-wide screen.
     const phone = await prepareContext(browser, 'process-lanes-phone', {

@@ -50,6 +50,47 @@ function uniqueNodeIds(finding) {
   return [...new Set(finding.evidence.map((row) => row.nodeId))];
 }
 
+function roleNodeIds(finding, role) {
+  return [
+    ...new Set(
+      finding.evidence.filter((row) => row.role === role).map((row) => row.nodeId),
+    ),
+  ].sort();
+}
+
+/** The non-empty source files named by the rows of one node and role. */
+function sourceFilesOf(finding, nodeId, role) {
+  const files = new Set();
+  for (const row of finding.evidence) {
+    if (row.role !== role || row.nodeId !== nodeId) continue;
+    if (typeof row.sourceFile === 'string' && row.sourceFile !== '') {
+      files.add(row.sourceFile);
+    }
+  }
+  return files;
+}
+
+function shareSourceFile(finding, leftId, leftRole, rightId, rightRole) {
+  const right = sourceFilesOf(finding, rightId, rightRole);
+  for (const file of sourceFilesOf(finding, leftId, leftRole)) {
+    if (right.has(file)) return true;
+  }
+  return false;
+}
+
+/** The R2 structure/reference pairs the evidence supports, computed from its rows. */
+function expectedR2LinkCount(finding) {
+  let count = 0;
+  for (const structure of roleNodeIds(finding, 'structure')) {
+    for (const reference of roleNodeIds(finding, 'reference')) {
+      if (shareSourceFile(finding, structure, 'structure', reference, 'reference')) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+}
+
 function laneRank(laneId) {
   return LANE_IDS.indexOf(laneId);
 }
@@ -220,6 +261,36 @@ test('the edge pattern of each rule comes from its evidence roles', () => {
       assert.ok(edge.kind === 'link' || edge.kind === 'missing', `${finding.id} edge kind`);
     }
   }
+});
+
+test('R2 links join a structure and a reference from the same source file', () => {
+  for (const finding of findings) {
+    if (finding.rule !== 'R2') continue;
+    const links = edgesForFinding(finding).filter((edge) => edge.kind === 'link');
+    for (const link of links) {
+      assert.ok(
+        shareSourceFile(finding, link.from, 'structure', link.to, 'reference'),
+        `${finding.id}: link ${link.from} → ${link.to} joins rows from different source files`,
+      );
+    }
+    assert.equal(
+      links.length,
+      expectedR2LinkCount(finding),
+      `${finding.id}: link edge count`,
+    );
+  }
+
+  const magnets = findings.find((finding) => finding.id === 'R2-magnets');
+  assert.ok(magnets, 'R2-magnets is missing from the committed file');
+  const magnetsLinks = edgesForFinding(magnets).filter((edge) => edge.kind === 'link');
+  const structures = roleNodeIds(magnets, 'structure').length;
+  const references = roleNodeIds(magnets, 'reference').length;
+  assert.equal(magnetsLinks.length, expectedR2LinkCount(magnets));
+  assert.ok(
+    magnetsLinks.length < structures * references,
+    `R2-magnets: ${magnetsLinks.length} link(s) for ` +
+      `${structures * references} structure/reference pairs`,
+  );
 });
 
 test('quantity labels carry the sign and class of their facts', () => {

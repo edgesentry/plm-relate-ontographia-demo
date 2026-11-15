@@ -186,6 +186,12 @@
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
+.evidence-select {
+  margin-top: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+}
+
 /* Process-lane diagram: hand-built SVG, classes only (no inline <style>). */
 
 .process-lanes {

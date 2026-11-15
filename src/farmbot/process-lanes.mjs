@@ -129,6 +129,26 @@ function uniqueNodeIds(rows, role) {
   return ids.sort(compareText);
 }
 
+/** Source files named by the rows of one role, keyed by node id. */
+function sourceFilesByNodeId(rows, role) {
+  const files = new Map();
+  for (const row of rows) {
+    if (row.role !== role) continue;
+    if (typeof row.sourceFile !== 'string' || row.sourceFile === '') continue;
+    if (!files.has(row.nodeId)) files.set(row.nodeId, new Set());
+    files.get(row.nodeId).add(row.sourceFile);
+  }
+  return files;
+}
+
+function sharesSourceFile(left, right) {
+  if (!left || !right) return false;
+  for (const file of left) {
+    if (right.has(file)) return true;
+  }
+  return false;
+}
+
 /** Stable order of one finding's evidence rows: lane, role, node id, source, line. */
 function compareItems(left, right) {
   return (
@@ -166,8 +186,10 @@ export function orderEvidenceRows(finding) {
  * The per-rule patterns are documented in `farmbot/docs/checks.md`:
  *
  * - R1: every packing line → the quantity comparison → the part.
- * - R2: every structure → its unresolved reference, plus a missing edge from
- *   the reference to the EBOM lane because it resolves to no part.
+ * - R2: every structure → an unresolved reference from the same source file,
+ *   plus a missing edge from the reference to the EBOM lane because it resolves
+ *   to no part. A reference with no structure from the same source file gets
+ *   only its missing edge.
  * - R3: a missing edge from the part to the assembly and packing lanes.
  * - R4: the part → every packing line → the packing structure, plus a missing
  *   edge from the part to the assembly lane.
@@ -208,8 +230,14 @@ export function edgesForFinding(finding) {
   } else if (rule === 'R2') {
     const references = uniqueNodeIds(rows, 'reference');
     const structures = uniqueNodeIds(rows, 'structure');
+    const referenceFiles = sourceFilesByNodeId(rows, 'reference');
+    const structureFiles = sourceFilesByNodeId(rows, 'structure');
     for (const structure of structures) {
-      for (const reference of references) add(structure, reference);
+      for (const reference of references) {
+        if (sharesSourceFile(structureFiles.get(structure), referenceFiles.get(reference))) {
+          add(structure, reference);
+        }
+      }
     }
     for (const reference of references) {
       add(reference, `${PLACEHOLDER_PREFIX}ebom-part`, 'missing');

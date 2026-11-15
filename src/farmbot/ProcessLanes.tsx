@@ -104,7 +104,20 @@ export function ProcessLanes({
     return key ? t(key) : laneId;
   };
 
-  const nodeLabel = (node: DiagramNode): string => `${laneName(node.lane)}: ${node.label}`;
+  const nodeLabel = (node: DiagramNode): string => {
+    const parts = [
+      `${laneName(node.lane)}: ${node.label}`,
+      t(node.problem ? 'lanesNodeProblem' : 'lanesNodeNoProblem'),
+    ];
+    for (const quantity of node.quantities) {
+      const variant =
+        quantity.version === ''
+          ? ''
+          : ` (${t('lanesNodeVariant')} ${quantity.version})`;
+      parts.push(`${t('lanesNodeQuantity')}: ${quantity.text}${variant}`);
+    }
+    return parts.join('; ');
+  };
 
   const missingLaneIds = [
     ...new Set(

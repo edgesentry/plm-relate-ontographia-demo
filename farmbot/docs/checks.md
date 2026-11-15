@@ -247,10 +247,15 @@ Edges come only from the evidence rows, by rule:
 | Rule | Edges |
 |---|---|
 | R1 | each packing line → the quantity comparison → the part |
-| R2 | each structure → its unresolved reference, plus a dashed missing edge from the reference to the EBOM lane |
+| R2 | each structure → an unresolved reference naming the same source file, plus a dashed missing edge from the reference to the EBOM lane |
 | R3 | dashed missing edges from the part to the assembly and packing lanes |
 | R4 | the part → each packing line → the packing structure, plus a dashed missing edge from the part to the assembly lane |
 | R5 | none; the page node stands alone |
+
+For R2, a structure → reference link is drawn only when the structure evidence
+row and the reference evidence row name the same `sourceFile`. A reference with
+no structure from the same source file gets no structure link, only its missing
+edge.
 
 A missing edge ends at a lane-level placeholder (`lane:<lane id>`), never at an
 invented node: the target lane may not be drawn at all, and a placeholder is

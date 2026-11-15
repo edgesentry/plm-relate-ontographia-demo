@@ -34,6 +34,7 @@ async function loadTsModule(relativePath) {
 
 section('typecheck');
 sh('npx', ['tsc', '--noEmit']);
+sh('npx', ['tsc', '-p', 'worker/tsconfig.json', '--noEmit']);
 
 section('vendored data');
 const dataDir = join(root, 'vendor/ontographia/data');

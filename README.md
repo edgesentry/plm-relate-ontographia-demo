@@ -8,7 +8,7 @@ Exploring and auditing product lifecycle management (PLM) data for the open-sour
 
 - **Packing differences**: Detecting discrepancies between the packing list and the BOM (e.g. quantity mismatches).
 - **Assembly chapters for a part**: Identifying which assembly chapters use a specific part to assess change impact.
-- **Structures a part reaches**: Forward-tracing which manufacturing structures and pre-assembly tools reach a part.
+- **Structures a part reaches**: Forward-tracing which assembly chapters, pre-assembly tools, kits and service procedures reach a part.
 - **Kit parts in a category**: Listing kit parts that belong to a specific functional category.
 - **Unmatched references**: Surfacing manufacturing references that did not resolve to a canonical part page.
 
@@ -18,17 +18,18 @@ High-level questions expressed as Ontographia Intents compile into parameter-bou
 
 - Mode: in memory (browser screen at `/farmbot/`) | directory store (inspectable build output)
 - Why this mode: A browser tab has no filesystem, so the interactive `/farmbot/` screen runs `@relate/relate-wasm` 1.0.1 in `:memory:`. The committed seed graph is fetched from `/farmbot/farmbot.seed.json`, verified by SHA-256 with Web Crypto against the committed digest, and loaded into an in-memory database that exists only in that tab. Relate WASM is lazily imported only on the first Run (not on first paint). For offline inspection, the same seed is compiled into a persistent Relate directory store using Node `@relate/relate` 1.0.1 with the JSON snapshot codec (`RELATE_SNAPSHOT_FORMAT=json`). Reviewers can inspect `graph.json` directly as plain JSON or open the directory store read-only from Node without running a browser or database daemon.
-- What the graph models: FarmBot Genesis v1.7 EBOM and MBOM data, including BOM parts, part variants, BOM categories, product variants, assembly chapters, pre-assembly pages, kits, the main carton, bags, usage lines, packing-versus-BOM quantity comparisons, quantity differences, and unresolved references. The logical store contains 604 nodes and 1022 relationships. Node labels include `Part`, `PartVariant`, `BomCategory`, `ProductVariant`, `AssemblyChapter`, `PreAssembly`, `Kit`, `Carton`, `Bag`, `Usage`, `QuantityComparison`, `QuantityDifference`, and `UnmatchedName`, along with abstract labels `Item`, `Structure`, `ManufacturingContainer`, and `Correspondence` that concrete nodes also carry.
+- What the graph models: FarmBot Genesis v1.7 EBOM and MBOM data, including BOM parts, part variants, BOM categories, product variants, assembly chapters, pre-assembly pages, kits, the main carton, bags, service procedures, usage lines, packing-versus-BOM quantity comparisons, quantity differences, unresolved references, and Change Log design changes. The logical store contains 656 nodes and 1087 relationships. Node labels include `Part`, `PartVariant`, `BomCategory`, `ProductVariant`, `AssemblyChapter`, `PreAssembly`, `ServiceProcedure`, `Kit`, `Carton`, `Bag`, `Usage`, `QuantityComparison`, `QuantityDifference`, `UnmatchedName`, and `DesignChange`, along with abstract labels `Item`, `Structure`, `ManufacturingContainer`, and `Correspondence` that concrete nodes also carry.
 
 Relationship types and counts (from the logical dump):
 
 | Type | Count | Type | Count |
 | --- | ---: | --- | ---: |
-| `HAS_USAGE` | 279 | `USES_ITEM` | 257 |
+| `HAS_USAGE` | 302 | `USES_ITEM` | 279 |
 | `IN_CATEGORY` | 149 | `COMPARED_IN` | 76 |
 | `COMPARES_PART` | 76 | `FOR_VARIANT` | 76 |
 | `HAS_PART_VARIANT` | 44 | `APPLIES_TO` | 38 |
-| `SEEN_IN` | 17 | `CANDIDATE` | 10 |
+| `SEEN_IN` | 18 | `CANDIDATE` | 10 |
+| `AFFECTS_PART` | 19 | | |
 
 The browser screen does not execute against the unpacked directory store; it executes queries against the in-memory database and displays the committed store logical digest and node/relationship counts from `farmbot/dist/farmbot.release.json`.
 
@@ -87,11 +88,11 @@ The screen provides five preset questions with localized labels (`src/farmbot/i1
 
 - **Q1 · Packing differences** — "Which parts disagree between the packing list and the BOM?" — 12 rows — no selector — columns: `part`, `packing_minus_part`
 - **Q2 · Assembly chapters for a part** — "Which assembly chapters use this part?" — default filter: `M5 x 10mm Screw` — 2 rows — DISTINCT applied after compile
-- **Q3 · Structures a part reaches** — "If this part changes, which structures reach it?" — default filter: `M5 Flange Locknut` — 7 rows — DISTINCT applied after compile
+- **Q3 · Structures a part reaches** — "If this part changes, which structures reach it — assembly chapters, pre-assemblies, kits or service procedures?" — default filter: `M5 Flange Locknut` — 7 rows — DISTINCT applied after compile
 - **Q4 · Kit parts in a category** — "Which kit parts belong to this category?" — default filter: `fasteners-and-hardware` — 24 rows
-- **Q5 · Unmatched references** — "Which references did not resolve to a part page?" — 17 rows (13 distinct `display_name` values) — filter `status = unmatched` is embedded in the Intent, no on-screen selector
+- **Q5 · Unmatched references** — "Which references did not resolve to a part page?" — 18 rows (14 distinct `display_name` values, including one unresolved service name) — filter `status = unmatched` is embedded in the Intent, no on-screen selector
 
-*Note on query compilation*: Ontographia 0.1.9 cannot express `DISTINCT`; Q2 and Q3 receive a documented post-compile `RETURN DISTINCT` step. Q1, Q4, and Q5 are not modified. Q1 projects only `part` and `packing_minus_part`. Quantity differences are reported, not corrected.
+*Note on query compilation*: Ontographia 0.1.9 cannot express `DISTINCT`; Q2 and Q3 receive a documented post-compile `RETURN DISTINCT` step. Q1, Q4, and Q5 are not modified. Q1 projects only `part` and `packing_minus_part`. Quantity differences are reported, not corrected. Q3 traverses any `Structure`, so it returns a `ServiceProcedure` page when the part has a service reference; the selector lists the parts that appear in an assembly chapter, a pre-assembly and a kit.
 
 ### Check findings panel
 
@@ -109,7 +110,7 @@ The diagram is hand-built SVG (`src/farmbot/ProcessLanes.tsx`) laid out by the p
 
 The committed seed and sidecar digests live in `farmbot/dist/`:
 
-- Seed file: `farmbot/dist/farmbot.seed.json` (364867 bytes) and sidecar `farmbot/dist/farmbot.seed.json.sha256`
+- Seed file: `farmbot/dist/farmbot.seed.json` (395675 bytes) and sidecar `farmbot/dist/farmbot.seed.json.sha256`
 - Findings document: `farmbot/dist/farmbot.findings.json` (format `farmbot-findings-v1`) and sidecar `farmbot/dist/farmbot.findings.json.sha256`
 - Part page paths: `farmbot/dist/farmbot.part-sources.json` (format `farmbot-part-sources-v1`), written by `npm run agent:farmbot`
 - DuckDB extract sidecar: `farmbot/dist/farmbot.duckdb.sha256` (the DuckDB file itself is a build output and is gitignored)
@@ -121,13 +122,13 @@ The directory store and DuckDB extract are gitignored under `farmbot/dist/.gitig
 
 | Artifact | Digest |
 | --- | --- |
-| Committed seed | `farmbot-graph-v1 sha256:db6503e0c17d024d610736b0996c98a2872b495936d4f84230747db603f36fb1` |
+| Committed seed | `farmbot-graph-v1 sha256:5e0a2e2b65bf89ce61a1dbc217c7df2bcf09f61b527bf4626348892a52b15cd3` |
 | DuckDB extract | `farmbot-canonical-v1 sha256:9bf30774ca18b815d2c7ba2bc6f221a0bf0e9e03acdeb1d11676b8cb22c4c040` |
-| Relate store (logical) | `farmbot-relate-store-v2 sha256:c44248c23f4800f20c0d456924d930e09e8dd0bb76080fdbd63375bd4b52b7fc` |
+| Relate store (logical) | `farmbot-relate-store-v3 sha256:f50e731c116c5a34fa418bb71e09ef9b2dc48b8f45eb75a1774ec12860be68ae` |
 
 - The seed digest is the SHA-256 of the committed file bytes.
-- The DuckDB digest is a canonical dump of all tables, not the file bytes.
-- The Relate store digest is a canonical logical dump (`farmbot-relate-store-v2`) over all nodes and relationships (documented in `farmbot/docs/relate-store.md`). The archive bytes can differ between builds; judges should verify the logical store digest rather than assuming byte-identical tar.gz archives.
+- The DuckDB digest is a canonical dump of all tables, not the file bytes. The Change Log and service tables were already in the extract, so this digest is unchanged by the graph mapping.
+- The Relate store digest is a canonical logical dump (`farmbot-relate-store-v3`) over all nodes and relationships (documented in `farmbot/docs/relate-store.md`). The archive bytes can differ between builds; judges should verify the logical store digest rather than assuming byte-identical tar.gz archives.
 
 ### GitHub Release assets
 
@@ -140,6 +141,8 @@ Target commit: `6aa2bc5cd595d23bf1d742d64b5963ae7b45da6b`
 | `farmbot.duckdb` | 5517312 bytes | DuckDB canonical extract database |
 | `farmbot.release.json` | 801 bytes | Release manifest |
 | `SHA256SUMS` | 262 bytes | Checksums of release assets |
+
+The next release tag is `farmbot-data-v2`. It uses the same four asset names and carries the seed, DuckDB and store digests above. CI builds and verifies it as the `farmbot-release-assets-v2` artifact; creating the GitHub Release is a maintainer step. Once `farmbot-data-v2` exists it replaces `farmbot-data-v1`; until then v1 stays published. The `/farmbot/` screen never fetches release assets — it reads the committed seed and manifest — so it keeps working regardless of which release tag is current.
 
 ### Third-party provenance and licenses
 
@@ -229,7 +232,7 @@ Drives headless Playwright Chromium to verify `/farmbot/`:
 1. Question chips are visible and Ontographia is ready before first Run.
 2. First paint requests neither Relate WASM asset nor lazy Relate chunk.
 3. The page displays the committed seed digest, matching the SHA-256 of `/farmbot/farmbot.seed.json`.
-4. All five preset questions execute with default selectors and match `farmbot/oracle/default-results.gold.json` row-for-row (12 / 2 / 7 / 24 / 17 rows).
+4. All five preset questions execute with default selectors and match `farmbot/oracle/default-results.gold.json` row-for-row (12 / 2 / 7 / 24 / 18 rows).
 5. Relate WASM is requested same-origin on the first successful Run.
 6. The notification panel's finding count, ids and per-severity counts equal `farmbot/dist/farmbot.findings.json`, and the digest line reports a match.
 7. `/farmbot/#finding=<id>` opens that finding with its summary, evidence rows and per-row Intent/Cypher/parameters; a well-formed but unknown id opens nothing and shows no error.
@@ -248,10 +251,10 @@ Artifact sizes (raw / `gzip -9 -n` bytes):
 | `dist/assets/ontographia_wasm-BOJRSUvY.wasm` | 512627 | 173885 |
 | `dist/assets/relate_bg-9Q1Zsp67.wasm` | 6932319 | 2424791 |
 | `dist/assets/relate-loader-C129q4jF.js` | 12367 | 4579 |
-| `dist/assets/farmbot-B-U5mcmi.js` | 84626 | 22715 |
-| `dist/farmbot/farmbot.seed.json` | 364867 | 18135 |
+| `dist/assets/farmbot-r6Jv9-bp.js` | 100944 | 27863 |
+| `dist/farmbot/farmbot.seed.json` | 395675 | 21459 |
 
-The `farmbot-B-U5mcmi.js` row was re-measured on 2026-11-15 with the same tooling after the check panel was added; the other rows are unchanged from the 2026-11-13 build.
+The `farmbot` chunk and the seed rows were re-measured on 2026-11-15 with the same tooling after the DesignChange/ServiceProcedure graph and the evidence keyboard controls were added; the other rows are unchanged from the 2026-11-13 build.
 
 Timings from that local run:
 
@@ -304,14 +307,14 @@ console.log(db.connect().query('MATCH (n) RETURN count(n) AS nodes').rows[0]);
 
 ### Maintainer: publishing the release
 
-CI uploads the `farmbot-release-assets` artifact; it never creates a release. After a merge, download the artifact, verify it, and attach the files:
+CI uploads the `farmbot-release-assets-v2` artifact; it never creates a release. After a merge, download the artifact, verify it, and attach the files:
 
-Release `farmbot-data-v1` already exists and targets `6aa2bc5cd595d23bf1d742d64b5963ae7b45da6b`. CI still uploads a `farmbot-release-assets` artifact after later merges; it never creates or updates the Release. To publish a new tag later:
+Release `farmbot-data-v1` already exists and targets `6aa2bc5cd595d23bf1d742d64b5963ae7b45da6b`. CI uploads a `farmbot-release-assets-v2` artifact after later merges; it never creates or updates the Release. The next tag is `farmbot-data-v2`, which replaces v1 once the maintainer creates it. To publish it:
 
 ```bash
-gh run download <run-id> -n farmbot-release-assets -D release-assets
+gh run download <run-id> -n farmbot-release-assets-v2 -D release-assets
 npm run release:verify -- release-assets
-gh release create <tag> release-assets/* --target <merge-commit-sha> --title "..." --notes "..."
+gh release create farmbot-data-v2 release-assets/* --target <merge-commit-sha> --title "FarmBot data v2" --notes "..."
 ```
 
 ## Deploy

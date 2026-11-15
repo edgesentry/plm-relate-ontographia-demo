@@ -64,7 +64,7 @@ after the checkpoint and fails if the JSON layout is not there.
 
 | Path | Size | Role |
 | --- | ---: | --- |
-| `graph.json` | 222122 bytes | The graph: `value_encoding`, `nodes`, `relationships`. |
+| `graph.json` | 242364 bytes | The graph: `value_encoding`, `nodes`, `relationships`. |
 | `manifest.json` | 122 bytes | Engine metadata; `"codec": "json"`, checkpoint LSN and commit timestamp. |
 | `wal/00000002.log` | 8 bytes | Write-ahead log segment left after the checkpoint. |
 | `.cypherlite/schema/schema.cypher` | 0 bytes | Schema text; empty for this store. |
@@ -83,10 +83,10 @@ read-only, reads every node and every relationship through Cypher, and
 serializes them canonically. Engine-internal numeric ids and element ids are
 never used: a relationship records the `id` property of its two nodes.
 
-The format id is `farmbot-relate-store-v2`. The serialized text is:
+The format id is `farmbot-relate-store-v3`. The serialized text is:
 
 ```text
-farmbot-relate-store-v2
+farmbot-relate-store-v3
 {"kind":"node","labels":[...],"properties":{"<key>":{"type":"...","value":...},...}}
 ...
 {"from":"...","kind":"relationship","properties":{...},"to":"...","type":"..."}
@@ -115,9 +115,11 @@ farmbot-relate-store-v2
   and `0.0` encode the same; the seed has no such value.
 
 The digest is SHA-256 over the UTF-8 bytes of the serialized text, printed as
-`farmbot-relate-store-v2 sha256:<hex>`. The seed used here has 604 nodes and
-1022 relationships, and its digest is the `relateStore.sha256` value in
-`farmbot/dist/farmbot.release.json`.
+`farmbot-relate-store-v3 sha256:<hex>`. The seed used here has 656 nodes and
+1087 relationships, and its digest is the `relateStore.sha256` value in
+`farmbot/dist/farmbot.release.json`. Version 3 is version 2 plus the
+`DesignChange` and `ServiceProcedure` classes and the `AFFECTS_PART`
+relationship; the dump format itself is unchanged.
 
 ## Reading a store read-only
 

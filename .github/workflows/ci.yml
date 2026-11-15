@@ -76,7 +76,7 @@ jobs:
       - run: npm run release:verify -- release-assets
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: farmbot-release-assets
+          name: farmbot-release-assets-v2
           path: release-assets/
           if-no-files-found: error
           retention-days: 90

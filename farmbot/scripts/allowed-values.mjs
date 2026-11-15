@@ -84,6 +84,10 @@ export async function readAllowedValues(extractPath) {
         "SELECT DISTINCT resolved_part AS name FROM preassembly_reference " +
           "WHERE resolved_part IS NOT NULL AND section IS DISTINCT FROM 'Accessory bag BOM'",
       );
+      const serviceRows = await read(
+        'SELECT DISTINCT resolved_part AS name FROM service_reference ' +
+          'WHERE resolved_part IS NOT NULL',
+      );
       const kitRows = await read(
         'SELECT DISTINCT item.resolved_part AS name ' +
           'FROM packing_item AS item ' +
@@ -110,6 +114,7 @@ export async function readAllowedValues(extractPath) {
       const inAllThree = inAssembly.filter(
         (name) => preassemblySet.has(name) && kitSet.has(name),
       );
+      const inService = sortedUnique(serviceRows.map((row) => row.name));
 
       return {
         format: ALLOWED_VALUES_FORMAT,
@@ -120,6 +125,7 @@ export async function readAllowedValues(extractPath) {
         part_names_in_assembly_chapters: inAssembly,
         part_names_in_kits: inKits,
         part_names_in_preassemblies: inPreassembly,
+        part_names_in_service_procedures: inService,
         unmatched_statuses: sortedUnique(statusRows.map((row) => row.status)),
       };
     } finally {
@@ -196,7 +202,8 @@ async function main() {
     `parts ${result.values.part_names.length}, ` +
       `categories ${result.values.category_slugs.length}, ` +
       `statuses ${result.values.unmatched_statuses.length}, ` +
-      `all-structure-kind parts ${result.values.part_names_in_all_three_structure_kinds.length}\n`,
+      `all-structure-kind parts ${result.values.part_names_in_all_three_structure_kinds.length}, ` +
+      `service parts ${result.values.part_names_in_service_procedures.length}\n`,
   );
 }
 

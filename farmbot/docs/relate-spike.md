@@ -16,8 +16,8 @@ Every node and edge count in this document (601 nodes, 1017 relationships)
 belongs to the probe seed only.
 
 The official generator `farmbot/scripts/graph.mjs` and the committed seed
-`farmbot/dist/farmbot.seed.json` hold **604 nodes and 1022 edges**, with digest
-`farmbot-graph-v1 sha256:db6503e0c17d024d610736b0996c98a2872b495936d4f84230747db603f36fb1`.
+`farmbot/dist/farmbot.seed.json` hold **656 nodes and 1087 edges**, with digest
+`farmbot-graph-v1 sha256:5e0a2e2b65bf89ce61a1dbc217c7df2bcf09f61b527bf4626348892a52b15cd3`.
 Read those figures, not the probe figures, when reasoning about the shipped
 graph.
 

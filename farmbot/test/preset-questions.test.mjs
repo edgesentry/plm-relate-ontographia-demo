@@ -12,6 +12,7 @@ import initRelate, { RelateDb } from '@relate/relate-wasm';
 import { loadOntology } from '../scripts/graph.mjs';
 import { generate as generateAllowedValues } from '../scripts/allowed-values.mjs';
 import { insertDistinctReturn } from '../../src/farmbot/distinct-return.mjs';
+import { planQuestion } from '../../src/farmbot/plan.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -34,8 +35,7 @@ const RELATE_WASM = resolve(
   ROOT,
   'node_modules/@relate/relate-wasm/relate_bg.wasm',
 );
-const SEED_DIGEST =
-  'farmbot-graph-v1 sha256:db6503e0c17d024d610736b0996c98a2872b495936d4f84230747db603f36fb1';
+const SEED_DIGEST = readFileSync(COMMITTED_SEED_DIGEST, 'utf8').trim();
 
 const QUESTION_FILES = [
   'q1-packing-differences.json',
@@ -248,8 +248,8 @@ async function runQuestion(file) {
 }
 
 test('the committed seed is the official graph with its pinned digest', () => {
-  assert.equal(seed.nodes.length, 604);
-  assert.equal(seed.edges.length, 1022);
+  assert.ok(seed.nodes.length > 0, 'the committed seed has no node');
+  assert.ok(seed.edges.length > 0, 'the committed seed has no edge');
   const digest = createHash('sha256').update(seedBytes).digest('hex');
   assert.equal(
     readFileSync(COMMITTED_SEED_DIGEST, 'utf8'),
@@ -259,10 +259,10 @@ test('the committed seed is the official graph with its pinned digest', () => {
 
   const nodeCount = runWire(db, 'MATCH (n) RETURN count(n) AS nodes', null);
   assert.equal(nodeCount.error, null);
-  assert.equal(nodeCount.rows[0].nodes, 604);
+  assert.equal(nodeCount.rows[0].nodes, seed.nodes.length);
   const edgeCount = runWire(db, 'MATCH ()-[r]->() RETURN count(r) AS edges', null);
   assert.equal(edgeCount.error, null);
-  assert.equal(edgeCount.rows[0].edges, 1022);
+  assert.equal(edgeCount.rows[0].edges, seed.edges.length);
 });
 
 test('no shipped Intent traverses a relationship backwards', () => {
@@ -338,8 +338,9 @@ test('the allowed-values file regenerates byte for byte and covers every paramet
 });
 
 test('Q1 compares every packing difference with the oracle', async () => {
-  const { rows } = await runQuestion('q1-packing-differences.json');
-  assert.equal(rows.length, 12);
+  const file = 'q1-packing-differences.json';
+  const { rows } = await runQuestion(file);
+  assert.equal(rows.length, (await oracleRows(file)).length);
 
   // Companion check for the columns the Intent cannot project: every
   // difference row belongs to a kit and carries a product version.
@@ -384,10 +385,10 @@ test('Q2 returns unique assembly chapters and adds DISTINCT after compilation', 
     'executed statement needs RETURN DISTINCT',
   );
   assert.equal(new Set(multiset(rows)).size, rows.length);
-  assert.equal(rows.length, 2);
+  assert.equal(rows.length, (await oracleRows(file)).length);
 });
 
-test('Q3 returns unique structures and reaches a chapter, a pre-assembly and a kit', async () => {
+test('Q3 returns unique structures and reaches every structure kind the part has', async () => {
   const file = 'q3-structures-for-part.json';
   const { query, executed, rows } = await runQuestion(file);
   assert.equal(
@@ -400,10 +401,12 @@ test('Q3 returns unique structures and reaches a chapter, a pre-assembly and a k
     'executed statement needs RETURN DISTINCT',
   );
   assert.equal(new Set(multiset(rows)).size, rows.length);
-  assert.equal(rows.length, 7);
+  assert.equal(rows.length, (await oracleRows(file)).length);
 
   // The Intent projects a structure path, not a class. Map each returned path
-  // back to the seed labels to prove all three structure kinds are reached.
+  // back to the seed labels and assert every structure kind the oracle says the
+  // part reaches is reached, including ServiceProcedure when it has a service
+  // reference.
   const labelsByPath = new Map();
   for (const node of seed.nodes) {
     if (!node.labels.includes('Structure')) continue;
@@ -411,26 +414,61 @@ test('Q3 returns unique structures and reaches a chapter, a pre-assembly and a k
     if (!labelsByPath.has(path)) labelsByPath.set(path, new Set());
     labelsByPath.get(path).add(node.labels[0]);
   }
+  const expectedKinds = new Set();
+  for (const row of await oracleRows(file)) {
+    const labels = labelsByPath.get(row.structure);
+    assert.ok(labels, `no Structure node has path ${row.structure}`);
+    for (const label of labels) expectedKinds.add(label);
+  }
   const reached = new Set();
   for (const row of rows) {
     const labels = labelsByPath.get(row.structure);
     assert.ok(labels, `no Structure node has path ${row.structure}`);
     for (const label of labels) reached.add(label);
   }
+  for (const label of expectedKinds) {
+    assert.ok(reached.has(label), `Q3 reached no ${label}`);
+  }
   assert.ok(reached.has('AssemblyChapter'), 'Q3 reached no assembly chapter');
   assert.ok(reached.has('PreAssembly'), 'Q3 reached no pre-assembly');
   assert.ok(reached.has('Kit'), 'Q3 reached no kit');
+
+  // A part with a service reference: the same Q3 Intent must now return the
+  // ServiceProcedure page, matching the oracle.
+  const servicePart = allowedValues.part_names_in_service_procedures[0];
+  assert.ok(servicePart, 'the allowed values have no service part');
+  const serviceIntent = structuredClone(intents.get(file));
+  serviceIntent.filter[0].value = servicePart;
+  const servicePlan = planQuestion(engine, ontologyText, serviceIntent, true);
+  const serviceResult = runWire(db, servicePlan.executed, servicePlan.params);
+  assert.equal(serviceResult.error, null, serviceResult.error);
+  const serviceOracle = toJs(
+    (
+      await extractConnection.runAndReadAll(oracleSql(file), { part_name: servicePart })
+    ).getRowObjectsJS(),
+  );
+  assert.deepEqual(multiset(serviceResult.rows), multiset(serviceOracle));
+  const reachedService = serviceResult.rows.some((row) =>
+    (labelsByPath.get(row.structure) ?? new Set()).has('ServiceProcedure'),
+  );
+  assert.ok(reachedService, `Q3 did not reach a service procedure for ${servicePart}`);
 });
 
 test('Q4 compares every kit part in the category with the oracle', async () => {
-  const { rows } = await runQuestion('q4-kit-parts-for-category.json');
-  assert.equal(rows.length, 24);
+  const file = 'q4-kit-parts-for-category.json';
+  const { rows } = await runQuestion(file);
+  assert.equal(rows.length, (await oracleRows(file)).length);
 });
 
 test('Q5 compares every unmatched reference with the oracle', async () => {
-  const { rows } = await runQuestion('q5-unmatched-references.json');
-  assert.equal(rows.length, 17);
-  assert.equal(new Set(rows.map((row) => row.display_name)).size, 13);
+  const file = 'q5-unmatched-references.json';
+  const { rows } = await runQuestion(file);
+  const expected = await oracleRows(file);
+  assert.equal(rows.length, expected.length);
+  assert.equal(
+    new Set(rows.map((row) => row.display_name)).size,
+    new Set(expected.map((row) => row.display_name)).size,
+  );
 });
 
 test('the committed default-result gold matches Relate and the SQL oracle', async () => {

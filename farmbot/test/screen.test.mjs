@@ -42,6 +42,9 @@ const RELATE_WASM = resolve(ROOT, 'node_modules/@relate/relate-wasm/relate_bg.wa
 const seedBytes = readFileSync(COMMITTED_SEED);
 const seed = JSON.parse(seedBytes.toString('utf8'));
 const allowedValues = JSON.parse(readFileSync(COMMITTED_ALLOWED_VALUES, 'utf8'));
+const gold = JSON.parse(
+  readFileSync(resolve(ROOT, 'farmbot/oracle/default-results.gold.json'), 'utf8'),
+);
 const ontologyText = readFileSync(ONTOLOGY_PATH, 'utf8');
 const intentByFile = new Map(
   QUESTIONS.map((question) => [
@@ -120,10 +123,10 @@ test('the shared seed loader fills in-memory Relate with the committed graph', (
 
   const nodes = runWire('MATCH (n) RETURN count(n) AS nodes', null);
   assert.equal(nodes.error, null);
-  assert.equal(nodes.rows[0].nodes, 604);
+  assert.equal(nodes.rows[0].nodes, seed.nodes.length);
   const edges = runWire('MATCH ()-[r]->() RETURN count(r) AS edges', null);
   assert.equal(edges.error, null);
-  assert.equal(edges.rows[0].edges, 1022);
+  assert.equal(edges.rows[0].edges, seed.edges.length);
 });
 
 test('every question defaults to its committed filter value inside its selector domain', () => {
@@ -160,8 +163,10 @@ test('every question defaults to its committed filter value inside its selector 
   }
 });
 
-test('the five preset questions return the oracle row counts through the screen path', () => {
-  const expected = { q1: 12, q2: 2, q3: 7, q4: 24, q5: 17 };
+test('the five preset questions return the gold row counts through the screen path', () => {
+  const expected = Object.fromEntries(
+    gold.questions.map((entry) => [entry.id, entry.rowCount]),
+  );
   for (const question of QUESTIONS) {
     const intent = intentByFile.get(question.intentFile);
     const plan = planQuestion(engine, ontologyText, intent, question.distinct);

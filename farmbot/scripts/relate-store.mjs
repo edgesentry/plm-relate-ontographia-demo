@@ -33,7 +33,7 @@ import { SEED_SHA256_HEX } from '../../src/farmbot/seed-digest.mjs';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 export const FARMBOT_DIR = resolve(SCRIPT_DIR, '..');
 
-export const STORE_FORMAT = 'farmbot-relate-store-v2';
+export const STORE_FORMAT = 'farmbot-relate-store-v3';
 export const STORE_DIR_NAME = 'farmbot.relate-store';
 export const STORE_ARCHIVE_NAME = 'farmbot-relate-store.tar.gz';
 export const MANIFEST_NAME = 'farmbot.release.json';

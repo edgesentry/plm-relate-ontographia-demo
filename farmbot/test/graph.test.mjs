@@ -16,12 +16,14 @@ import {
   buildFullGraph,
   digestBytes,
   loadOntology,
+  PRODUCT_VARIANTS,
   readExtract,
   scopeGraphToPart,
   serializeSeed,
   sidecarText,
   validateSeed,
 } from '../scripts/graph.mjs';
+import { CHANGE_LOG_PATH } from '../scripts/lib/change-log.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -112,20 +114,305 @@ test('two runs produce byte-identical seeds and digests', () => {
   assert.equal(digestOne, sidecarText(seedOne));
 });
 
-test('the full graph has the acceptance counts', () => {
+test('the full graph has the counts the extract implies', () => {
   const counts = countByPrimaryLabel(fullSeed);
-  assert.equal(counts.get('Part'), 149);
-  assert.equal(counts.get('Usage'), 160 + 54 + 65);
+  assert.equal(counts.get('Part'), tables.part.length);
+  assert.equal(counts.get('PartVariant'), tables.part_variant.length);
+  assert.equal(counts.get('BomCategory'), tables.bom_category.length);
+  assert.equal(counts.get('AssemblyChapter'), tables.assembly_page.length);
+  assert.equal(counts.get('PreAssembly'), tables.preassembly_page.length);
+  assert.equal(counts.get('ServiceProcedure'), tables.service_page.length);
+  assert.equal(counts.get('DesignChange'), tables.change_note.length);
+  assert.equal(
+    counts.get('Usage'),
+    tables.assembly_reference.length +
+      tables.preassembly_reference.length +
+      tables.packing_item.length +
+      tables.service_reference.length,
+  );
   assert.equal(
     fullSeed.nodes.filter((node) => node.labels.includes('QuantityDifference')).length,
-    12,
+    tables.quantity_difference.length,
   );
-  assert.equal(counts.get('UnmatchedName'), 13);
-  assert.equal(counts.get('ProductVariant'), 2);
-  assert.equal(counts.get('PartVariant'), 44);
-  assert.equal(counts.get('BomCategory'), 8);
-  assert.equal(counts.get('AssemblyChapter'), 9);
-  assert.equal(counts.get('PreAssembly'), 12);
+  assert.equal(counts.get('ProductVariant'), PRODUCT_VARIANTS.length);
+});
+
+function edgeSet(seed, type) {
+  return new Set(
+    seed.edges
+      .filter((edge) => edge.type === type)
+      .map((edge) => `${edge.from}\u0000${edge.to}`),
+  );
+}
+
+test('DesignChange and service Usage counts equal the extract rows', () => {
+  const usageById = new Map(
+    fullSeed.nodes
+      .filter((node) => node.labels[0] === 'Usage')
+      .map((node) => [node.id, node]),
+  );
+  const serviceUsage = [...usageById.values()].filter(
+    (node) => node.properties.source_kind === 'service',
+  );
+  assert.equal(serviceUsage.length, tables.service_reference.length);
+  assert.equal(
+    serviceUsage.filter((node) =>
+      fullSeed.edges.some(
+        (edge) => edge.type === 'USES_ITEM' && edge.from === node.id,
+      ),
+    ).length,
+    tables.service_reference.filter((row) => row.resolved_part).length,
+  );
+
+  const affected = edgeSet(fullSeed, 'AFFECTS_PART');
+  const expectedAffected = new Set();
+  for (const link of tables.change_note_link) {
+    if (!link.resolved_part) continue;
+    expectedAffected.add(
+      `designchange:${CHANGE_LOG_PATH}#${link.section}@${link.bullet}\u0000part:${link.resolved_part}`,
+    );
+  }
+  assert.equal(affected.size, expectedAffected.size);
+  assert.deepEqual([...affected].sort(), [...expectedAffected].sort());
+
+  const changeNodes = fullSeed.nodes.filter(
+    (node) => node.labels[0] === 'DesignChange',
+  );
+  assert.equal(changeNodes.length, tables.change_note.length);
+  for (const node of changeNodes) {
+    assert.equal(node.properties.path, CHANGE_LOG_PATH);
+    assert.equal(typeof node.properties.line, 'number');
+  }
+});
+
+test('service UnmatchedName nodes equal the unresolved service display names', () => {
+  const serviceIds = new Set(
+    fullSeed.nodes
+      .filter((node) => node.labels[0] === 'ServiceProcedure')
+      .map((node) => node.id),
+  );
+  const seenInService = new Map();
+  for (const edge of fullSeed.edges) {
+    if (edge.type !== 'SEEN_IN' || !serviceIds.has(edge.to)) continue;
+    seenInService.set(edge.from, [...(seenInService.get(edge.from) ?? []), edge.to]);
+  }
+  const expectedNames = new Set(
+    tables.service_reference
+      .filter((row) => !row.resolved_part)
+      .map((row) => row.display_name),
+  );
+  assert.equal(seenInService.size, expectedNames.size);
+  for (const nodeId of seenInService.keys()) {
+    const node = fullSeed.nodes.find((candidate) => candidate.id === nodeId);
+    assert.ok(node, `${nodeId} is not a node`);
+    assert.ok(node.labels.includes('UnmatchedName'), `${nodeId} is not an UnmatchedName`);
+    assert.ok(expectedNames.has(node.properties.display_name));
+  }
+});
+
+test('an unresolved service name merges into an existing UnmatchedName', () => {
+  const unresolvedServiceNames = new Set(
+    tables.service_reference
+      .filter((row) => !row.resolved_part)
+      .map((row) => row.display_name),
+  );
+  const target = [...tables.unmatched_name]
+    .sort((left, right) =>
+      left.display_name < right.display_name
+        ? -1
+        : left.display_name > right.display_name
+          ? 1
+          : 0,
+    )
+    .find((row) => !unresolvedServiceNames.has(row.display_name));
+  assert.ok(target, 'the extract has no unmatched name without a service collision');
+
+  const splitList = (value) =>
+    value
+      ? value
+          .split(', ')
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
+
+  const existingCandidates = new Set(splitList(target.candidates));
+  const candidatePart = [...tables.part]
+    .map((part) => part.name)
+    .sort()
+    .find((name) => !existingCandidates.has(name));
+  assert.ok(candidatePart, 'every part is already a candidate');
+
+  const servicePage = [...tables.service_page]
+    .map((page) => page.path)
+    .sort()[0];
+  assert.ok(servicePage, 'the extract has no service page');
+
+  const injected = [
+    {
+      page_path: servicePage,
+      line_number: 9001,
+      occurrence: 0,
+      display_name: target.display_name,
+      normalized_name: target.normalized_name,
+      resolved_part: null,
+      match_method: 'unmatched',
+      candidates: null,
+    },
+    {
+      page_path: servicePage,
+      line_number: 9002,
+      occurrence: 1,
+      display_name: target.display_name,
+      normalized_name: target.normalized_name,
+      resolved_part: null,
+      match_method: 'ambiguous',
+      candidates: candidatePart,
+    },
+  ];
+  const fixture = {
+    ...tables,
+    service_reference: [...tables.service_reference, ...injected],
+  };
+  const seed = buildFullGraph(fixture, ontology);
+  const id = `unmatched:${target.display_name}`;
+
+  const matchingServiceRows = fixture.service_reference.filter(
+    (row) => !row.resolved_part && row.display_name === target.display_name,
+  );
+  const nodesWithId = seed.nodes.filter((node) => node.id === id);
+  assert.equal(nodesWithId.length, 1, `${id} is not exactly one node`);
+  const node = nodesWithId[0];
+  assert.ok(node.labels.includes('UnmatchedName'));
+
+  assert.equal(
+    node.properties.reference_count,
+    target.reference_count + matchingServiceRows.length,
+  );
+  const expectedKinds = [
+    ...new Set([...splitList(target.source_kinds), 'service']),
+  ].sort();
+  assert.equal(node.properties.source_kinds, expectedKinds.join(', '));
+  assert.equal(
+    node.properties.status,
+    target.status === 'ambiguous' ||
+      matchingServiceRows.some((row) => row.match_method === 'ambiguous')
+      ? 'ambiguous'
+      : 'unmatched',
+  );
+
+  const expectedPages = new Set([
+    ...splitList(target.source_pages),
+    ...matchingServiceRows.map((row) => row.page_path),
+  ]);
+  const structureIdByPath = new Map();
+  for (const candidate of seed.nodes) {
+    if (!candidate.labels.includes('Structure')) continue;
+    if (candidate.properties.path === undefined) continue;
+    structureIdByPath.set(candidate.properties.path, candidate.id);
+  }
+  const expectedSeenIn = [...expectedPages].map((page) => {
+    const structure = structureIdByPath.get(page);
+    assert.ok(structure, `page ${page} is not a Structure in the fixture`);
+    return structure;
+  });
+  const seenIn = seed.edges
+    .filter((edge) => edge.type === 'SEEN_IN' && edge.from === id)
+    .map((edge) => edge.to)
+    .sort();
+  assert.deepEqual(seenIn, expectedSeenIn.sort());
+
+  const expectedCandidates = new Set([
+    ...splitList(target.candidates),
+    ...matchingServiceRows.flatMap((row) => splitList(row.candidates)),
+  ]);
+  const candidateEdges = seed.edges
+    .filter((edge) => edge.type === 'CANDIDATE' && edge.from === id)
+    .map((edge) => edge.to)
+    .sort();
+  assert.deepEqual(
+    candidateEdges,
+    [...expectedCandidates].map((name) => `part:${name}`).sort(),
+  );
+
+  const nodeIds = new Set();
+  for (const candidate of seed.nodes) {
+    assert.ok(!nodeIds.has(candidate.id), `duplicate node id ${candidate.id}`);
+    nodeIds.add(candidate.id);
+  }
+  const edgeKeys = new Set();
+  for (const edge of seed.edges) {
+    const key = `${edge.type}\u0000${edge.from}\u0000${edge.to}`;
+    assert.ok(!edgeKeys.has(key), `duplicate edge ${key}`);
+    edgeKeys.add(key);
+  }
+
+  const reversed = Object.fromEntries(
+    Object.entries(fixture).map(([name, rows]) => [name, [...rows].reverse()]),
+  );
+  const shuffled = Object.fromEntries(
+    Object.entries(fixture).map(([name, rows]) => [
+      name,
+      seededShuffle(rows, 20261116),
+    ]),
+  );
+  const canonical = serializeSeed(seed);
+  for (const [label, candidate] of [
+    ['reversed', reversed],
+    ['shuffled', shuffled],
+  ]) {
+    const candidateSeed = buildFullGraph(candidate, ontology);
+    assert.ok(
+      serializeSeed(candidateSeed).equals(canonical),
+      `${label} input changed the seed bytes`,
+    );
+    assert.deepEqual(
+      candidateSeed.nodes.find((candidateNode) => candidateNode.id === id),
+      node,
+    );
+  }
+});
+
+// A deterministic shuffle (32-bit LCG seeded with a fixed value).
+function seededShuffle(items, seedValue) {
+  let seed = seedValue;
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+test('the graph builder ignores input row order and emits no duplicate node or edge', () => {
+  const shuffled = Object.fromEntries(
+    Object.entries(tables).map(([name, rows]) => [
+      name,
+      seededShuffle(rows, 20261115),
+    ]),
+  );
+  const shuffledSeed = buildFullGraph(shuffled, ontology);
+  const canonical = serializeSeed(fullSeed);
+  assert.ok(
+    serializeSeed(shuffledSeed).equals(canonical),
+    'a reshuffled extract must produce the same seed bytes',
+  );
+  assert.equal(digestBytes(serializeSeed(shuffledSeed)), digestBytes(canonical));
+
+  const nodeIds = new Set();
+  for (const node of fullSeed.nodes) {
+    assert.ok(!nodeIds.has(node.id), `duplicate node id ${node.id}`);
+    nodeIds.add(node.id);
+  }
+  const edgeKeys = new Set();
+  for (const edge of fullSeed.edges) {
+    const key = `${edge.type}\u0000${edge.from}\u0000${edge.to}`;
+    assert.ok(!edgeKeys.has(key), `duplicate edge ${key}`);
+    edgeKeys.add(key);
+  }
 });
 
 test('every label and relationship type is declared and every ancestor label is present', () => {

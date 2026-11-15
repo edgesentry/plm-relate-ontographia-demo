@@ -13,6 +13,13 @@ export const SERVICE_KINDS = [
 
 const FENCE = /^\s*```/;
 
+// Plain code-unit comparison, so the row order does not depend on the host
+// locale.
+function compareText(left, right) {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
 export function serviceKindForPath(path) {
   for (const entry of SERVICE_KINDS) {
     if (path.startsWith(entry.prefix)) return entry.kind;
@@ -78,11 +85,14 @@ export function extractServicePages(pages, { index, parts }) {
     references.push(...links);
   }
 
-  pageRows.sort((left, right) => left.path.localeCompare(right.path));
+  pageRows.sort((left, right) => compareText(left.path, right.path));
+  // Follows the documented uniqueness key (page path, line, display name,
+  // occurrence), so the order is total.
   references.sort(
     (left, right) =>
-      left.pagePath.localeCompare(right.pagePath) ||
+      compareText(left.pagePath, right.pagePath) ||
       left.lineNumber - right.lineNumber ||
+      compareText(left.displayName, right.displayName) ||
       left.occurrence - right.occurrence,
   );
 

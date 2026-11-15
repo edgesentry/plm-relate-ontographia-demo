@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { after, before, test } from 'node:test';
 import { DuckDBInstance } from '@duckdb/node-api';
 
-import { canonicalDigest, tableDigests } from '../scripts/extract.mjs';
+import { canonicalDigest, readChangeLog, tableDigests } from '../scripts/extract.mjs';
 import { parseFrontmatter } from '../scripts/lib/frontmatter.mjs';
 import { buildPartIndex, resolveName } from '../scripts/lib/normalize.mjs';
 import { extractServicePages } from '../scripts/lib/service-pages.mjs';
@@ -154,7 +154,12 @@ test('schema version is 2 and the new counts are recorded', async () => {
     "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main' ORDER BY table_name",
   );
   const names = tables.map((row) => row.table_name);
-  for (const table of ['change_note', 'service_page', 'service_reference']) {
+  for (const table of [
+    'change_note',
+    'change_note_link',
+    'service_page',
+    'service_reference',
+  ]) {
     assert.ok(names.includes(table), `${table} is missing`);
   }
 
@@ -162,46 +167,67 @@ test('schema version is 2 and the new counts are recorded', async () => {
   const [{ n: changeLinks }] = await query('SELECT count(*) AS n FROM change_note_link');
   const [{ n: servicePages }] = await query('SELECT count(*) AS n FROM service_page');
   const [{ n: serviceLinks }] = await query('SELECT count(*) AS n FROM service_reference');
+  const [{ n: resolvedServiceLinks }] = await query(
+    'SELECT count(*) AS n FROM service_reference WHERE resolved_part IS NOT NULL',
+  );
   assert.equal(metadata.change_note_count, String(changeNotes));
   assert.equal(metadata.change_link_count, String(changeLinks));
   assert.equal(metadata.service_page_count, String(servicePages));
   assert.equal(metadata.service_reference_count, String(serviceLinks));
+  assert.equal(metadata.service_reference_resolved_count, String(resolvedServiceLinks));
   assert.equal(metadata.change_link_resolved_count, String(changeLinks));
 });
 
 // The oracle's unit scan: for each `#` section, split the body into text units
 // independently of the extract's parser. A unit is one list item or one
 // paragraph; image-only lines and blank lines end a unit and are not units.
+// Each unit records its 1-based first and last source line.
 function scanUnits(body) {
   const units = [];
   let section = null;
   let block = [];
+  let startLine = 0;
+  let endLine = 0;
   const flush = () => {
     if (block.length > 0) {
-      units.push({ section, text: block.join('\n').trim() });
+      units.push({ section, text: block.join('\n').trim(), startLine, endLine });
       block = [];
     }
   };
-  for (const line of body.split(/\r?\n/)) {
+  body.split(/\r?\n/).forEach((line, index) => {
+    const lineNumber = index + 1;
     const heading = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
     if (heading) {
       flush();
       section = heading[2].replace(/\s*#+\s*$/, '').trim();
-      continue;
+      return;
     }
     if (!line.trim() || /^\s*!\[[^\]]*\]\([^)]*\)\s*$/.test(line)) {
       flush();
-      continue;
+      return;
     }
     if (/^\s*(?:[-*+]|\d+\.)\s+/.test(line)) {
       flush();
       block = [line];
-      continue;
+      startLine = lineNumber;
+      endLine = lineNumber;
+      return;
     }
+    if (block.length === 0) startLine = lineNumber;
     block.push(line);
-  }
+    endLine = lineNumber;
+  });
   flush();
   return units;
+}
+
+// The resolution status a unit should have, from its link and resolution
+// counts alone.
+function scanResolution(linkCount, resolvedCount) {
+  if (linkCount === 0) return 'no_links';
+  if (resolvedCount === linkCount) return 'all_resolved';
+  if (resolvedCount === 0) return 'none_resolved';
+  return 'partially_resolved';
 }
 
 test('the change-log rows match an independent scan of the source', async () => {
@@ -233,7 +259,10 @@ test('the change-log rows match an independent scan of the source', async () => 
     assert.equal(row.resolved_part, resolved, `resolution for ${link.name}`);
   }
 
-  const notes = await query('SELECT section, bullet, text, line_number FROM change_note');
+  const notes = await query(
+    'SELECT section, bullet, text, line_number, linked_names, link_count, resolution ' +
+      'FROM change_note ORDER BY section, bullet',
+  );
   assert.deepEqual(
     [...new Set(notes.map((note) => note.section))].sort(),
     [...new Set(headings)].sort(),
@@ -241,8 +270,40 @@ test('the change-log rows match an independent scan of the source', async () => 
   );
   assert.equal(notes.length, units.length, 'one row per text unit');
 
-  const keys = notes.map((note) => `${note.section}\u0000${note.bullet}`);
-  assert.equal(new Set(keys).size, keys.length, 'change_note is unique by (section, bullet)');
+  const rowsByKey = new Map(
+    notes.map((note) => [`${note.section}\u0000${note.bullet}`, note]),
+  );
+  assert.equal(rowsByKey.size, notes.length, 'change_note is unique by (section, bullet)');
+
+  // Compare each scanned unit with its extract row. `bullet` is the 0-based
+  // unit index within the section, in document order.
+  const nextBullet = new Map();
+  for (const unit of units) {
+    const bullet = nextBullet.get(unit.section) ?? 0;
+    nextBullet.set(unit.section, bullet + 1);
+    const where = `${unit.section} unit ${bullet}`;
+    const row = rowsByKey.get(`${unit.section}\u0000${bullet}`);
+    assert.ok(row, `${where} has no row`);
+    assert.equal(row.text, unit.text, `text of ${where}`);
+    assert.equal(row.line_number, unit.startLine, `line number of ${where}`);
+
+    const unitLinks = scanned.filter(
+      (link) => link.line >= unit.startLine && link.line <= unit.endLine,
+    );
+    const resolvedCount = unitLinks.filter((link) => resolveToPart(link.name)).length;
+    assert.equal(row.link_count, unitLinks.length, `link count of ${where}`);
+    assert.equal(
+      row.linked_names,
+      unitLinks.map((link) => link.name).join(', ') || null,
+      `linked names of ${where}`,
+    );
+    assert.equal(
+      row.resolution,
+      scanResolution(unitLinks.length, resolvedCount),
+      `resolution of ${where}`,
+    );
+  }
+
   for (const section of new Set(headings)) {
     const sectionNotes = notes.filter((note) => note.section === section);
     assert.ok(sectionNotes.length > 0, `section ${section} has no rows`);
@@ -264,6 +325,7 @@ test('the service rows match an independent scan of the source', async () => {
 
   const scanned = [];
   const pagesWithLinks = new Map();
+  const linksPerPage = new Map();
   let pageCount = 0;
   for (const root of SERVICE_ROOTS) {
     for (const file of markdownFiles(join(SOURCE, root.dir))) {
@@ -271,6 +333,7 @@ test('the service rows match an independent scan of the source', async () => {
       const page = readSourcePage(relPath);
       pageCount += 1;
       const links = scanLinks(page.body);
+      linksPerPage.set(relPath, links.length);
       if (links.length > 0) pagesWithLinks.set(relPath, root.kind);
       for (const link of links) {
         scanned.push({ page: relPath, line: link.line, name: link.name });
@@ -278,10 +341,12 @@ test('the service rows match an independent scan of the source', async () => {
     }
   }
 
-  const actualPages = await query('SELECT path, title, kind FROM service_page ORDER BY path');
+  const actualPages = await query(
+    'SELECT path, title, kind, reference_count FROM service_page ORDER BY path',
+  );
   const actualLinks = await query(
     'SELECT page_path, line_number, display_name, resolved_part FROM service_reference ' +
-      'ORDER BY page_path, line_number, occurrence',
+      'ORDER BY page_path, line_number, display_name, occurrence',
   );
 
   assert.equal(actualLinks.length, scanned.length, 'service link count');
@@ -300,6 +365,11 @@ test('the service rows match an independent scan of the source', async () => {
   for (const page of actualPages) {
     assert.equal(page.kind, pagesWithLinks.get(page.path), page.path);
     assert.ok(page.title, `${page.path} has no title`);
+    assert.equal(
+      page.reference_count,
+      linksPerPage.get(page.path),
+      `reference count for ${page.path}`,
+    );
   }
   const byKind = {};
   for (const page of actualPages) {
@@ -319,6 +389,12 @@ test('the service rows match an independent scan of the source', async () => {
     assert.equal(row.resolved_part, resolved, `resolution for ${link.name} on ${link.page}`);
   }
   assert.deepEqual([...unresolved].sort(), [...KNOWN_UNRESOLVED].sort());
+
+  const metadata = Object.fromEntries(
+    (await query('SELECT key, value FROM extract_metadata')).map((row) => [row.key, row.value]),
+  );
+  const scannedResolved = scanned.filter((link) => resolveToPart(link.name)).length;
+  assert.equal(metadata.service_reference_resolved_count, String(scannedResolved));
 
   console.log(
     `service pages: ${pageCount} pages scanned, ${actualPages.length} with links ` +
@@ -349,10 +425,24 @@ test('service links are unique by page, line, name and occurrence', async () => 
   }
 });
 
+// A deterministic shuffle (32-bit LCG seeded with a fixed value).
+function seededShuffle(items, seedValue) {
+  let seed = seedValue;
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 test('the page parse does not depend on input order', async () => {
   const partNames = (await query('SELECT name FROM part')).map((row) => row.name);
   const parts = partNames.map((name) => ({ name }));
-  const { buildPartIndex } = await import('../scripts/lib/normalize.mjs');
   const index = buildPartIndex(parts);
 
   const pages = SERVICE_ROOTS.flatMap((root) =>
@@ -364,17 +454,7 @@ test('the page parse does not depend on input order', async () => {
   assert.deepEqual(reversed.pages, forward.pages);
   assert.deepEqual(reversed.references, forward.references);
 
-  // A deterministic shuffle (32-bit LCG seeded with a fixed value).
-  let seed = 20261115;
-  const next = () => {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    return seed / 4294967296;
-  };
-  const shuffled = [...pages];
-  for (let i = shuffled.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(next() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
+  const shuffled = seededShuffle(pages, 20261115);
   assert.notDeepEqual(
     shuffled.map((page) => page.path),
     pages.map((page) => page.path),
@@ -383,6 +463,27 @@ test('the page parse does not depend on input order', async () => {
   const shuffledResult = extractServicePages(shuffled, { index, parts });
   assert.deepEqual(shuffledResult.pages, forward.pages);
   assert.deepEqual(shuffledResult.references, forward.references);
+
+  // The Change Log parse also takes a page list. Feed it the Change Log page
+  // alongside the service pages as decoys, in all three orders.
+  const changeLogPages = [readSourcePage(CHANGE_LOG), ...pages];
+  const changeLogForward = readChangeLog(changeLogPages, index, parts);
+  assert.ok(changeLogForward.notes.length > 0, 'the Change Log page must yield units');
+  const orders = [
+    changeLogPages,
+    [...changeLogPages].reverse(),
+    seededShuffle(changeLogPages, 20261115),
+  ];
+  assert.notDeepEqual(
+    orders[2].map((page) => page.path),
+    changeLogPages.map((page) => page.path),
+    'the shuffle must actually reorder the Change Log page list',
+  );
+  for (const ordered of orders) {
+    const parsed = readChangeLog(ordered, index, parts);
+    assert.deepEqual(parsed.notes, changeLogForward.notes);
+    assert.deepEqual(parsed.links, changeLogForward.links);
+  }
 });
 
 test('the existing tables keep their schema version 1 logical dumps', async () => {

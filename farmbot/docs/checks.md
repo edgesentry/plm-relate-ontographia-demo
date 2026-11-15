@@ -182,6 +182,8 @@ Opening a finding from the panel, or loading a deep link, shows:
 
 - a one-line summary from the per-rule template filled from `subject` and
   evidence `facts` / `sourceFile` (Japanese and English);
+- a process-lane diagram above the table, built from the same evidence rows
+  (see [Process lanes](#process-lanes));
 - one row per evidence entry: role, seed node id, source file and, when the
   row has one, the line number; the values from that node; and a collapsible
   list of the Intent, Cypher and bound parameters that produced the row;
@@ -197,6 +199,97 @@ HTML.
 Evidence rows are unique per finding by role, node id, source file and line.
 `evidenceRows` in `src/farmbot/findings-view.mjs` drops a repeated row and
 attaches the finding's queries, so a row never appears twice.
+
+## Process lanes
+
+The finding view draws one hand-built SVG diagram above the evidence table.
+`src/farmbot/ProcessLanes.tsx` renders it; `layoutFinding` in
+`src/farmbot/process-lanes.mjs` computes it without the DOM, so the Node tests
+and the screen share one layout. Styling is classes and React attributes only
+(no `<style>` element, no HTML string), so the page keeps `style-src 'self'`.
+
+### Lanes
+
+The lane order is fixed, left to right: Design change, EBOM part, Assembly /
+pre-assembly, Packing, Service. A lane is drawn only when the finding has a
+node in it.
+
+| Evidence role | Lane |
+|---|---|
+| `part` | EBOM part |
+| `quantity-difference` | Packing (the packing count is compared with the part page) |
+| `packing-line`, `packing-structure` | Packing |
+| `structure` with `chapter:` or `preassembly:` | Assembly / pre-assembly |
+| `structure` with `container:` or `bag:` | Packing |
+| `reference` with `usage:assembly:` or `usage:preassembly:` | Assembly / pre-assembly |
+| `reference` with `usage:packing:` | Packing |
+| `pre-assembly-page` | Assembly / pre-assembly |
+| `design-change` | Design change |
+| `service` | Service |
+
+The last two roles are reserved for rules that do not emit evidence yet. Any
+other role, structure prefix or usage kind throws instead of landing in a
+guessed lane, so a new rule has to declare its lane.
+
+### Nodes
+
+A node is one unique `nodeId` from the finding's evidence rows; it lists the
+evidence row indexes it represents. Rows are ordered by lane order, then role,
+then node id (plain code-unit comparison), then source file and line. The
+evidence table uses the same order, so an index names the same row in both
+places and a permuted evidence array produces the same diagram. The diagram
+never draws a node the evidence rows do not cite.
+
+### Edges
+
+Edges come only from the evidence rows, by rule:
+
+| Rule | Edges |
+|---|---|
+| R1 | each packing line → the quantity comparison → the part |
+| R2 | each structure → its unresolved reference, plus a dashed missing edge from the reference to the EBOM lane |
+| R3 | dashed missing edges from the part to the assembly and packing lanes |
+| R4 | the part → each packing line → the packing structure, plus a dashed missing edge from the part to the assembly lane |
+| R5 | none; the page node stands alone |
+
+A missing edge ends at a lane-level placeholder (`lane:<lane id>`), never at an
+invented node: the target lane may not be drawn at all, and a placeholder is
+not a node and is not counted as one. It records what the evidence cannot
+confirm: the name resolves to no part (R2), no process references the part
+(R3), or no assembly chapter, pre-assembly or bag references the packed part
+(R4). The diagram names the target lanes of its missing links in a note below
+the SVG; the edge itself is a short dashed stub inside the source lane, so it
+never points at an empty column.
+
+### Highlight and selection
+
+Problem nodes are the finding's subject node, every quantity comparison node
+and every unresolved reference. The impacted path is the link edges whose two
+ends are both problem nodes. A quantity comparison node also shows the product
+variant and the signed difference from its `facts` (`+4`, `−8`, `0`) with a
+sign class.
+
+Selecting a node highlights the evidence rows it represents and scrolls the
+first of them into view; selecting an evidence row highlights its node. The
+selected row carries `data-selected="true"`. Nodes are keyboard reachable and
+select on Enter or Space.
+
+### Node cap and overflow
+
+`DEFAULT_NODE_CAP` is 12, above the largest committed finding (7 unique
+evidence nodes). Nodes beyond the cap are not drawn; the diagram reports how
+many were left out and points at the evidence table, which still lists every
+row.
+
+### Diagram attributes
+
+Nodes carry `data-node-id`, `data-lane`, `data-evidence-index` (a comma list),
+`data-problem` and `data-selected`; edges carry `data-from`, `data-to`,
+`data-kind` (`link` or `missing`) and `data-path`. The browser smoke reads
+these attributes. `farmbot/test/process-lanes.test.mjs` covers the lane
+mapping, the node and edge sets of every committed finding, determinism under
+reversed and shuffled evidence, the quantity sign classes, the highlight
+rules, the node cap and the coordinates.
 
 ## Deep link
 

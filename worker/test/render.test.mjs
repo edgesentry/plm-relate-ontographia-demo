@@ -132,7 +132,6 @@ test('PUBLIC_BASE_URL must be bare https with no path, query, hash, or credentia
   assert.equal(normalizeBaseUrl('https://demo.example.invalid'), 'https://demo.example.invalid');
   for (const value of [
     'http://demo.example.invalid',
-    'https://demo.example.invalid/',
     'https://demo.example.invalid/farmbot',
     'https://demo.example.invalid?x=1',
     'https://demo.example.invalid#x',
@@ -141,21 +140,22 @@ test('PUBLIC_BASE_URL must be bare https with no path, query, hash, or credentia
     '',
     undefined,
   ]) {
-    // A trailing slash is the URL parser's default path and is accepted.
-    if (value === 'https://demo.example.invalid/') {
-      assert.equal(normalizeBaseUrl(value), 'https://demo.example.invalid');
-      continue;
-    }
     assert.equal(normalizeBaseUrl(value), null, String(value));
   }
 });
 
-test('NOTIFY_DAILY_CAP parsing falls back to 10 for missing or invalid values', () => {
+test('a single trailing slash on PUBLIC_BASE_URL is normalized away', () => {
+  assert.equal(normalizeBaseUrl('https://demo.example.invalid/'), 'https://demo.example.invalid');
+  assert.equal(normalizeBaseUrl('https://demo.example.invalid//'), null);
+});
+
+test('NOTIFY_DAILY_CAP: empty is the default, digits only, anything else is invalid', () => {
   assert.equal(dailyCapFromEnv(undefined), 10);
   assert.equal(dailyCapFromEnv(''), 10);
-  assert.equal(dailyCapFromEnv('not-a-number'), 10);
-  assert.equal(dailyCapFromEnv('-1'), 10);
   assert.equal(dailyCapFromEnv('3'), 3);
-  assert.equal(dailyCapFromEnv('2.9'), 2);
+  assert.equal(dailyCapFromEnv('007'), 7);
   assert.equal(dailyCapFromEnv('0'), 0);
+  for (const value of ['off', '-1', '2.9', ' 5', '5 ', '1e3', 'not-a-number', '+5', '5\n']) {
+    assert.equal(dailyCapFromEnv(value), null, JSON.stringify(value));
+  }
 });

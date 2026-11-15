@@ -18,6 +18,7 @@ import {
   captureLogs,
   cloneBundle,
   createEnv,
+  createEmail,
   createKv,
   createLimiter,
   makeRequest,
@@ -184,6 +185,128 @@ test('a successful send increments the daily counter with a two-day TTL', async 
   assert.equal(counter.options?.expirationTtl, DAILY_CAP_TTL_SECONDS);
 });
 
+test('the daily counter is written before EMAIL.send is called', async () => {
+  const events = [];
+  const state = createKv();
+  const email = createEmail();
+  const env = createEnv({
+    NOTIFY_STATE: {
+      ...state,
+      async get(key) {
+        events.push(`kv.get:${key}`);
+        return state.get(key);
+      },
+      async put(key, value, options) {
+        events.push(`kv.put:${key}=${value}`);
+        return state.put(key, value, options);
+      },
+    },
+    EMAIL: {
+      ...email,
+      async send(message) {
+        events.push('email.send');
+        return email.send(message);
+      },
+    },
+  });
+  const response = await post(env);
+  assert.equal(response.status, 200);
+  const putIndex = events.indexOf(`kv.put:${SENT_KEY}=1`);
+  const sendIndex = events.indexOf('email.send');
+  assert.ok(putIndex !== -1, `counter was not written: ${events.join(' -> ')}`);
+  assert.ok(sendIndex !== -1, `email.send was not called: ${events.join(' -> ')}`);
+  assert.ok(putIndex < sendIndex, `counter must be written first: ${events.join(' -> ')}`);
+});
+
+test('a daily-counter write failure is a 503 and EMAIL.send is never called', async () => {
+  const failingState = () => ({
+    store: new Map(),
+    puts: [],
+    async get() {
+      return null;
+    },
+    async put() {
+      throw new Error('kv write failed');
+    },
+  });
+
+  const env = createEnv({ NOTIFY_STATE: failingState() });
+  const response = await post(env);
+  assert.equal(response.status, 503);
+  assertSecurityHeaders(assert, response);
+  assert.deepEqual(await response.json(), { ok: false, error: 'unavailable' });
+  assert.equal(env.EMAIL.messages.length, 0);
+
+  const cronEnv = createEnv({ NOTIFY_STATE: failingState() });
+  const result = await runScheduled(cronEnv, bundle, NOW);
+  assert.deepEqual(result, { sent: false, reason: 'state_error' });
+  assert.equal(cronEnv.EMAIL.messages.length, 0);
+});
+
+test('a failed send still consumes the daily counter', async () => {
+  const env = createEnv({ EMAIL: createEmail({ fail: true }) });
+  const response = await post(env);
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { ok: false, error: 'send_failed' });
+  assert.equal(env.EMAIL.messages.length, 0);
+  const counter = env.NOTIFY_STATE.puts.find((put) => put.key === SENT_KEY);
+  assert.ok(counter, 'counter was not reserved before the send');
+  assert.equal(counter.value, '1');
+  assert.equal(env.NOTIFY_STATE.store.get(SENT_KEY), '1');
+
+  const cronEnv = createEnv({ EMAIL: createEmail({ fail: true }) });
+  const result = await runScheduled(cronEnv, bundle, NOW);
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, 'send_failed');
+  assert.equal(cronEnv.NOTIFY_STATE.store.get(SENT_KEY), '1');
+});
+
+test('NOTIFY_DAILY_CAP=0 mutes sending through the daily cap', async () => {
+  const env = createEnv({ NOTIFY_DAILY_CAP: '0' });
+  const response = await post(env);
+  assert.equal(response.status, 429);
+  assert.deepEqual(await response.json(), { ok: false, error: 'rate_limited' });
+  assert.equal(env.EMAIL.messages.length, 0);
+
+  const cronEnv = createEnv({ NOTIFY_DAILY_CAP: '0' });
+  const result = await runScheduled(cronEnv, bundle, NOW);
+  assert.deepEqual(result, { sent: false, reason: 'daily_cap_reached' });
+  assert.equal(cronEnv.EMAIL.messages.length, 0);
+  assert.equal(cronEnv.NOTIFY_STATE.store.has(DIGEST_KEY), false);
+});
+
+test('an unset NOTIFY_DAILY_CAP uses the default cap', async () => {
+  const env = createEnv({ NOTIFY_DAILY_CAP: undefined });
+  const response = await post(env);
+  assert.equal(response.status, 200);
+  assert.equal(env.EMAIL.messages.length, 1);
+});
+
+test('an invalid NOTIFY_DAILY_CAP is a config failure: 503, no send, nothing stored', async () => {
+  for (const value of ['off', '-1', '2.9', ' 5', '5 ', '1e3']) {
+    const env = createEnv({ NOTIFY_DAILY_CAP: value });
+    const logs = captureLogs();
+    let response;
+    let result;
+    try {
+      response = await post(env);
+      result = await runScheduled(env, bundle, NOW);
+    } finally {
+      logs.restore();
+    }
+    assert.equal(response.status, 503, JSON.stringify(value));
+    assertSecurityHeaders(assert, response);
+    assert.deepEqual(await response.json(), { ok: false, error: 'unavailable' }, JSON.stringify(value));
+    assert.equal(env.EMAIL.messages.length, 0, JSON.stringify(value));
+    assert.equal(env.NOTIFY_STATE.puts.length, 0, JSON.stringify(value));
+    assert.deepEqual(result, { sent: false, reason: 'invalid_daily_cap' }, JSON.stringify(value));
+    assert.ok(
+      logs.parsed().some((entry) => entry.reason === 'invalid_daily_cap'),
+      `${JSON.stringify(value)}: cron did not log invalid_daily_cap`,
+    );
+  }
+});
+
 test('body validation rejects everything outside the single-key findingId shape', async () => {
   const marker = 'MARKER-should-never-escape-<script>&"\'';
   const cases = [
@@ -280,6 +403,7 @@ test('every Worker-generated status carries the security headers', async () => {
     ['429 global', () => post(createEnv({ NOTIFY_GLOBAL_LIMITER: createLimiter(false) }))],
     ['429 cap', () => post(createEnv({ NOTIFY_STATE: createKv({ [SENT_KEY]: '10' }) }))],
     ['503 config', () => post(createEnv({ NOTIFY_TO: undefined }))],
+    ['503 cap config', () => post(createEnv({ NOTIFY_DAILY_CAP: 'off' }))],
     ['503 binding', () => post(createEnv({ NOTIFY_CLIENT_LIMITER: undefined }))],
   ];
   for (const [label, run] of scenarios) {
@@ -331,12 +455,16 @@ test('a failed scheduled send does not store the digest and retries next run', a
   const failed = await runScheduled(env, bundle, NOW);
   assert.equal(failed.sent, false);
   assert.equal(env.NOTIFY_STATE.store.has(DIGEST_KEY), false);
-  assert.equal(env.NOTIFY_STATE.puts.length, 0);
+  // The daily counter was reserved before the send failed, so only the digest
+  // write is absent.
+  assert.ok(env.NOTIFY_STATE.puts.every((put) => put.key !== DIGEST_KEY));
+  assert.equal(env.NOTIFY_STATE.store.get(SENT_KEY), '1');
 
   email.fail = false;
   const retried = await runScheduled(env, bundle, NOW);
   assert.equal(retried.sent, true);
   assert.equal(env.NOTIFY_STATE.store.get(DIGEST_KEY), bundle.findingsDigest);
+  assert.equal(env.NOTIFY_STATE.store.get(SENT_KEY), '2');
 });
 
 test('scheduled respects the global limiter and daily cap without storing the digest', async () => {

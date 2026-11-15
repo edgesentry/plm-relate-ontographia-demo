@@ -82,6 +82,7 @@ export const DAILY_CAP_DEFAULT = 10;
 export const DAILY_CAP_TTL_SECONDS = 2 * 24 * 60 * 60;
 export const MAX_BODY_BYTES = 1024;
 export const FINDING_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
+export const DAILY_CAP_PATTERN = /^\d+$/;
 
 const SEVERITY_RANK: Readonly<Record<string, number>> = {
   action: 0,
@@ -310,7 +311,11 @@ function nonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
-/** `https://host` only: no path, query, hash, credentials, or trailing slash. */
+/**
+ * Accept a bare `https://host` origin only. A single trailing slash is
+ * normalized away; any other path, a query, a hash, credentials, or a
+ * non-https scheme is rejected. Returns the origin (no trailing slash).
+ */
 export function normalizeBaseUrl(value: unknown): string | null {
   const raw = nonEmptyString(value);
   if (!raw) return null;
@@ -329,11 +334,18 @@ export function normalizeBaseUrl(value: unknown): string | null {
   return url.origin;
 }
 
-export function dailyCapFromEnv(value: unknown): number {
-  if (typeof value !== 'string' || value.trim() === '') return DAILY_CAP_DEFAULT;
-  const parsed = Number(value.trim());
-  if (!Number.isFinite(parsed) || parsed < 0) return DAILY_CAP_DEFAULT;
-  return Math.floor(parsed);
+/**
+ * Parse NOTIFY_DAILY_CAP. Missing or empty means the default. A non-empty value
+ * must be exactly ASCII digits: no sign, decimal point, exponent, or surrounding
+ * whitespace. `null` means the configuration is invalid, which is a hard failure
+ * rather than a silent fallback. `"0"` is valid and mutes sending through the
+ * cap.
+ */
+export function dailyCapFromEnv(value: unknown): number | null {
+  if (value === undefined || value === null || value === '') return DAILY_CAP_DEFAULT;
+  if (typeof value !== 'string') return null;
+  if (!DAILY_CAP_PATTERN.test(value)) return null;
+  return Number(value);
 }
 
 export function utcDateKey(now: Date): string {
@@ -367,13 +379,15 @@ function resolveConfig(env: NotifyEnv): ConfigResult {
   if (!from) return { ok: false, reason: 'missing_sender' };
   const baseUrl = normalizeBaseUrl(env.PUBLIC_BASE_URL);
   if (!baseUrl) return { ok: false, reason: 'invalid_public_base_url' };
+  const dailyCap = dailyCapFromEnv(env.NOTIFY_DAILY_CAP);
+  if (dailyCap === null) return { ok: false, reason: 'invalid_daily_cap' };
   return {
     ok: true,
     config: {
       to,
       from,
       baseUrl,
-      dailyCap: dailyCapFromEnv(env.NOTIFY_DAILY_CAP),
+      dailyCap,
     },
   };
 }
@@ -488,8 +502,14 @@ function parseCount(value: string | null): number {
 
 /**
  * Shared send path for cron and the endpoint: global limiter, KV daily cap,
- * then EMAIL.send. On success the daily counter is advanced. `to` and `from`
- * come only from the resolved config.
+ * then EMAIL.send. The counter is reserved (written) before the send so a
+ * retried or concurrent request cannot spend the same slot twice; a failed
+ * send keeps the reservation because the message may still have reached the
+ * provider. `to` and `from` come only from the resolved config.
+ *
+ * The KV daily cap is best effort, not strict: KV is eventually consistent and
+ * rate-limit bindings are scoped per location, so the cap is not enforced
+ * across all Cloudflare locations.
  */
 async function deliver(
   env: NotifyEnv,
@@ -533,6 +553,16 @@ async function deliver(
   }
 
   try {
+    await state.put(capKey, String(sentToday + 1), {
+      expirationTtl: DAILY_CAP_TTL_SECONDS,
+    });
+  } catch {
+    // Without a reserved slot the send is refused; this fails closed.
+    logEvent('notify.counter_write_failed', {});
+    return { ok: false, status: 503, reason: 'state_error' };
+  }
+
+  try {
     await email.send({
       to: config.to,
       from: config.from,
@@ -541,17 +571,11 @@ async function deliver(
       html: message.html,
     });
   } catch {
+    // The reservation is intentionally kept: a send that failed may still have
+    // reached the provider, so it stays counted against the day's cap.
     return { ok: false, status: 502, reason: 'send_failed' };
   }
 
-  try {
-    await state.put(capKey, String(sentToday + 1), {
-      expirationTtl: DAILY_CAP_TTL_SECONDS,
-    });
-  } catch {
-    // The email went out; a missed counter only makes the cap slightly looser.
-    logEvent('notify.counter_write_failed', {});
-  }
   return { ok: true, status: 200, reason: 'sent' };
 }
 
@@ -560,7 +584,8 @@ async function deliver(
  *
  * Order is fixed and fail-closed:
  * path/method -> per-client limiter -> auth -> body -> config -> global
- * limiter -> daily cap -> send. The stored findings digest is never updated.
+ * limiter -> daily cap (reserve, then send). The stored findings digest is
+ * never updated.
  */
 export async function handleNotifyRequest(
   request: Request,

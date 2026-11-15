@@ -24,6 +24,21 @@ Both triggers share:
 Fail-closed order for the endpoint: method/path → client limiter → auth → body
 validation → configuration check → global limiter → daily cap → send. Missing
 bindings or secrets refuse the send (503 for the endpoint; the cron logs a skip).
+`NOTIFY_DAILY_CAP` must be exactly ASCII digits (no sign, decimal point,
+exponent, or surrounding whitespace); an unset or empty value means the default
+of 10, `"0"` is valid and mutes sending through the cap, and anything else is a
+configuration failure (`invalid_daily_cap`): the endpoint returns 503 without
+sending, and the cron logs a skip and stores nothing.
+
+### The daily cap is best effort
+
+The cap is a guard rail, not a strict quota. Sends reserve their slot by
+writing `sent:<UTC date>` **before** calling `EMAIL.send`, so a failed send
+still counts and a request whose counter write fails is refused with 503
+(`state_error`) without sending. KV is eventually consistent, though, and
+`NOTIFY_GLOBAL_LIMITER` / `NOTIFY_CLIENT_LIMITER` are scoped per Cloudflare
+location, so the cap is not enforced across all locations: a burst that lands
+on several locations at once can exceed `NOTIFY_DAILY_CAP`.
 
 ## Maintainer setup
 
@@ -86,13 +101,18 @@ Any of these stops email without affecting the static site:
 - Delete `NOTIFY_TOKEN` (or keep it shorter than 32 characters) to disable the
   test endpoint with 401 while leaving the cron untouched.
 - For a temporary mute, set `NOTIFY_DAILY_CAP` to `"0"` and redeploy; every send
-  is refused by the daily cap.
+  is refused by the daily cap. `"0"` is a valid value; a malformed value such as
+  `"off"` is a configuration failure instead (the endpoint returns 503 and the
+  cron logs a skip).
 
 ## Local development and tests
 
 ```bash
 # Regenerate worker/generated/notify-bundle.json (digest-checked)
 npm run build:notify
+
+# Regenerate the committed Worker env types after editing wrangler.jsonc
+npm run types:worker
 
 # Pure logic tests: stubbed EMAIL.send, in-memory KV, stub limiters
 npm run test:worker
@@ -108,7 +128,11 @@ npm run smoke:wrangler
 
 `npm run typecheck` checks both the app and `worker/tsconfig.json`. `npm run
 build` runs `build:notify` first, so a findings file that does not match its
-sidecar digest fails the build instead of reaching an inbox.
+sidecar digest fails the build instead of reaching an inbox. `npm run verify`
+also runs `wrangler types --check worker/worker-configuration.d.ts` and fails if
+`worker/generated/notify-bundle.json` differs from a fresh `npm run build:notify`
+output. Both generated files are committed, so tests and CI need no generation
+step.
 
 Tests must use fake addresses and fake tokens. The committed examples use the
 `.invalid` TLD and a token generated inside each test run. Logs are structured

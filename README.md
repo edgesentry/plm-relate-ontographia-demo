@@ -62,6 +62,7 @@ npm run smoke:farmbot
 Worker notification checks (no account, no email sent):
 
 ```bash
+npm run types:worker   # refresh the committed worker/worker-configuration.d.ts
 npm run test:worker
 npm run build && npm run test:worker:contract
 npm run smoke:wrangler
@@ -184,6 +185,8 @@ npm run verify
 
 `npm run verify` checks:
 - TypeScript typecheck (`tsc --noEmit`)
+- Committed Worker env types (`wrangler types --check worker/worker-configuration.d.ts`)
+- The committed notify bundle matches a fresh digest-checked rebuild
 - Data and i18n structure checks
 - Ontographia WASM smoke compilation (all five Intents plus a malformed Intent, ABI rejection)
 - Intent executor gold tests and schema rejection tests
@@ -303,7 +306,7 @@ Deployment targets Cloudflare Workers with static assets via Workers Builds (Git
 - `assets.run_worker_first: ["/api/*"]`: only API paths run the script first; every other path is served directly by Workers Assets with the same `_headers` behavior
 - Deliberately omits `not_found_handling` so unknown paths return 404 instead of falling back to `index.html`
 
-`npm run build` first runs `npm run build:notify`, which checks `farmbot/dist/farmbot.findings.json` against its `.sha256` sidecar and regenerates the committed `worker/generated/notify-bundle.json`. The Worker sends email only from that bundle. See [farmbot/docs/notifications.md](farmbot/docs/notifications.md) for Email Routing / Email Sending onboarding, the `NOTIFY_TO`, `NOTIFY_FROM`, and `NOTIFY_TOKEN` secrets, KV auto-provisioning, the hourly cron, how to disable sending, and how to run `test:worker`, `test:worker:contract`, and `smoke:wrangler`.
+`npm run build` first runs `npm run build:notify`, which checks `farmbot/dist/farmbot.findings.json` against its `.sha256` sidecar and regenerates the committed `worker/generated/notify-bundle.json`. The Worker sends email only from that bundle. `worker/worker-configuration.d.ts` is also committed; regenerate it with `npm run types:worker` after editing `wrangler.jsonc`, and `npm run verify` fails if it is stale. See [farmbot/docs/notifications.md](farmbot/docs/notifications.md) for Email Routing / Email Sending onboarding, the `NOTIFY_TO`, `NOTIFY_FROM`, and `NOTIFY_TOKEN` secrets, KV auto-provisioning, the hourly cron, how to disable sending, and how to run `types:worker`, `test:worker`, `test:worker:contract`, and `smoke:wrangler`.
 
 ### Workers Builds settings
 

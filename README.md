@@ -120,7 +120,7 @@ The directory store and DuckDB extract are gitignored under `farmbot/dist/.gitig
 | Artifact | Digest |
 | --- | --- |
 | Committed seed | `farmbot-graph-v1 sha256:db6503e0c17d024d610736b0996c98a2872b495936d4f84230747db603f36fb1` |
-| DuckDB extract | `farmbot-canonical-v1 sha256:6c32e7067b21679531fd7b6959670b76dcad461227137c96e54078a70ac3ee84` |
+| DuckDB extract | `farmbot-canonical-v1 sha256:9bf30774ca18b815d2c7ba2bc6f221a0bf0e9e03acdeb1d11676b8cb22c4c040` |
 | Relate store (logical) | `farmbot-relate-store-v2 sha256:c44248c23f4800f20c0d456924d930e09e8dd0bb76080fdbd63375bd4b52b7fc` |
 
 - The seed digest is the SHA-256 of the committed file bytes.

@@ -17,7 +17,8 @@ const en = {
   q2Label: 'Q2 · Assembly chapters for a part',
   q2Question: 'Which assembly chapters use this part?',
   q3Label: 'Q3 · Structures a part reaches',
-  q3Question: 'If this part changes, which structures reach it?',
+  q3Question:
+    'If this part changes, which structures reach it — assembly chapters, pre-assemblies, kits or service procedures?',
   q4Label: 'Q4 · Kit parts in a category',
   q4Question: 'Which kit parts belong to this category?',
   q5Label: 'Q5 · Unmatched references',
@@ -144,7 +145,8 @@ const ja: Record<keyof typeof en, string> = {
   q2Label: 'Q2 · 部品を使う組立チャプタ',
   q2Question: 'この部品を使う組立チャプタはどれですか？',
   q3Label: 'Q3 · 部品が到達する構造',
-  q3Question: 'この部品が変わると、どの構造に到達しますか？',
+  q3Question:
+    'この部品が変わると、どの構造（組立チャプタ、プリ組立、キット、サービス手順）に到達しますか？',
   q4Label: 'Q4 · カテゴリに属するキット部品',
   q4Question: 'このカテゴリに属するキット部品はどれですか？',
   q5Label: 'Q5 · 未解決の参照',

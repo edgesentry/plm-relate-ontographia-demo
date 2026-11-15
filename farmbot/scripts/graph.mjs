@@ -9,13 +9,16 @@
 //   productvariant:<code>
 //   chapter:<path>
 //   preassembly:<path>
+//   service:<path>                        ServiceProcedure page
 //   container:<path>                     Kit and Carton page containers
 //   bag:pack:<page>@<table>/<row>/<child>  Bag for a packing_item pack row
 //   bag:accessory:<page>                   Bag for an Accessory bag BOM section
 //   usage:assembly:<page>@<ordinal>        Ordinal within the sorted page rows
 //   usage:preassembly:<page>@<line_number>
 //   usage:packing:<page>@<table>/<row>/<child>
+//   usage:service:<page>@<ordinal>         Ordinal within the sorted page rows
 //   comparison:<packing_page>#<part_name>#<version>
+//   designchange:<change_log_path>#<section>@<bullet>
 //   unmatched:<display_name>
 //
 // The seed is canonical: object keys are sorted, nodes are sorted by id, and
@@ -30,6 +33,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DuckDBInstance } from '@duckdb/node-api';
 import { parse } from 'yaml';
+import { CHANGE_LOG_PATH } from './lib/change-log.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const FARMBOT_DIR = resolve(SCRIPT_DIR, '..');
@@ -54,9 +58,13 @@ const TABLES = [
   'quantity_comparison',
   'quantity_difference',
   'unmatched_name',
+  'change_note',
+  'change_note_link',
+  'service_page',
+  'service_reference',
 ];
 
-const PRODUCT_VARIANTS = [
+export const PRODUCT_VARIANTS = [
   { code: 'standard', label: 'Genesis' },
   { code: 'xl', label: 'Genesis XL' },
 ];
@@ -376,7 +384,13 @@ function packingPageClass(path) {
   return 'Kit';
 }
 
-export function buildFullGraph(tables, ontology) {
+export function buildFullGraph(sourceTables, ontology) {
+  // The builder must not depend on the order rows arrive in: sort every table
+  // with the same canonical row key the extract reader uses, so ordinals and
+  // ids stay stable when a caller reshuffles the rows.
+  const tables = Object.fromEntries(
+    Object.entries(sourceTables).map(([name, rows]) => [name, sortRows(rows)]),
+  );
   const nodes = [];
   const edges = [];
   const nodeIds = new Set();
@@ -476,6 +490,19 @@ export function buildFullGraph(tables, ontology) {
       machine_readable: page.machine_readable,
       machine_readable_reason: page.machine_readable_reason,
       pdf_count: page.pdf_count,
+    });
+  }
+
+  // Troubleshooting and maintenance pages are Structures too: their part
+  // references are usage lines and unresolved names are seen in them.
+  for (const page of tables.service_page) {
+    const id = `service:${page.path}`;
+    structureId.set(page.path, id);
+    addNode('ServiceProcedure', id, {
+      path: page.path,
+      title: page.title,
+      kind: page.kind,
+      reference_count: page.reference_count,
     });
   }
 
@@ -601,6 +628,27 @@ export function buildFullGraph(tables, ontology) {
     );
   }
 
+  // Service references are usage lines of their service page. Only a resolved
+  // reference gets USES_ITEM; an unresolved name is handled below as an
+  // UnmatchedName that is seen in the service page.
+  const serviceOrdinals = new Map();
+  for (const reference of tables.service_reference) {
+    const ordinal = serviceOrdinals.get(reference.page_path) ?? 0;
+    serviceOrdinals.set(reference.page_path, ordinal + 1);
+    addUsage(
+      `usage:service:${reference.page_path}@${ordinal}`,
+      structureId.get(reference.page_path),
+      {
+        display_name: reference.display_name,
+        match_method: reference.match_method,
+        line_number: reference.line_number,
+        source_kind: 'service',
+      },
+      reference.resolved_part,
+      null,
+    );
+  }
+
   // Comparisons: one node per comparison row. Difference rows keep the same
   // node and add the subclass label plus the signed difference.
   const differenceByKey = new Map(
@@ -651,6 +699,35 @@ export function buildFullGraph(tables, ontology) {
     }
   }
 
+  // One DesignChange node per Change Log text unit. Only a link the extract
+  // resolved to a part becomes AFFECTS_PART; an unresolved link is recorded on
+  // the change note by the extract and is not turned into an invented edge.
+  const changeIdByKey = new Map();
+  for (const note of tables.change_note) {
+    const key = `${note.section}\u0000${note.bullet}`;
+    const id = `designchange:${CHANGE_LOG_PATH}#${note.section}@${note.bullet}`;
+    changeIdByKey.set(key, id);
+    addNode('DesignChange', id, {
+      path: CHANGE_LOG_PATH,
+      section: note.section,
+      text: note.text,
+      line: note.line_number,
+    });
+  }
+  for (const link of tables.change_note_link) {
+    if (!link.resolved_part) continue;
+    const key = `${link.section}\u0000${link.bullet}`;
+    const change = changeIdByKey.get(key);
+    if (!change) {
+      throw new Error(`change link names unknown change note ${link.section} / ${link.bullet}`);
+    }
+    const part = partId.get(link.resolved_part);
+    if (!part) {
+      throw new Error(`change link resolves to unknown part ${link.resolved_part}`);
+    }
+    addEdge('AFFECTS_PART', change, part);
+  }
+
   for (const unmatched of tables.unmatched_name) {
     const id = `unmatched:${unmatched.display_name}`;
     addNode('UnmatchedName', id, {
@@ -674,6 +751,50 @@ export function buildFullGraph(tables, ontology) {
         throw new Error(`unmatched ${id} names unknown candidate part ${candidate}`);
       }
       addEdge('CANDIDATE', id, part);
+    }
+  }
+
+  // Unresolved service names are not in `unmatched_name`; they are derived from
+  // `service_reference` here, grouped by display name, and seen in the service
+  // page that wrote them. An existing node with the same display name is
+  // reused rather than duplicated.
+  const serviceUnmatched = new Map();
+  for (const reference of tables.service_reference) {
+    if (reference.resolved_part) continue;
+    const key = reference.display_name;
+    if (!serviceUnmatched.has(key)) {
+      serviceUnmatched.set(key, {
+        displayName: key,
+        normalizedName: reference.normalizedName ?? reference.normalized_name ?? null,
+        referenceCount: 0,
+        pages: new Set(),
+        ambiguous: false,
+      });
+    }
+    const group = serviceUnmatched.get(key);
+    group.referenceCount += 1;
+    group.pages.add(reference.page_path);
+    if (reference.match_method === 'ambiguous') group.ambiguous = true;
+  }
+  for (const group of [...serviceUnmatched.values()].sort((left, right) =>
+    compareStrings(left.displayName, right.displayName),
+  )) {
+    const id = `unmatched:${group.displayName}`;
+    if (!nodeIds.has(id)) {
+      addNode('UnmatchedName', id, {
+        display_name: group.displayName,
+        normalized_name: group.normalizedName,
+        reference_count: group.referenceCount,
+        source_kinds: 'service',
+        status: group.ambiguous ? 'ambiguous' : 'unmatched',
+      });
+    }
+    for (const page of [...group.pages].sort(compareStrings)) {
+      const structure = structureId.get(page);
+      if (!structure) {
+        throw new Error(`unmatched ${id} names unknown page ${page}`);
+      }
+      addEdge('SEEN_IN', id, structure);
     }
   }
 

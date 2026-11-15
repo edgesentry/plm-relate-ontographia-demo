@@ -15,10 +15,11 @@ guessed at query time.
 
 The extract also carries the Change Log notes and the troubleshooting and
 maintenance service pages (`change_note`, `change_note_link`,
-`service_page`, `service_reference`). Those tables are not yet mapped to
-graph classes: the graph and the seed are unchanged, and this ontology does
-not declare them. Mapping them is a separate step that would change the seed
-digest.
+`service_page`, `service_reference`). They are mapped to graph classes:
+`DesignChange` reads `change_note` and links to parts through `AFFECTS_PART`;
+`ServiceProcedure` is a subclass of `Structure`, so its references are ordinary
+`Usage` lines with `source_kind = service` and unresolved service names become
+`UnmatchedName` nodes seen in the service page.
 
 The file is self-contained. It does not import, extend, wrap or copy any
 other ontology in this repository or elsewhere, and it is not tied to the
@@ -75,13 +76,16 @@ it writes anything, and fails on an undeclared name.
 Node ids are stable and derived only from extract keys: `part:<name>`,
 `partvariant:<part_name>@<variant_index>`, `category:<slug>`,
 `productvariant:<code>`, `chapter:<path>`, `preassembly:<path>`,
-`container:<path>` for a kit or carton page,
+`service:<path>`, `container:<path>` for a kit or carton page,
 `bag:pack:<page>@<table>/<row>/<child>`, `bag:accessory:<page>`,
 `usage:assembly:<page>@<ordinal>`, `usage:preassembly:<page>@<line_number>`,
 `usage:packing:<page>@<table>/<row>/<child>`,
-`comparison:<packing_page>#<part_name>#<version>` and
-`unmatched:<display_name>`. The assembly ordinal counts the page's rows after
-they are sorted, because assembly line numbers are not unique.
+`usage:service:<page>@<ordinal>`,
+`comparison:<packing_page>#<part_name>#<version>`,
+`designchange:<change_log_path>#<section>@<bullet>` and
+`unmatched:<display_name>`. The assembly and service ordinals count the page's
+rows after they are sorted, because assembly line numbers are not unique and a
+service line can carry more than one name.
 
 The seed is canonical: object keys are sorted, nodes are sorted by id, edges
 are sorted by type, source id and target id, and no clock, host name or
@@ -92,7 +96,7 @@ one line:
 
 The hash is the SHA-256 of the exact bytes of the seed JSON. The format token
 comes first so a consumer can reject an unknown format before comparing
-hashes. The committed full seed is `farmbot/dist/farmbot.seed.json`, 364867
+hashes. The committed full seed is `farmbot/dist/farmbot.seed.json`, 395675
 bytes, with `farmbot/dist/farmbot.seed.json.sha256` beside it.
 
 ## Class model
@@ -113,16 +117,18 @@ another container.
 | BomCategory | — | `bom_category` | A BOM category page |
 | ProductVariant | — | two fixed nodes | A version of the machine as a whole |
 | AssemblyChapter | Structure | `assembly_page` | One assembly chapter (constructed EBOM grouping) |
+| ServiceProcedure | Structure | `service_page` | A troubleshooting or maintenance page that references parts |
 | ManufacturingContainer | Item, Structure | none (abstract) | A container in the constructed MBOM view |
 | PreAssembly | ManufacturingContainer | `preassembly_page` | A pre-assembly page |
 | Kit | ManufacturingContainer | `packing_page` | A packing page that lists a kit |
 | Bag | ManufacturingContainer | `packing_item`, `preassembly_reference` | A bag inside a kit |
 | Carton | ManufacturingContainer | `packing_page` | The main carton page |
-| Usage | — | `assembly_reference`, `preassembly_reference`, `packing_item` | One reference line |
+| Usage | — | `assembly_reference`, `preassembly_reference`, `packing_item`, `service_reference` | One reference line |
 | Correspondence | — | none (abstract) | A node derived by comparing the extract with itself |
 | QuantityComparison | Correspondence | `quantity_comparison` | One packing-versus-part quantity comparison |
 | QuantityDifference | QuantityComparison | `quantity_difference` | A comparison with a non-zero difference |
-| UnmatchedName | Correspondence | `unmatched_name` | A display name that did not resolve |
+| UnmatchedName | Correspondence | `unmatched_name`, unresolved `service_reference` | A display name that did not resolve |
+| DesignChange | — | `change_note` | One text unit of the Change Log page |
 
 `QuantityDifference` is a subclass of `QuantityComparison`, not a separate
 kind of node: both describe one comparison, and the subclass only marks the
@@ -152,8 +158,9 @@ format; see the modelling rules for where the per-link facts went.
 | COMPARES_PART | QuantityComparison | Part | `quantity_comparison.part_name` |
 | COMPARED_IN | QuantityComparison | ManufacturingContainer | `quantity_comparison.packing_page` |
 | FOR_VARIANT | QuantityComparison | ProductVariant | `quantity_comparison.version` |
-| SEEN_IN | UnmatchedName | Structure | `unmatched_name.source_pages` |
+| SEEN_IN | UnmatchedName | Structure | `unmatched_name.source_pages`, service `page_path` |
 | CANDIDATE | UnmatchedName | Part | `unmatched_name.candidates` |
+| AFFECTS_PART | DesignChange | Part | `change_note_link.resolved_part` |
 
 `SEEN_IN` and `CANDIDATE` are many-to-many in practice, because a name can be
 seen on several pages and can have several candidate parts. `CANDIDATE` only
@@ -164,8 +171,8 @@ duplicated.
 
 ## Properties
 
-Property names are DuckDB column names, except for the four documented
-derivations at the end of this section. Datatypes follow the column types:
+Property names are DuckDB column names, except for the six documented
+derivations in this section. Datatypes follow the column types:
 `VARCHAR` → `string`, `INTEGER` → `integer`, `BOOLEAN` → `boolean`.
 
 ### Part (`part`)
@@ -224,22 +231,24 @@ names.
 | Structure | title | string | `title` |
 | AssemblyChapter | chapter | string | `assembly_page.chapter` |
 | AssemblyChapter | reference_count | integer | `assembly_page.reference_count` |
+| ServiceProcedure | kind | string | `service_page.kind` |
+| ServiceProcedure | reference_count | integer | `service_page.reference_count` |
 | PreAssembly | machine_readable | boolean | `preassembly_page.machine_readable` |
 | PreAssembly | machine_readable_reason | string | `preassembly_page.machine_readable_reason` |
 | PreAssembly | pdf_count | integer | `preassembly_page.pdf_count` |
 
-### Usage (three reference tables)
+### Usage (four reference tables)
 
 | Property | Datatype | Column | Notes |
 |---|---|---|---|
 | quantity | integer | see below | Derived |
 | quantity_text | string | `preassembly_reference.quantity_text` | The literal cell text |
 | unit | string | see below | Derived |
-| section | string | `preassembly_reference.section`, `packing_item.section` | Null for assembly references |
-| source_kind | string | `preassembly_reference.source_kind` | `table` or `prose` |
-| line_number | integer | `assembly_reference.line_number`, `preassembly_reference.line_number` | |
-| display_name | string | `display_name` in all three tables | The text as written |
-| match_method | string | `match_method` in all three tables | How the name resolved |
+| section | string | `preassembly_reference.section`, `packing_item.section` | Null for assembly and service references |
+| source_kind | string | `preassembly_reference.source_kind`, fixed `service` for service references | `table`, `prose`, or `service` |
+| line_number | integer | `assembly_reference.line_number`, `preassembly_reference.line_number`, `service_reference.line_number` | |
+| display_name | string | `display_name` in every reference table | The text as written |
+| match_method | string | `match_method` in every reference table | How the name resolved |
 | sub_packing | string | `packing_item.sub_packing` | e.g. `Press-to-seal bag` |
 
 `Usage.quantity` is derived. For a pre-assembly reference it is
@@ -288,17 +297,32 @@ the row's keys.
 | source_kinds | string | `source_kinds` |
 | status | string | `status` |
 
-### Extract-only tables (`change_note`, `change_note_link`, `service_page`, `service_reference`)
+Service references share the `Usage` shape. `source_kind` is `service`, and
+`line_number` comes from `service_reference.line_number`; a service row has no
+quantity or section. Only a resolved service reference gets `USES_ITEM`.
 
-These four tables are in the extract but have no class in this ontology, so
-the generator never reads them and the seed is unchanged.
+### DesignChange (`change_note`, `change_note_link`)
 
-| Table | Contents |
-|---|---|
-| `change_note` | One row per text unit of the v1.7 Change Log page: `section`, the 0-based `bullet` (unit index within the section), the raw `text`, the 1-based `line_number` of the unit's first line, `linked_names` (comma-separated display names in order), `link_count`, and `resolution` (`no_links`, `all_resolved`, `none_resolved`, `partially_resolved`). Rows are unique by (`section`, `bullet`). |
-| `change_note_link` | One row per Change Log part link: `section`, `bullet`, 0-based `link_index` within the unit, `line_number`, `display_name`, `normalized_name`, `resolved_part`, `match_method`, `candidates`. |
-| `service_page` | Every page under `v1.7/extras/troubleshooting/` and `v1.7/extras/maintenance/` with at least one part link: `path`, `title`, `kind` (`troubleshooting` or `maintenance`), `reference_count`. |
-| `service_reference` | One row per part link on those pages: `page_path`, `line_number`, 0-based `occurrence` within the line, `display_name`, `normalized_name`, `resolved_part`, `match_method`, `candidates`. Rows are unique by (`page_path`, `line_number`, `display_name`, `occurrence`). Unresolved service links stay here and are not added to `unmatched_name`. |
+| Property | Datatype | Source | Notes |
+|---|---|---|---|
+| path | string | constant | Required; the Change Log page path `v1.7/assembly/intro/change-log.md` |
+| section | string | `change_note.section` | The `#` heading the unit sits under |
+| text | string | `change_note.text` | The unit text as plain text |
+| line | integer | `change_note.line_number` | Derived into the `line` name; 1-based first source line |
+
+One node per text unit, keyed by section and the 0-based unit index (`bullet`).
+Each resolved `change_note_link` row adds one `AFFECTS_PART` edge to the part
+the extract resolved. An unresolved link stays visible in the extract but never
+becomes an edge, because the graph does not invent part links.
+
+### Service pages and references (`service_page`, `service_reference`)
+
+`service_page` rows become `ServiceProcedure` nodes. `service_reference` rows
+become `Usage` nodes owned by that page. An unresolved service display name is
+grouped across its rows into one `UnmatchedName` node whose `SEEN_IN` edge
+points at the service page; it is not a row of `unmatched_name`, so the graph
+derives it from `service_reference` itself. A display name that already has an
+`unmatched_name` node reuses that node rather than duplicating it.
 
 ## Modelling rules
 
@@ -343,7 +367,16 @@ the generator never reads them and the seed is unchanged.
    links kits with plain Markdown links instead of wikilinks. Filling them
    needs a separate extract change.
 
-7. **Ontographia 0.1.9 limitations.**
+7. **Service procedures are Structures.** Making `ServiceProcedure` a
+   subclass of `Structure` lets its references reuse `HAS_USAGE` → `Usage` →
+   `USES_ITEM` unchanged. A service page is not a manufacturing container and
+   does not enter the MBOM; it is a process document that reaches parts.
+
+8. **Design changes only link resolved parts.** `AFFECTS_PART` comes from
+   `change_note_link.resolved_part`. The Change Log text itself stays on the
+   `DesignChange` node as text; it is not parsed for extra part names.
+
+9. **Ontographia 0.1.9 limitations.**
    (a) With `direction: in`, validation still checks the relationship's
    `from_class` against the previous node's class. Intents must therefore
    start from the `from_class` side and traverse outward.
@@ -358,7 +391,7 @@ the generator never reads them and the seed is unchanged.
 
 The unit test parses the YAML and checks the shape of the declaration, checks
 that every named class exists, checks the datatypes and directions against the
-allowed sets, and checks that every modelled property (except the four
+allowed sets, and checks that every modelled property (except the six
 documented derivations) is a real column of a mapped source table in the
 DuckDB extract. It also compiles a few intents through the WebAssembly
 binding to confirm that the declared relationships produce the expected

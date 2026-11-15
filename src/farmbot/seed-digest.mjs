@@ -12,7 +12,7 @@ export const SEED_FORMAT = 'farmbot-graph-v1';
 
 /** SHA-256 hex of the committed seed, `farmbot/dist/farmbot.seed.json`. */
 export const SEED_SHA256_HEX =
-  'db6503e0c17d024d610736b0996c98a2872b495936d4f84230747db603f36fb1';
+  '5e0a2e2b65bf89ce61a1dbc217c7df2bcf09f61b527bf4626348892a52b15cd3';
 
 /** The full digest line stored in the committed `.sha256` sidecar. */
 export const SEED_DIGEST = `${SEED_FORMAT} sha256:${SEED_SHA256_HEX}`;

@@ -95,8 +95,13 @@ node --input-type=module -e "import { canonicalDigest } from './farmbot/scripts/
 | `service_reference` | One row per part link on a service page: page path, 1-based line, 0-based occurrence within the line, display name, normalized name, resolved part (null when unresolved), match method (`exact`, `normalized`, `singular`, `ambiguous` or `unmatched`) and diagnostic candidates. Rows are unique by (page, line, display name, occurrence), so the same name linked twice on one line keeps two rows. Unresolved service links are recorded here only; they are not added to `unmatched_name`, whose logical dump is unchanged. |
 | `extract_metadata` | Source pin, source label, schema version, row counts, and DuckDB version. Key `change_note_count` (23), `change_link_count` (19), `change_link_resolved_count` (19), `service_page_count` (5), `service_reference_count` (23) and `service_reference_resolved_count` (22). |
 
-The Change Log and service tables are extract-only: the graph seed does not map
-them, and the ontology change is a separate step.
+The Change Log and service tables are mapped into the graph seed. `change_note`
+becomes `DesignChange`, and each resolved `change_note_link` becomes
+`AFFECTS_PART`. `service_page` becomes `ServiceProcedure` (a `Structure`), and
+`service_reference` becomes `Usage` rows with `source_kind = service`.
+Unresolved service references stay out of `unmatched_name` but become
+`UnmatchedName` nodes with `SEEN_IN` in the graph, derived from
+`service_reference`.
 
 The current pinned source yields 9 Change Log sections and 23 text units; all
 19 Change Log links resolve. Fifteen pages make up the two service directories
@@ -125,7 +130,8 @@ expire, so neither is the lasting distribution channel.
 
 ## Lasting distribution: GitHub Releases
 
-The canonical release tag is `farmbot-data-v1`. It carries four assets:
+The canonical release tag is `farmbot-data-v2`. It replaces `farmbot-data-v1`
+once the maintainer creates it. Both tags use the same four asset names:
 
 | Asset | Contents |
 | --- | --- |
@@ -135,15 +141,15 @@ The canonical release tag is `farmbot-data-v1`. It carries four assets:
 | `SHA256SUMS` | `sha256sum`-format hashes of the other three files. |
 
 Publishing is a maintainer step. CI builds and uploads the
-`farmbot-release-assets` artifact but never creates a release. The maintainer
+`farmbot-release-assets-v2` artifact but never creates a release. The maintainer
 downloads that artifact, verifies it locally, and attaches the files to the
 release:
 
 ```sh
-gh run download <run-id> -n farmbot-release-assets -D release-assets
+gh run download <run-id> -n farmbot-release-assets-v2 -D release-assets
 npm run release:verify -- release-assets
-gh release create farmbot-data-v1 release-assets/* \
-  --target <merge-commit-sha> --title "FarmBot data v1" --notes "..."
+gh release create farmbot-data-v2 release-assets/* \
+  --target <merge-commit-sha> --title "FarmBot data v2" --notes "..."
 ```
 
 To check a downloaded copy of the assets:

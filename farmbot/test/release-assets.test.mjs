@@ -111,7 +111,7 @@ function expectedTypedProperties(properties) {
 function parseDump(dump) {
   const lines = dump.text.split('\n');
   assert.equal(lines.at(-1), '', 'the dump ends with a newline');
-  assert.equal(lines[0], 'farmbot-relate-store-v2');
+  assert.equal(lines[0], 'farmbot-relate-store-v3');
   const nodes = [];
   const relationships = [];
   for (const line of lines.slice(1, -1)) {
@@ -159,8 +159,8 @@ test('the logical dump matches a dump derived from the committed seed', () => {
   const { seed } = loadCommittedSeed();
   const parsed = parseDump(dump);
 
-  assert.equal(dump.nodes, 604);
-  assert.equal(dump.relationships, 1022);
+  assert.equal(dump.nodes, seed.nodes.length);
+  assert.equal(dump.relationships, seed.edges.length);
   assert.equal(parsed.nodes.length, seed.nodes.length);
   assert.equal(parsed.relationships.length, seed.edges.length);
 
@@ -202,14 +202,14 @@ test('the logical dump matches a dump derived from the committed seed', () => {
   assert.ok(labelCount > dump.nodes, 'nodes carry their ancestor labels too');
   assert.equal(
     Object.values(dump.relationshipTypes).reduce((sum, count) => sum + count, 0),
-    1022,
+    seed.edges.length,
   );
 });
 
 test('the store logical digest and counts equal the committed manifest', () => {
   const manifest = readManifest();
   const dump = logicalDump(sharedStoreDir());
-  assert.equal(manifest.relateStore.digestFormat, 'farmbot-relate-store-v2');
+  assert.equal(manifest.relateStore.digestFormat, 'farmbot-relate-store-v3');
   assert.equal(manifest.relateStore.sha256, dump.sha256);
   assert.equal(manifest.relateStore.nodes, dump.nodes);
   assert.equal(manifest.relateStore.relationships, dump.relationships);

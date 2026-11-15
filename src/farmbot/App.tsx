@@ -922,6 +922,7 @@ export function App() {
                     type="button"
                     className="evidence-select"
                     aria-label={`${t('evidenceSelect')}: ${row.nodeId}`}
+                    aria-pressed={rowSelected}
                     onClick={() => selectEvidence([index], { focusRow: false })}
                   >
                     {t('evidenceSelect')}

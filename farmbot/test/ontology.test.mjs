@@ -36,6 +36,8 @@ const REQUIRED_CLASSES = [
   'QuantityComparison',
   'QuantityDifference',
   'UnmatchedName',
+  'ServiceProcedure',
+  'DesignChange',
 ];
 
 // Class -> the extract tables its properties are allowed to come from.
@@ -43,16 +45,23 @@ const SOURCE_TABLES = {
   Part: ['part'],
   PartVariant: ['part_variant'],
   BomCategory: ['bom_category'],
-  Structure: ['assembly_page', 'preassembly_page', 'packing_page'],
+  Structure: ['assembly_page', 'preassembly_page', 'packing_page', 'service_page'],
   AssemblyChapter: ['assembly_page'],
   PreAssembly: ['preassembly_page'],
+  ServiceProcedure: ['service_page'],
   Kit: ['packing_page'],
   Carton: ['packing_page'],
   Bag: ['packing_item', 'preassembly_reference'],
-  Usage: ['assembly_reference', 'preassembly_reference', 'packing_item'],
+  Usage: [
+    'assembly_reference',
+    'preassembly_reference',
+    'packing_item',
+    'service_reference',
+  ],
   QuantityComparison: ['quantity_comparison'],
   QuantityDifference: ['quantity_difference'],
   UnmatchedName: ['unmatched_name'],
+  DesignChange: ['change_note'],
 };
 
 // Ontology-level names documented in farmbot/docs/ontology.md as derived
@@ -62,6 +71,8 @@ const DERIVED_PROPERTIES = new Set([
   'ProductVariant.label',
   'Usage.quantity',
   'Usage.unit',
+  'DesignChange.path',
+  'DesignChange.line',
 ]);
 
 // Strings that would mean the FarmBot ontology or its document leaked into

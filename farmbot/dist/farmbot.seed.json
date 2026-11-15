@@ -1,6 +1,101 @@
 {
   "edges": [
     {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#100 watt power supply@0",
+      "to": "part:Power Supply",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Cross-slide plate@0",
+      "to": "part:Cross-Slide Plate",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Gantry columns@0",
+      "to": "part:Gantry Column",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Gantry wheel plates@0",
+      "to": "part:Gantry Wheel Plate",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@0",
+      "to": "part:Left Gantry Corner Bracket",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@0",
+      "to": "part:Right Gantry Corner Bracket",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@1",
+      "to": "part:Belt Clip",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@10",
+      "to": "part:60mm Horizontal Cable Carrier Support",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@2",
+      "to": "part:5.5mm and 8mm Combo Wrench",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@3",
+      "to": "part:T25 Wood Screw",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@4",
+      "to": "part:T10 Bit",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@4",
+      "to": "part:T25 Bit",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@5",
+      "to": "part:M5 x 4mm Setscrew",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@6",
+      "to": "part:90-Degree Barb",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@9",
+      "to": "part:10mm Nut Bar",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Toolbays@0",
+      "to": "part:3-Slot Toolbay",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#Track extrusions@0",
+      "to": "part:Track Extrusion",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#X-axis cable carrier@0",
+      "to": "part:30mm Cable Carrier Mount",
+      "type": "AFFECTS_PART"
+    },
+    {
+      "from": "designchange:v1.7/assembly/intro/change-log.md#X-axis cable carrier@0",
+      "to": "part:X-Axis Cable Carrier",
+      "type": "AFFECTS_PART"
+    },
+    {
       "from": "usage:packing:v1.7/manufacturing/packing/extrusion-kit.md@0/8/0",
       "to": "productvariant:standard",
       "type": "APPLIES_TO"
@@ -2996,6 +3091,121 @@
       "type": "HAS_USAGE"
     },
     {
+      "from": "service:v1.7/extras/maintenance/general-maintenance.md",
+      "to": "usage:service:v1.7/extras/maintenance/general-maintenance.md@0",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@0",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@1",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@2",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@3",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@4",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@5",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@6",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "to": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@7",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/tool-verification.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@0",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/tool-verification.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@1",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/tool-verification.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@2",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/tool-verification.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@3",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/tool-verification.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@4",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/water-pressure.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/water-pressure.md@0",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/water-pressure.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/water-pressure.md@1",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@0",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@1",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@2",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@3",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@4",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@5",
+      "type": "HAS_USAGE"
+    },
+    {
+      "from": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "to": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@6",
+      "type": "HAS_USAGE"
+    },
+    {
       "from": "part:100mm Nut Bar",
       "to": "category:fasteners-and-hardware",
       "type": "IN_CATEGORY"
@@ -3808,6 +4018,11 @@
     {
       "from": "unmatched:X-Profile O-Ring",
       "to": "preassembly:v1.7/manufacturing/pre-assembly/tools/utm.md",
+      "type": "SEEN_IN"
+    },
+    {
+      "from": "unmatched:tee nuts",
+      "to": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
       "type": "SEEN_IN"
     },
     {
@@ -5108,6 +5323,116 @@
     {
       "from": "usage:preassembly:v1.7/manufacturing/pre-assembly/v-wheels.md@8",
       "to": "part:M5 Precision Shim",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/general-maintenance.md@0",
+      "to": "part:Belt Clip",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@0",
+      "to": "part:Belt Clip",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@1",
+      "to": "part:Gantry Column",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@2",
+      "to": "part:Gantry Main Beam",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@3",
+      "to": "part:Power Supply Cable",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@4",
+      "to": "part:Power Supply",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@5",
+      "to": "part:Power Supply",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@7",
+      "to": "part:X-Axis Cable Carrier",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@0",
+      "to": "part:Farmduino",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@1",
+      "to": "part:UTM PCB",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@2",
+      "to": "part:Jumper Link",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@3",
+      "to": "part:Pogo Pin",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@4",
+      "to": "part:Shunt",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/water-pressure.md@0",
+      "to": "part:Pressure Regulator",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/water-pressure.md@1",
+      "to": "part:Solenoid Valve",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@0",
+      "to": "part:V-Wheel",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@1",
+      "to": "part:Leadscrew Block",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@2",
+      "to": "part:Leadscrew",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@3",
+      "to": "part:Leadscrew",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@4",
+      "to": "part:Motor",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@5",
+      "to": "part:Shaft Coupler",
+      "type": "USES_ITEM"
+    },
+    {
+      "from": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@6",
+      "to": "part:Z-Axis Extrusion",
       "type": "USES_ITEM"
     }
   ],
@@ -6505,6 +6830,282 @@
       "properties": {
         "path": "v1.7/manufacturing/packing/vacuum-pump.md",
         "title": "Vacuum Pump"
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#100 watt power supply@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 43,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "100 watt power supply",
+        "text": "Switched to a 100 watt [[power supply]], still providing ample power for all of FarmBot's core capabilities while reducing cost and weight."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Cross-slide plate@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 37,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Cross-slide plate",
+        "text": "Reduced the number of wheels mounted to the [[cross-slide plate]] and added weight-saving cutouts."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Gantry columns@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 25,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Gantry columns",
+        "text": "The [[gantry column]] extrusions have been redesigned to save weight, provide a cleaner aesthetic, and make belt installation easier by removing the center two V slots in favor of a single, larger center cavity."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Gantry wheel plates@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 19,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Gantry wheel plates",
+        "text": "Accompanying the new track extrusions are a new version of the [[gantry wheel plates]]. These new plates are significantly lighter than previous versions thanks to a more compact shape and the addition of two large cutouts. The new wheel plates now include holes for only 3 wheels on the top and two wheels on the bottom, allowing FarmBot to more easily move over track joints and debris, while also reducing part count, manufacturing cost, and overall weight."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 55,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Added weight-saving cutouts to the [[left gantry corner bracket]] and [[right gantry corner bracket]]."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@1",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 56,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Made the tab on the [[belt clips]] narrower."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@10",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 65,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Reduced the number of [[60mm horizontal cable carrier supports]] on the gantry main beam to 5 per extrusion."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@11",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 66,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Removed the original weeder in favor of only including the powered rotary tool."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@12",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 67,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Removed the jumper wires, peripheral leads, PTFE tape, 2mm hex driver, 2.5mm hex key, 5.5mm nut driver, 8mm nut driver, second seed tray and bin, and crop stickers from the kit."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@13",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 68,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Combined the getting started guide and camera calibration cards into a single double-sided card."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@2",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 57,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Replaced individual wrenches with a [[5.5mm and 8mm combo wrench]]."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@3",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 58,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Replaced the black oxide Phillips drive wood screws with stainless steel [[T25 wood screws]]."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@4",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 59,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Included a [[T25 bit]] and [[T10 bit]] as assembly tools."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@5",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 60,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Added [[M5 x 4mm setscrews]] for use with nut bars to align track extrusions end-to-end."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@6",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 61,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Changed the material of the [[90-degree barb]] to brass."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@7",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 62,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Switched to smaller and lighter cardboard edge protectors."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@8",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 63,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Reduced the number of post-assembly extra parts."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@9",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 64,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Miscellaneous",
+        "text": "* Switched all drop-in tee nuts to [[10mm nut bars]]."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Pre-assembly@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 5,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Pre-assembly",
+        "text": "FarmBot Genesis and Genesis (XL) v1.7 now come 90% pre-assembled in the box, significantly reducing the setup time required by the end user to just 3 hours for a Genesis kit and 4 hours for a Genesis (XL) kit. Major pre-assemblies include: the left gantry column with solenoid valve and electronics box, the right gantry column, the cross-slide and z-axis with UTM, all of the tools, and X and Y cable carriers with pre-loaded cables and tubing."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Toolbays@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 31,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Toolbays",
+        "text": "The [[3-slot toolbays]] have been redesigned to save weight while providing slightly improved geometry for UTM access. Both kits now include just two 3-slot toolbays."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Track extrusions@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 11,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Track extrusions",
+        "text": "New in this version of FarmBot Genesis are completely redesigned [[track extrusions]]. These new extrusions are less than half the weight of the previous track extrusions and are designed to mount directly on top of a wood raised bed without the need for track joining or end plates. The new design also removes the need for separate plastic cable carrier supports, instead relying on an integrated wooden cable carrier support attached to the side of the raised bed."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#Track extrusions@1",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 15,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "Track extrusions",
+        "text": "This new track design is much easier and faster to assemble than previous versions of the Genesis tracks due to the significant reduction in part count. The new design also saves significantly on manufacturing cost and shipping weight and volume."
+      }
+    },
+    {
+      "id": "designchange:v1.7/assembly/intro/change-log.md#X-axis cable carrier@0",
+      "labels": [
+        "DesignChange"
+      ],
+      "properties": {
+        "line": 49,
+        "path": "v1.7/assembly/intro/change-log.md",
+        "section": "X-axis cable carrier",
+        "text": "Switched to a smaller and lighter [[X-axis cable carrier]], further improving movement dynamics along the X-axis. This change also required a new [[30mm cable carrier mount]]."
       }
     },
     {
@@ -9747,6 +10348,71 @@
       }
     },
     {
+      "id": "service:v1.7/extras/maintenance/general-maintenance.md",
+      "labels": [
+        "ServiceProcedure",
+        "Structure"
+      ],
+      "properties": {
+        "kind": "maintenance",
+        "path": "v1.7/extras/maintenance/general-maintenance.md",
+        "reference_count": 1,
+        "title": "General Maintenance"
+      }
+    },
+    {
+      "id": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+      "labels": [
+        "ServiceProcedure",
+        "Structure"
+      ],
+      "properties": {
+        "kind": "maintenance",
+        "path": "v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+        "reference_count": 8,
+        "title": "Storing FarmBot for Winter"
+      }
+    },
+    {
+      "id": "service:v1.7/extras/troubleshooting/tool-verification.md",
+      "labels": [
+        "ServiceProcedure",
+        "Structure"
+      ],
+      "properties": {
+        "kind": "troubleshooting",
+        "path": "v1.7/extras/troubleshooting/tool-verification.md",
+        "reference_count": 5,
+        "title": "Tool Verification"
+      }
+    },
+    {
+      "id": "service:v1.7/extras/troubleshooting/water-pressure.md",
+      "labels": [
+        "ServiceProcedure",
+        "Structure"
+      ],
+      "properties": {
+        "kind": "troubleshooting",
+        "path": "v1.7/extras/troubleshooting/water-pressure.md",
+        "reference_count": 2,
+        "title": "Water Pressure"
+      }
+    },
+    {
+      "id": "service:v1.7/extras/troubleshooting/z-axis-movements.md",
+      "labels": [
+        "ServiceProcedure",
+        "Structure"
+      ],
+      "properties": {
+        "kind": "troubleshooting",
+        "path": "v1.7/extras/troubleshooting/z-axis-movements.md",
+        "reference_count": 7,
+        "title": "Z-Axis Movements"
+      }
+    },
+    {
       "id": "unmatched:Barb",
       "labels": [
         "UnmatchedName",
@@ -9923,6 +10589,20 @@
         "reference_count": 1,
         "singular_name": "x profile o ring",
         "source_kinds": "pre-assembly table",
+        "status": "unmatched"
+      }
+    },
+    {
+      "id": "unmatched:tee nuts",
+      "labels": [
+        "UnmatchedName",
+        "Correspondence"
+      ],
+      "properties": {
+        "display_name": "tee nuts",
+        "normalized_name": "tee nuts",
+        "reference_count": 1,
+        "source_kinds": "service",
         "status": "unmatched"
       }
     },
@@ -13319,6 +13999,282 @@
         "match_method": "case-insensitive",
         "quantity": 1,
         "source_kind": "prose"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/general-maintenance.md@0",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "belt clip",
+        "line_number": 44,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@0",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "belt clips",
+        "line_number": 23,
+        "match_method": "singular",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@1",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "gantry column",
+        "line_number": 28,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@2",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "gantry main beam",
+        "line_number": 26,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@3",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "power supply cable",
+        "line_number": 17,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@4",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "power supply",
+        "line_number": 15,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@5",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "power supply",
+        "line_number": 17,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@6",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "tee nuts",
+        "line_number": 23,
+        "match_method": "unmatched",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/maintenance/storing-farmbot-for-winter.md@7",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "x-axis cable carrier",
+        "line_number": 20,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@0",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "Farmduino",
+        "line_number": 9,
+        "match_method": "exact",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@1",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "UTM PCB",
+        "line_number": 6,
+        "match_method": "exact",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@2",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "jumper link",
+        "line_number": 20,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@3",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "pogo pins",
+        "line_number": 14,
+        "match_method": "singular",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/tool-verification.md@4",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "shunts",
+        "line_number": 9,
+        "match_method": "singular",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/water-pressure.md@0",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "pressure regulator",
+        "line_number": 14,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/water-pressure.md@1",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "solenoid valve",
+        "line_number": 14,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@0",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "V-wheels",
+        "line_number": 8,
+        "match_method": "singular",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@1",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "leadscrew block",
+        "line_number": 12,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@2",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "leadscrew",
+        "line_number": 12,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@3",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "leadscrew",
+        "line_number": 40,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@4",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "motor",
+        "line_number": 40,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@5",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "shaft coupler",
+        "line_number": 40,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
+      }
+    },
+    {
+      "id": "usage:service:v1.7/extras/troubleshooting/z-axis-movements.md@6",
+      "labels": [
+        "Usage"
+      ],
+      "properties": {
+        "display_name": "z-axis extrusion",
+        "line_number": 8,
+        "match_method": "case-insensitive",
+        "source_kind": "service"
       }
     }
   ]

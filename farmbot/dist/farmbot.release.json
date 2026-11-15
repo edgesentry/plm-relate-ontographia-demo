@@ -2,7 +2,7 @@
   "format": "farmbot-release-manifest-v1",
   "seed": {
     "file": "farmbot.seed.json",
-    "digest": "farmbot-graph-v1 sha256:db6503e0c17d024d610736b0996c98a2872b495936d4f84230747db603f36fb1"
+    "digest": "farmbot-graph-v1 sha256:5e0a2e2b65bf89ce61a1dbc217c7df2bcf09f61b527bf4626348892a52b15cd3"
   },
   "duckdb": {
     "file": "farmbot.duckdb",
@@ -11,10 +11,10 @@
   },
   "relateStore": {
     "file": "farmbot-relate-store.tar.gz",
-    "digestFormat": "farmbot-relate-store-v2",
-    "sha256": "c44248c23f4800f20c0d456924d930e09e8dd0bb76080fdbd63375bd4b52b7fc",
-    "nodes": 604,
-    "relationships": 1022,
+    "digestFormat": "farmbot-relate-store-v3",
+    "sha256": "f50e731c116c5a34fa418bb71e09ef9b2dc48b8f45eb75a1774ec12860be68ae",
+    "nodes": 656,
+    "relationships": 1087,
     "client": "@relate/relate",
     "clientVersion": "1.0.1",
     "snapshotCodec": "json"

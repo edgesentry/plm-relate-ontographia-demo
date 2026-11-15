@@ -316,6 +316,27 @@
     "Watering Nozzle Bottom",
     "Watering Nozzle Top"
   ],
+  "part_names_in_service_procedures": [
+    "Belt Clip",
+    "Farmduino",
+    "Gantry Column",
+    "Gantry Main Beam",
+    "Jumper Link",
+    "Leadscrew",
+    "Leadscrew Block",
+    "Motor",
+    "Pogo Pin",
+    "Power Supply",
+    "Power Supply Cable",
+    "Pressure Regulator",
+    "Shaft Coupler",
+    "Shunt",
+    "Solenoid Valve",
+    "UTM PCB",
+    "V-Wheel",
+    "X-Axis Cable Carrier",
+    "Z-Axis Extrusion"
+  ],
   "unmatched_statuses": [
     "unmatched"
   ]

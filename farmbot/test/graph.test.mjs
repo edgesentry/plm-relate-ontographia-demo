@@ -16,12 +16,14 @@ import {
   buildFullGraph,
   digestBytes,
   loadOntology,
+  PRODUCT_VARIANTS,
   readExtract,
   scopeGraphToPart,
   serializeSeed,
   sidecarText,
   validateSeed,
 } from '../scripts/graph.mjs';
+import { CHANGE_LOG_PATH } from '../scripts/lib/change-log.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -112,20 +114,143 @@ test('two runs produce byte-identical seeds and digests', () => {
   assert.equal(digestOne, sidecarText(seedOne));
 });
 
-test('the full graph has the acceptance counts', () => {
+test('the full graph has the counts the extract implies', () => {
   const counts = countByPrimaryLabel(fullSeed);
-  assert.equal(counts.get('Part'), 149);
-  assert.equal(counts.get('Usage'), 160 + 54 + 65);
+  assert.equal(counts.get('Part'), tables.part.length);
+  assert.equal(counts.get('PartVariant'), tables.part_variant.length);
+  assert.equal(counts.get('BomCategory'), tables.bom_category.length);
+  assert.equal(counts.get('AssemblyChapter'), tables.assembly_page.length);
+  assert.equal(counts.get('PreAssembly'), tables.preassembly_page.length);
+  assert.equal(counts.get('ServiceProcedure'), tables.service_page.length);
+  assert.equal(counts.get('DesignChange'), tables.change_note.length);
+  assert.equal(
+    counts.get('Usage'),
+    tables.assembly_reference.length +
+      tables.preassembly_reference.length +
+      tables.packing_item.length +
+      tables.service_reference.length,
+  );
   assert.equal(
     fullSeed.nodes.filter((node) => node.labels.includes('QuantityDifference')).length,
-    12,
+    tables.quantity_difference.length,
   );
-  assert.equal(counts.get('UnmatchedName'), 13);
-  assert.equal(counts.get('ProductVariant'), 2);
-  assert.equal(counts.get('PartVariant'), 44);
-  assert.equal(counts.get('BomCategory'), 8);
-  assert.equal(counts.get('AssemblyChapter'), 9);
-  assert.equal(counts.get('PreAssembly'), 12);
+  assert.equal(counts.get('ProductVariant'), PRODUCT_VARIANTS.length);
+});
+
+function edgeSet(seed, type) {
+  return new Set(
+    seed.edges
+      .filter((edge) => edge.type === type)
+      .map((edge) => `${edge.from}\u0000${edge.to}`),
+  );
+}
+
+test('DesignChange and service Usage counts equal the extract rows', () => {
+  const usageById = new Map(
+    fullSeed.nodes
+      .filter((node) => node.labels[0] === 'Usage')
+      .map((node) => [node.id, node]),
+  );
+  const serviceUsage = [...usageById.values()].filter(
+    (node) => node.properties.source_kind === 'service',
+  );
+  assert.equal(serviceUsage.length, tables.service_reference.length);
+  assert.equal(
+    serviceUsage.filter((node) =>
+      fullSeed.edges.some(
+        (edge) => edge.type === 'USES_ITEM' && edge.from === node.id,
+      ),
+    ).length,
+    tables.service_reference.filter((row) => row.resolved_part).length,
+  );
+
+  const affected = edgeSet(fullSeed, 'AFFECTS_PART');
+  const expectedAffected = new Set();
+  for (const link of tables.change_note_link) {
+    if (!link.resolved_part) continue;
+    expectedAffected.add(
+      `designchange:${CHANGE_LOG_PATH}#${link.section}@${link.bullet}\u0000part:${link.resolved_part}`,
+    );
+  }
+  assert.equal(affected.size, expectedAffected.size);
+  assert.deepEqual([...affected].sort(), [...expectedAffected].sort());
+
+  const changeNodes = fullSeed.nodes.filter(
+    (node) => node.labels[0] === 'DesignChange',
+  );
+  assert.equal(changeNodes.length, tables.change_note.length);
+  for (const node of changeNodes) {
+    assert.equal(node.properties.path, CHANGE_LOG_PATH);
+    assert.equal(typeof node.properties.line, 'number');
+  }
+});
+
+test('service UnmatchedName nodes equal the unresolved service display names', () => {
+  const serviceIds = new Set(
+    fullSeed.nodes
+      .filter((node) => node.labels[0] === 'ServiceProcedure')
+      .map((node) => node.id),
+  );
+  const seenInService = new Map();
+  for (const edge of fullSeed.edges) {
+    if (edge.type !== 'SEEN_IN' || !serviceIds.has(edge.to)) continue;
+    seenInService.set(edge.from, [...(seenInService.get(edge.from) ?? []), edge.to]);
+  }
+  const expectedNames = new Set(
+    tables.service_reference
+      .filter((row) => !row.resolved_part)
+      .map((row) => row.display_name),
+  );
+  assert.equal(seenInService.size, expectedNames.size);
+  for (const nodeId of seenInService.keys()) {
+    const node = fullSeed.nodes.find((candidate) => candidate.id === nodeId);
+    assert.ok(node, `${nodeId} is not a node`);
+    assert.ok(node.labels.includes('UnmatchedName'), `${nodeId} is not an UnmatchedName`);
+    assert.ok(expectedNames.has(node.properties.display_name));
+  }
+});
+
+// A deterministic shuffle (32-bit LCG seeded with a fixed value).
+function seededShuffle(items, seedValue) {
+  let seed = seedValue;
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+test('the graph builder ignores input row order and emits no duplicate node or edge', () => {
+  const shuffled = Object.fromEntries(
+    Object.entries(tables).map(([name, rows]) => [
+      name,
+      seededShuffle(rows, 20261115),
+    ]),
+  );
+  const shuffledSeed = buildFullGraph(shuffled, ontology);
+  const canonical = serializeSeed(fullSeed);
+  assert.ok(
+    serializeSeed(shuffledSeed).equals(canonical),
+    'a reshuffled extract must produce the same seed bytes',
+  );
+  assert.equal(digestBytes(serializeSeed(shuffledSeed)), digestBytes(canonical));
+
+  const nodeIds = new Set();
+  for (const node of fullSeed.nodes) {
+    assert.ok(!nodeIds.has(node.id), `duplicate node id ${node.id}`);
+    nodeIds.add(node.id);
+  }
+  const edgeKeys = new Set();
+  for (const edge of fullSeed.edges) {
+    const key = `${edge.type}\u0000${edge.from}\u0000${edge.to}`;
+    assert.ok(!edgeKeys.has(key), `duplicate edge ${key}`);
+    edgeKeys.add(key);
+  }
 });
 
 test('every label and relationship type is declared and every ancestor label is present', () => {

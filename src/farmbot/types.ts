@@ -64,6 +64,7 @@ export interface AllowedValuesFile {
   part_names_in_assembly_chapters: string[];
   part_names_in_preassemblies: string[];
   part_names_in_kits: string[];
+  part_names_in_service_procedures: string[];
   part_names_in_all_three_structure_kinds: string[];
   category_slugs: string[];
   category_slugs_in_kits: string[];

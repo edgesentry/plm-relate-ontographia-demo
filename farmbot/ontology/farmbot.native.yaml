@@ -51,6 +51,13 @@ classes:
       One assembly instruction page, one row of the `assembly_page` table.
       Used here as a constructed EBOM grouping, which is our label rather
       than an official FarmBot term.
+  - name: ServiceProcedure
+    super_classes: [Structure]
+    description: >-
+      One troubleshooting or maintenance page that references parts, one row
+      of the `service_page` table. Its references are usage lines, so a
+      service page is a fourth kind of Structure beside the assembly and
+      manufacturing containers.
   - name: ManufacturingContainer
     super_classes: [Item, Structure]
     description: >-
@@ -102,7 +109,12 @@ classes:
     super_classes: [Correspondence]
     description: >-
       A display name that did not resolve to a part, one row of the
-      `unmatched_name` table.
+      `unmatched_name` table or one unresolved name from `service_reference`.
+  - name: DesignChange
+    description: >-
+      One text unit of the v1.7 Change Log page, one row of the `change_note`
+      table. `path` is the Change Log page; `line` is the 1-based first source
+      line of the unit.
 
 relationships:
   - name: IN_CATEGORY
@@ -143,6 +155,10 @@ relationships:
     direction: out
   - name: CANDIDATE
     from_class: UnmatchedName
+    to_class: Part
+    direction: out
+  - name: AFFECTS_PART
+    from_class: DesignChange
     to_class: Part
     direction: out
 
@@ -243,6 +259,13 @@ properties:
     owner_class: PreAssembly
     datatype: integer
 
+  - name: kind
+    owner_class: ServiceProcedure
+    datatype: string
+  - name: reference_count
+    owner_class: ServiceProcedure
+    datatype: integer
+
   - name: quantity
     owner_class: Usage
     datatype: integer
@@ -312,3 +335,17 @@ properties:
   - name: status
     owner_class: UnmatchedName
     datatype: string
+
+  - name: path
+    owner_class: DesignChange
+    datatype: string
+    required: true
+  - name: section
+    owner_class: DesignChange
+    datatype: string
+  - name: text
+    owner_class: DesignChange
+    datatype: string
+  - name: line
+    owner_class: DesignChange
+    datatype: integer

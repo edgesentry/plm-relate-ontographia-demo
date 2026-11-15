@@ -3,9 +3,10 @@
 -- The graph gives every reference row one owning Structure. Assembly references
 -- belong to an AssemblyChapter; pre-assembly references belong to the
 -- PreAssembly page, or to the Accessory bag node of that page (which carries
--- the same path); packing items belong to a Kit or to the Carton. The Intent
--- projects the structure path and therefore collides those owners when a page
--- owns both a bag and a pre-assembly, so this query projects the page path.
+-- the same path); packing items belong to a Kit or to the Carton; service
+-- references belong to a ServiceProcedure page. The Intent projects the
+-- structure path and therefore collides those owners when a page owns both a
+-- bag and a pre-assembly, so this query projects the page path.
 --
 -- Unduplicated rows repeat a structure when the part is referenced more than
 -- once by the same structure; the paired Intent projects DISTINCT.
@@ -21,6 +22,9 @@ FROM (
   UNION ALL
   SELECT page_path, resolved_part
   FROM packing_item
+  UNION ALL
+  SELECT page_path, resolved_part
+  FROM service_reference
 ) AS owned
 JOIN part ON part.name = owned.part_name
 WHERE part.name = $part_name

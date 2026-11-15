@@ -17,6 +17,8 @@ import { createServer } from 'node:http';
 import { basename, extname, join, resolve, sep } from 'node:path';
 import { chromium } from 'playwright';
 
+import { summaryLine } from '../src/farmbot/findings-view.mjs';
+
 const root = resolve(import.meta.dirname, '..');
 const liveBase = process.env.SMOKE_BASE_URL?.trim();
 const port = Number(process.env.SMOKE_PORT ?? 4175);
@@ -42,6 +44,8 @@ const EXPECTED_STORE_DIGEST =
   `${committedManifest.relateStore.digestFormat} ` +
   `sha256:${committedManifest.relateStore.sha256}`;
 const goldPath = join(root, 'farmbot/oracle/default-results.gold.json');
+const findingsPath = join(root, 'farmbot/dist/farmbot.findings.json');
+const findingsDigestPath = `${findingsPath}.sha256`;
 
 const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
 
@@ -327,6 +331,22 @@ const readCspViolations = (page) =>
 
 const externalRequests = (requests) => requests.filter((url) => isExternal(url));
 
+/** Assert that one browser context made no CSP, page or cross-origin noise. */
+async function assertContextClean(fixture) {
+  const csp = await readCspViolations(fixture.page);
+  assert(csp.length === 0, `${fixture.label} CSP violation(s): ${JSON.stringify(csp)}`);
+  assert(
+    fixture.pageErrors.length === 0,
+    `${fixture.label} page error(s): ${fixture.pageErrors.join(' | ')}`,
+  );
+  const external = externalRequests(fixture.requests);
+  assert(
+    external.length === 0,
+    `${fixture.label} non-same-origin request(s): ${external.join(', ')}`,
+  );
+  return { cspViolations: csp.length, external };
+}
+
 function isRelateAssetUrl(url, entryInfo) {
   const pathname = pathOf(url);
   if (/\/relate_bg[^/]*\.wasm$/.test(pathname)) return true;
@@ -399,6 +419,29 @@ async function main() {
     );
   }
 
+  const findingsDocument = JSON.parse(readFileSync(findingsPath, 'utf8'));
+  assert(
+    findingsDocument.format === 'farmbot-findings-v1',
+    'unexpected findings document format',
+  );
+  const findings = findingsDocument.findings;
+  const expectedFindingsDigest = readFileSync(findingsDigestPath, 'utf8').trim();
+  assert(
+    /^farmbot-findings-v1 sha256:[0-9a-f]{64}$/.test(expectedFindingsDigest),
+    `the findings sidecar is not a digest line: ${expectedFindingsDigest}`,
+  );
+  const expectedFindingIds = findings.map((finding) => finding.id).sort();
+  const expectedSeverity = { action: 0, review: 0, info: 0 };
+  for (const finding of findings) expectedSeverity[finding.severity] += 1;
+
+  // The deep link opens the finding with the most evidence rows; ties break by
+  // id so the choice comes from the committed file only.
+  const deepLinkFinding = [...findings].sort(
+    (left, right) =>
+      right.evidence.length - left.evidence.length ||
+      (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
+  )[0];
+
   const tampered = Buffer.from(committedSeedBytes);
   tampered[Math.floor(tampered.length / 2)] ^= 0x01;
   const tamperedSha = sha256Hex(tampered);
@@ -417,6 +460,10 @@ async function main() {
     questions: [],
     timings: null,
     budgets: budgetRecords,
+    findings: null,
+    deepLink: null,
+    unknownFinding: null,
+    malformedHashes: [],
     tamperedSeed: null,
     cspViolations: null,
     nonSameOriginRequests: [],
@@ -565,6 +612,81 @@ async function main() {
       servedSeed.bytes === committedSeedBytes.length,
       `served seed is ${servedSeed.bytes} bytes, committed seed is ${committedSeedBytes.length}`,
     );
+
+    // Notification panel: run the checks in the same page and compare the
+    // panel and the debug hook with the committed findings document.
+    await page.click('[data-testid="run-checks"]');
+    await page.waitForSelector('[data-testid="findings-count"]', { timeout: 180000 });
+    const panel = await page.evaluate(() => {
+      const number = (selector) => {
+        const element = document.querySelector(selector);
+        return element ? Number(element.textContent) : null;
+      };
+      const digest = document.querySelector('[data-testid="findings-digest"]');
+      return {
+        count: number('[data-testid="findings-count"]'),
+        action: number('[data-testid="severity-action"]'),
+        review: number('[data-testid="severity-review"]'),
+        info: number('[data-testid="severity-info"]'),
+        digest: (digest?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        ids: [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
+          (element) => element.getAttribute('data-finding-id'),
+        ),
+      };
+    });
+    assert(
+      panel.count === findings.length,
+      `the panel shows ${panel.count} findings, the committed file has ${findings.length}`,
+    );
+    assert(
+      JSON.stringify([...panel.ids].sort()) === JSON.stringify(expectedFindingIds),
+      'the panel finding ids differ from the committed file',
+    );
+    for (const level of ['action', 'review', 'info']) {
+      assert(
+        panel[level] === expectedSeverity[level],
+        `the panel shows ${panel[level]} ${level} findings, the committed file has ${expectedSeverity[level]}`,
+      );
+    }
+    assert(
+      panel.digest.includes(expectedFindingsDigest),
+      `the panel does not show the committed digest: ${panel.digest}`,
+    );
+    assert(
+      /matches the committed findings/i.test(panel.digest),
+      `the panel does not report a match: ${panel.digest}`,
+    );
+
+    const checksTimings = (await readTimings(page)).checks;
+    assert(checksTimings, 'the debug hook has no check result');
+    assert(checksTimings.matches === true, 'the browser result does not match the committed file');
+    assert(
+      checksTimings.digest === expectedFindingsDigest,
+      `the browser digest is ${checksTimings.digest}, expected ${expectedFindingsDigest}`,
+    );
+    assert(
+      checksTimings.count === findings.length,
+      `the debug hook reports ${checksTimings.count} findings`,
+    );
+    assert(
+      JSON.stringify([...checksTimings.ids].sort()) === JSON.stringify(expectedFindingIds),
+      'the debug hook finding ids differ from the committed file',
+    );
+    for (const level of ['action', 'review', 'info']) {
+      assert(
+        checksTimings.bySeverity[level] === expectedSeverity[level],
+        `the debug hook reports ${checksTimings.bySeverity[level]} ${level} findings`,
+      );
+    }
+    summary.findings = {
+      panelCount: panel.count,
+      committedCount: findings.length,
+      idsMatch: true,
+      severity: { panel: { action: panel.action, review: panel.review, info: panel.info }, file: expectedSeverity },
+      digest: checksTimings.digest,
+      matches: checksTimings.matches,
+      checksMs: Number(checksTimings.ms.toFixed(2)),
+    };
 
     for (const [index, question] of gold.questions.entries()) {
       const id = QUESTION_IDS[index];
@@ -766,6 +888,55 @@ async function main() {
       relateAfterTamper.length === 0,
       `a rejected seed must not load Relate: ${relateAfterTamper.join(', ')}`,
     );
+    // Run checks after a preset question failed: the checks box reports its own
+    // failure, and the question box neither duplicates nor disappears.
+    const questionErrorsBeforeChecks = await tamper.page
+      .locator('[data-testid="error"]')
+      .count();
+    const questionErrorBefore = await tamper.page
+      .locator('[data-testid="error"]')
+      .textContent();
+    const questionErrorBeforeChecks = (questionErrorBefore ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    assert(
+      questionErrorsBeforeChecks === 1,
+      `the tampered-seed context shows ${questionErrorsBeforeChecks} question error ` +
+        'banner(s) before Run checks, expected 1',
+    );
+    await tamper.page.click('[data-testid="run-checks"]');
+    await tamper.page.waitForSelector('[data-testid="checks-error"]', { timeout: 30000 });
+    const tamperChecksState = await tamper.page.evaluate(() => {
+      const checksError = document.querySelector('[data-testid="checks-error"]');
+      const questionError = document.querySelector('[data-testid="error"]');
+      return {
+        checksErrorCount: document.querySelectorAll('[data-testid="checks-error"]').length,
+        checksErrorVisible: Boolean(
+          checksError && checksError.getBoundingClientRect().height > 0,
+        ),
+        checksErrorText: (checksError?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        questionErrorCount: document.querySelectorAll('[data-testid="error"]').length,
+        questionErrorText: (questionError?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      };
+    });
+    assert(
+      tamperChecksState.checksErrorCount === 1,
+      `the tampered-seed checks failure shows ` +
+        `${tamperChecksState.checksErrorCount} checks error banner(s), expected 1`,
+    );
+    assert(
+      tamperChecksState.checksErrorVisible,
+      'the tampered-seed checks error box is not visible',
+    );
+    assert(
+      tamperChecksState.questionErrorCount === questionErrorsBeforeChecks,
+      `Run checks changed the question error banner count from ` +
+        `${questionErrorsBeforeChecks} to ${tamperChecksState.questionErrorCount}`,
+    );
+    assert(
+      tamperChecksState.questionErrorText === questionErrorBeforeChecks,
+      'Run checks cleared or changed the question error banner',
+    );
     const tamperCsp = await readCspViolations(tamper.page);
     assert(tamperCsp.length === 0, `tampered-seed CSP violation(s): ${JSON.stringify(tamperCsp)}`);
     const tamperExternal = externalRequests(tamper.requests);
@@ -773,18 +944,171 @@ async function main() {
       tamperExternal.length === 0,
       `tampered-seed non-same-origin request(s): ${tamperExternal.join(', ')}`,
     );
+    assert(
+      tamper.pageErrors.length === 0,
+      `tampered-seed page error(s): ${tamper.pageErrors.join(' | ')}`,
+    );
     summary.tamperedSeed = {
       rejected: true,
       error: tamperState.errorText.replace(/\s+/g, ' ').trim().slice(0, 400),
       relateRequests: relateAfterTamper.length,
       rows: null,
       cspViolations: tamperCsp.length,
+      pageErrors: [...tamper.pageErrors],
+      checks: {
+        questionErrorsBefore: questionErrorsBeforeChecks,
+        questionErrorsAfter: tamperChecksState.questionErrorCount,
+        questionErrorUnchanged:
+          tamperChecksState.questionErrorText === questionErrorBeforeChecks,
+        checksErrorCount: tamperChecksState.checksErrorCount,
+        checksErrorVisible: tamperChecksState.checksErrorVisible,
+        checksError: tamperChecksState.checksErrorText.slice(0, 400),
+      },
     };
 
-    summary.cspViolations = { happy: happyCsp.length, tampered: tamperCsp.length };
-    summary.pageErrors = happy.pageErrors;
+    // Deep link: a well-formed hash runs the checks and opens the finding.
+    const deep = await prepareContext(browser, 'deep-link');
+    const deepExpectedSummary = summaryLine(deepLinkFinding, 'en');
+    await deep.page.goto(`${entryUrl}#finding=${encodeURIComponent(deepLinkFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await deep.page.waitForSelector('[data-testid="finding-view"]', { timeout: 180000 });
+    const deepState = await deep.page.evaluate(() => {
+      const view = document.querySelector('[data-testid="finding-view"]');
+      const rows = [...document.querySelectorAll('[data-testid="evidence-row"]')];
+      return {
+        visible: Boolean(view) && view.getBoundingClientRect().height > 0,
+        id: document.querySelector('[data-testid="finding-open-id"]')?.textContent?.trim() ?? '',
+        summary:
+          document
+            .querySelector('[data-testid="finding-summary"]')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim() ?? '',
+        evidenceRows: rows.length,
+        evidenceWithQueries: rows.filter((row) => row.querySelector('details pre')).length,
+        firstCypher: rows[0]?.querySelector('details pre')?.textContent ?? '',
+        hash: window.location.hash,
+      };
+    });
+    assert(deepState.visible, 'the deep link did not show the finding view');
+    assert(
+      deepState.id === deepLinkFinding.id,
+      `the deep link opened ${JSON.stringify(deepState.id)}`,
+    );
+    assert(
+      deepState.summary.includes(deepExpectedSummary),
+      `the finding summary ${JSON.stringify(deepState.summary)} does not contain ` +
+        `${JSON.stringify(deepExpectedSummary)}`,
+    );
+    assert(
+      deepState.evidenceRows === deepLinkFinding.evidence.length,
+      `the finding shows ${deepState.evidenceRows} evidence rows, expected ` +
+        `${deepLinkFinding.evidence.length}`,
+    );
+    assert(
+      deepState.evidenceWithQueries === deepLinkFinding.evidence.length,
+      'an evidence row does not show its Intent, Cypher and parameters',
+    );
+    assert(
+      deepState.firstCypher === deepLinkFinding.queries[0].cypher,
+      'the evidence row does not show the rule Cypher',
+    );
+    assert(
+      deepState.hash === `#finding=${deepLinkFinding.id}`,
+      `the deep-link hash changed to ${deepState.hash}`,
+    );
+    const deepRelate = deep.requests.filter((url) => isRelateAssetUrl(url, entryInfo));
+    assert(deepRelate.length > 0, 'the deep link did not run the checks');
+    const deepClean = await assertContextClean(deep);
+    summary.deepLink = {
+      id: deepLinkFinding.id,
+      summary: deepState.summary,
+      evidenceRows: deepState.evidenceRows,
+      relateRequests: deepRelate.length,
+      ...deepClean,
+    };
+
+    // A well-formed but unknown id may run the checks; it opens nothing and
+    // shows no error.
+    const unknown = await prepareContext(browser, 'unknown-finding');
+    await unknown.page.goto(`${entryUrl}#finding=does-not-exist`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await unknown.page.waitForSelector('[data-testid="findings-count"]', { timeout: 180000 });
+    const unknownState = await unknown.page.evaluate(() => ({
+      view: Boolean(document.querySelector('[data-testid="finding-view"]')),
+      error: Boolean(
+        document.querySelector('[data-testid="error"]') ||
+          document.querySelector('[data-testid="checks-error"]'),
+      ),
+      count: Number(document.querySelector('[data-testid="findings-count"]')?.textContent),
+    }));
+    assert(!unknownState.view, 'an unknown finding id opened a finding');
+    assert(!unknownState.error, 'an unknown finding id showed an error');
+    assert(
+      unknownState.count === findings.length,
+      `the unknown-id page reports ${unknownState.count} findings`,
+    );
+    const unknownClean = await assertContextClean(unknown);
+    summary.unknownFinding = { opened: false, ...unknownClean };
+
+    // Malformed hashes do nothing: no session, no request, no error.
+    for (const hash of ['#finding=%E0%A4%A', '#foo']) {
+      const malformed = await prepareContext(browser, `malformed-${hash}`);
+      await malformed.page.goto(`${entryUrl}${hash}`, { waitUntil: 'load', timeout: 60000 });
+      await malformed.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+      await malformed.page.waitForSelector('[data-testid="run"]:not([disabled])', {
+        timeout: 30000,
+      });
+      await delay(500);
+      const malformedState = await malformed.page.evaluate(() => ({
+        view: Boolean(document.querySelector('[data-testid="finding-view"]')),
+        checksRan: Boolean(document.querySelector('[data-testid="findings-count"]')),
+        error: Boolean(
+          document.querySelector('[data-testid="error"]') ||
+            document.querySelector('[data-testid="checks-error"]'),
+        ),
+      }));
+      assert(!malformedState.view, `${hash} opened a finding`);
+      assert(!malformedState.checksRan, `${hash} ran the checks`);
+      assert(!malformedState.error, `${hash} showed an error`);
+      const relate = malformed.requests.filter((url) => isRelateAssetUrl(url, entryInfo));
+      assert(relate.length === 0, `${hash} requested Relate: ${relate.join(', ')}`);
+      const malformedClean = await assertContextClean(malformed);
+      summary.malformedHashes.push({
+        hash,
+        opened: false,
+        checksRan: false,
+        relateRequests: relate.length,
+        pageErrors: [...malformed.pageErrors],
+        ...malformedClean,
+      });
+    }
+
+    summary.cspViolations = {
+      happy: happyCsp.length,
+      tampered: tamperCsp.length,
+      deepLink: summary.deepLink.cspViolations,
+      unknown: summary.unknownFinding.cspViolations,
+      malformed: summary.malformedHashes.map((entry) => entry.cspViolations),
+    };
+    summary.pageErrors = [
+      ...happy.pageErrors,
+      ...tamper.pageErrors,
+      ...deep.pageErrors,
+      ...unknown.pageErrors,
+      ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
+    ];
     summary.nonSameOriginRequests = [
-      ...new Set([...happyExternal, ...tamperExternal]),
+      ...new Set([
+        ...happyExternal,
+        ...tamperExternal,
+        ...deepClean.external,
+        ...unknownClean.external,
+        ...summary.malformedHashes.flatMap((entry) => entry.external),
+      ]),
     ];
 
     const missed = budgetRecords.filter((record) => !record.ok);

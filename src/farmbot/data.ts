@@ -27,6 +27,11 @@ import refsCartonJson from '../../farmbot/checks/refs-carton.json';
 import refsKitJson from '../../farmbot/checks/refs-kit.json';
 import refsPreassemblyJson from '../../farmbot/checks/refs-preassembly.json';
 import r5UnreadablePreassembliesJson from '../../farmbot/checks/r5-unreadable-preassemblies.json';
+import changedPartsJson from '../../farmbot/checks/changed-parts.json';
+import r6ChangesJson from '../../farmbot/checks/r6-changes.json';
+import r9ServiceUnmatchedJson from '../../farmbot/checks/r9-service-unmatched.json';
+import refsServiceJson from '../../farmbot/checks/refs-service.json';
+import unmatchedCandidatesJson from '../../farmbot/checks/unmatched-candidates.json';
 import allowedValuesJson from '../../farmbot/dist/farmbot.allowed-values.json';
 import partSourcesJson from '../../farmbot/dist/farmbot.part-sources.json';
 import findingsSidecar from '../../farmbot/dist/farmbot.findings.json.sha256?raw';
@@ -59,18 +64,23 @@ export const allowedValues = allowedValuesJson as AllowedValuesFile;
  * keys them. Every file comes from farmbot/checks/; no Intent JSON is copied.
  */
 export const checkIntents: Record<string, object> = {
+  'changed-parts.json': changedPartsJson,
   'r1-compared-in.json': r1ComparedInJson,
   'r1-for-variant.json': r1ForVariantJson,
   'r1-quantity-difference.json': r1QuantityDifferenceJson,
   'r2-assembly-unmatched.json': r2AssemblyUnmatchedJson,
   'r2-manufacturing-unmatched.json': r2ManufacturingUnmatchedJson,
   'r3-parts.json': r3PartsJson,
+  'r5-unreadable-preassemblies.json': r5UnreadablePreassembliesJson,
+  'r6-changes.json': r6ChangesJson,
+  'r9-service-unmatched.json': r9ServiceUnmatchedJson,
   'refs-assembly.json': refsAssemblyJson,
   'refs-bag.json': refsBagJson,
   'refs-carton.json': refsCartonJson,
   'refs-kit.json': refsKitJson,
   'refs-preassembly.json': refsPreassemblyJson,
-  'r5-unreadable-preassemblies.json': r5UnreadablePreassembliesJson,
+  'refs-service.json': refsServiceJson,
+  'unmatched-candidates.json': unmatchedCandidatesJson,
 };
 
 // The record must carry exactly the files the check engine asks for.

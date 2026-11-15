@@ -74,6 +74,25 @@ function summaryInputs(finding) {
     }
     case 'R5':
       return [page.sourceFile];
+    case 'R6': {
+      const files = finding.evidence
+        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [finding.subject.label, ...new Set(files)];
+    }
+    case 'R7':
+      return [part.facts.name];
+    case 'R8': {
+      const pages = finding.evidence
+        .filter((row) => row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [part.facts.name, ...new Set(pages)];
+    }
+    case 'R9': {
+      const reference = finding.evidence.find((row) => row.role === 'reference');
+      const service = finding.evidence.find((row) => row.role === 'service');
+      return [reference.facts.displayName, service.sourceFile];
+    }
     default:
       throw new Error(`no summary inputs for rule ${finding.rule}`);
   }
@@ -117,7 +136,7 @@ test('any other hash yields null', () => {
 
 test('the summary line is filled from evidence values in both languages', () => {
   const rules = [...new Set(findings.map((finding) => finding.rule))].sort();
-  assert.deepEqual(rules, ['R1', 'R2', 'R3', 'R4', 'R5']);
+  assert.deepEqual(rules, ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9']);
 
   for (const finding of findings) {
     const inputs = summaryInputs(finding);

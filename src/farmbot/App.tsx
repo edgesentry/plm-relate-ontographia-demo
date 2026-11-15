@@ -829,6 +829,22 @@ export function App() {
             </dd>
             <dt>{t('severityScoreLabel')}</dt>
             <dd data-testid="finding-score">{selectedFinding.severityScore}</dd>
+            {selectedFinding.rule === 'R6' && (
+              <>
+                <dt>{t('nameMatchLabel')}</dt>
+                <dd>
+                  <span
+                    className={`fact-label fact-label-${
+                      selectedFinding.inferred ? 'inference' : 'fact'
+                    }`}
+                    data-testid="finding-inferred"
+                    data-inferred={selectedFinding.inferred ? 'true' : 'false'}
+                  >
+                    {t(selectedFinding.inferred ? 'inferenceLabel' : 'factLabel')}
+                  </span>
+                </dd>
+              </>
+            )}
             <dt>{t('subjectLabel')}</dt>
             <dd>{selectedFinding.subject.label}</dd>
           </dl>

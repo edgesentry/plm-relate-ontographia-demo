@@ -1,0 +1,15 @@
+{
+  "start": { "class": "UnmatchedName", "alias": "unmatched" },
+  "traverse": [
+    {
+      "relationship": "CANDIDATE",
+      "direction": "out",
+      "to": { "class": "Part", "alias": "part" }
+    }
+  ],
+  "return": [
+    { "alias": "unmatched", "as_name": "unmatched" },
+    { "alias": "part", "as_name": "part" }
+  ],
+  "limit": 100
+}

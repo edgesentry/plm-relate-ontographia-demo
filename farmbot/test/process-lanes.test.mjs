@@ -256,6 +256,40 @@ test('the edge pattern of each rule comes from its evidence roles', () => {
     if (finding.rule === 'R1') {
       assert.equal(missing.length, 0, `${finding.id}: R1 has no missing edge`);
     }
+    if (finding.rule === 'R6') {
+      assert.ok(roles.has('design-change'), `${finding.id}: R6 has no design-change row`);
+      assert.ok(
+        roles.has('packing-structure') || roles.has('service'),
+        `${finding.id}: R6 has no downstream row`,
+      );
+    }
+    if (finding.rule === 'R8') {
+      assert.ok(roles.has('service'), `${finding.id}: R8 has no service row`);
+    }
+    if (finding.rule === 'R7') {
+      assert.equal(
+        missing.length,
+        finding.evidence.filter((row) => row.role === 'part').length * 3,
+        `${finding.id}: one missing edge per part and downstream lane`,
+      );
+    }
+    if (finding.rule === 'R8') {
+      assert.equal(
+        missing.length,
+        finding.evidence.filter((row) => row.role === 'part').length,
+        `${finding.id}: one missing edge per part`,
+      );
+    }
+    if (finding.rule === 'R9') {
+      assert.equal(
+        missing.length,
+        finding.evidence.filter((row) => row.role === 'reference').length,
+        `${finding.id}: one missing edge per unresolved service reference`,
+      );
+    }
+    if (finding.rule === 'R6') {
+      assert.equal(missing.length, 0, `${finding.id}: R6 has no missing edge`);
+    }
     for (const edge of edges) {
       assert.ok(edge.from !== edge.to, `${finding.id} has a self edge`);
       assert.ok(edge.kind === 'link' || edge.kind === 'missing', `${finding.id} edge kind`);
@@ -293,6 +327,51 @@ test('R2 links join a structure and a reference from the same source file', () =
   );
 });
 
+test('R6 diagrams put the design change upstream of packing and service', () => {
+  const r6 = findings.filter((finding) => finding.rule === 'R6');
+  assert.ok(r6.length > 0, 'the committed file has no R6 finding');
+
+  for (const finding of r6) {
+    const layout = layoutFinding(finding);
+    const changes = layout.nodes.filter((node) => node.lane === 'design-change');
+    assert.equal(changes.length, 1, `${finding.id}: expected one design-change node`);
+    const downstream = layout.edges.filter((edge) => edge.kind === 'link');
+    const reached = new Set([changes[0].id]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const edge of downstream) {
+        if (!reached.has(edge.from) || reached.has(edge.to)) continue;
+        reached.add(edge.to);
+        grew = true;
+      }
+    }
+    for (const node of layout.nodes) {
+      if (node.lane !== 'packing' && node.lane !== 'service') continue;
+      assert.ok(
+        reached.has(node.id),
+        `${finding.id}: ${node.id} is not downstream of the design change`,
+      );
+    }
+  }
+
+  const inferred = r6.find(
+    (finding) =>
+      finding.inferred === true &&
+      finding.evidence.some((row) => row.role === 'packing-structure') &&
+      finding.evidence.some((row) => row.role === 'service'),
+  );
+  assert.ok(inferred, 'the committed file has no inferred R6 finding with both paths');
+  assert.ok(
+    inferred.evidence.some((row) => row.role === 'packing-structure'),
+    `${inferred.id}: inferred finding has no packing path`,
+  );
+  assert.ok(
+    inferred.evidence.some((row) => row.role === 'service'),
+    `${inferred.id}: inferred finding has no service path`,
+  );
+});
+
 test('quantity labels carry the sign and class of their facts', () => {
   const r1 = findings.filter((finding) => finding.rule === 'R1');
   assert.ok(r1.length > 0, 'the committed file has no R1 finding');
@@ -326,7 +405,9 @@ test('problem nodes and the impacted path follow the highlight rules', () => {
       const expected = node.evidenceIndexes.some((index) => {
         const row = rows[index];
         if (row.role === 'quantity-difference') return true;
+        if (row.role === 'design-change') return true;
         if (row.role === 'reference') return row.facts.matchMethod === 'unmatched';
+        if (row.role === 'packing-line') return row.facts.matchMethod === 'unmatched';
         return subjectNodeId !== null && row.nodeId === subjectNodeId;
       });
       assert.equal(node.problem, expected, `${finding.id}/${node.id}: problem flag`);

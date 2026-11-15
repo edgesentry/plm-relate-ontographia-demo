@@ -20,18 +20,27 @@ import {
 } from './checks.mjs';
 import { compileCheck } from './compile.mjs';
 import { assignFindingIds, findingSubjectKey } from './ids.mjs';
+import { matchChangeNames, normalizeName } from './names.mjs';
 import { evaluateSeverity } from './severity.mjs';
 import {
+  changedNameCauses,
+  changedNameCountermeasures,
+  changedPartUnreachedCauses,
+  changedPartUnreachedCountermeasures,
   packedWithoutProcessCauses,
   packedWithoutProcessCountermeasures,
   quantityCauses,
   quantityCountermeasures,
+  serviceOnlyPartCauses,
+  serviceOnlyPartCountermeasures,
   unreadablePageCauses,
   unreadablePageCountermeasures,
   unreferencedPartCauses,
   unreferencedPartCountermeasures,
   unresolvedReferenceCauses,
   unresolvedReferenceCountermeasures,
+  unresolvedServiceCauses,
+  unresolvedServiceCountermeasures,
 } from './templates.mjs';
 import { nodeProperties } from './values.mjs';
 
@@ -150,6 +159,16 @@ function addToSetMap(map, key, value) {
 }
 
 /**
+ * Unique strings in code-unit order.
+ *
+ * @param {Iterable<string>} values
+ * @returns {string[]}
+ */
+function sortedUnique(values) {
+  return [...new Set(values)].sort(compareText);
+}
+
+/**
  * Read the check Intent files, compile each once, and execute it once.
  *
  * @param {CollectOptions} options
@@ -188,7 +207,7 @@ function runIntents(options) {
 }
 
 /**
- * Compile and execute every check Intent, evaluate R1-R5, and return the
+ * Compile and execute every check Intent, evaluate R1-R9, and return the
  * findings document as plain data. The caller serializes it canonically.
  *
  * @param {CollectOptions} options
@@ -274,6 +293,27 @@ export function collectFindings(options) {
     if (PACKING_INTENTS.includes(REFERENCE_INTENTS[reference.kind])) {
       addToSetMap(packingStructuresByPart, partName, reference.structure.id);
     }
+  }
+
+  // Service references are kept apart from `references`: R3 and R4 count the
+  // process and packing documents only, while R6-R9 read the service pages.
+  const serviceReferences = rows.get('refs-service.json').map((row) => ({
+    structure: nodeProperties(row.structure),
+    usage: nodeProperties(row.usage),
+    part: nodeProperties(row.part),
+  }));
+  /** @type {Map<string, Set<string>>} */
+  const serviceStructuresByPart = new Map();
+  /** @type {Map<string, Set<string>>} */
+  const reachStructuresByPart = new Map();
+  for (const [partName, structures] of allStructuresByPart) {
+    for (const id of structures) addToSetMap(reachStructuresByPart, partName, id);
+  }
+  for (const reference of serviceReferences) {
+    const partName = reference.part.name;
+    if (typeof partName !== 'string') throw new Error('service reference row has no part name');
+    addToSetMap(serviceStructuresByPart, partName, reference.structure.id);
+    addToSetMap(reachStructuresByPart, partName, reference.structure.id);
   }
 
   /** @type {Array<Record<string, unknown>>} */
@@ -598,6 +638,489 @@ export function collectFindings(options) {
       subject: { key: part.name, kind: 'part', label: part.name, nodeId: part.id },
       summary: `${part.name} is packed on ${files.join(', ')} but no assembly chapter or pre-assembly references it.`,
     });
+  }
+
+  // ---------------------------------------------------------------------
+  // R6-R9: Change Log and service-page rules.
+
+  const changes = rows
+    .get('r6-changes.json')
+    .map((row) => nodeProperties(row.change))
+    .sort((left, right) => compareText(String(left.id), String(right.id)));
+  const changeById = new Map(changes.map((change) => [change.id, change]));
+  const changedPartRows = rows
+    .get('changed-parts.json')
+    .map((row) => ({ change: nodeProperties(row.change), part: nodeProperties(row.part) }))
+    .sort((left, right) => compareText(String(left.part.id), String(right.part.id)));
+
+  // Every display name a packing or service page writes, resolved or not. The
+  // role is the page kind; the structure and usage nodes carry the citation.
+  /** @type {Array<{ displayName: string, resolvedPart: string | null, channel: 'packing' | 'service', structure: Record<string, unknown>, usage: Record<string, unknown> }>} */
+  const downstreamRecords = [];
+  for (const reference of references) {
+    if (!['bag', 'kit', 'carton'].includes(reference.kind)) continue;
+    if (typeof reference.usage.display_name !== 'string') continue;
+    downstreamRecords.push({
+      displayName: reference.usage.display_name,
+      resolvedPart:
+        typeof reference.part.name === 'string' ? reference.part.name : null,
+      channel: 'packing',
+      structure: reference.structure,
+      usage: reference.usage,
+    });
+  }
+  for (const row of rows.get('r2-manufacturing-unmatched.json')) {
+    const structure = nodeProperties(row.structure);
+    const usage = nodeProperties(row.usage);
+    if (typeof usage.display_name !== 'string') continue;
+    downstreamRecords.push({
+      displayName: usage.display_name,
+      resolvedPart: null,
+      channel: 'packing',
+      structure,
+      usage,
+    });
+  }
+  for (const reference of serviceReferences) {
+    if (typeof reference.usage.display_name !== 'string') continue;
+    downstreamRecords.push({
+      displayName: reference.usage.display_name,
+      resolvedPart: typeof reference.part.name === 'string' ? reference.part.name : null,
+      channel: 'service',
+      structure: reference.structure,
+      usage: reference.usage,
+    });
+  }
+  for (const row of rows.get('r9-service-unmatched.json')) {
+    const structure = nodeProperties(row.structure);
+    const usage = nodeProperties(row.usage);
+    if (typeof usage.display_name !== 'string') continue;
+    downstreamRecords.push({
+      displayName: usage.display_name,
+      resolvedPart: null,
+      channel: 'service',
+      structure,
+      usage,
+    });
+  }
+
+  /**
+   * @param {typeof downstreamRecords[number]} record
+   * @returns {Array<Record<string, unknown>>}
+   */
+  const downstreamEvidence = (record) => {    if (record.channel === 'packing') {
+      return [
+        {
+          nodeId: record.structure.id,
+          role: 'packing-structure',
+          sourceFile: record.structure.path ?? null,
+          line: null,
+          facts: { title: valueOrNull(record.structure.title) },
+        },
+        {
+          nodeId: record.usage.id,
+          role: 'packing-line',
+          sourceFile: record.structure.path ?? null,
+          line: valueOrNull(record.usage.line_number),
+          facts: {
+            displayName: valueOrNull(record.usage.display_name),
+            matchMethod: valueOrNull(record.usage.match_method),
+            quantity: valueOrNull(record.usage.quantity),
+            resolvedPart: valueOrNull(record.resolvedPart),
+          },
+        },
+      ];
+    }
+    return [
+      {
+        nodeId: record.structure.id,
+        role: 'service',
+        sourceFile: record.structure.path ?? null,
+        line: null,
+        facts: {
+          kind: valueOrNull(record.structure.kind),
+          title: valueOrNull(record.structure.title),
+        },
+      },
+      {
+        nodeId: record.usage.id,
+        role: 'reference',
+        sourceFile: record.structure.path ?? null,
+        line: valueOrNull(record.usage.line_number),
+        facts: {
+          displayName: valueOrNull(record.usage.display_name),
+          matchMethod: valueOrNull(record.usage.match_method),
+          resolvedPart: valueOrNull(record.resolvedPart),
+          sourceKind: 'service',
+        },
+      },
+    ];
+  };
+
+  /**
+   * The DesignChange nodes that link one part.
+   *
+   * @param {Array<{ change: Record<string, unknown>, part: Record<string, unknown> }>} rows
+   * @param {Map<string, Record<string, unknown>>} byId
+   * @param {string} partName
+   * @returns {Array<Record<string, unknown>>}
+   */
+  const changeNodesForPart = (entries, byId, partName) => {
+    const ids = [];
+    for (const entry of entries) {
+      if (entry.part.name !== partName) continue;
+      const id = /** @type {string} */ (entry.change.id);
+      if (!ids.includes(id)) ids.push(id);
+    }
+    return ids
+      .map((id) => byId.get(id))
+      .filter((change) => change !== undefined)
+      .sort((left, right) => compareText(String(left.id), String(right.id)));
+  };
+
+  /**
+   * @param {Record<string, unknown>} change
+   * @returns {Record<string, unknown>}
+   */
+  const changeEvidence = (change) => ({
+    nodeId: change.id,
+    role: 'design-change',
+    sourceFile: change.path ?? null,
+    line: valueOrNull(change.line),
+    facts: {
+      section: valueOrNull(change.section),
+      text: valueOrNull(change.text),
+    },
+  });
+
+  // R6: a Change Log name still appears on a packing or service page. A linked
+  // name is a fact; a removal statement matched by normalized name is inferred.
+  const changeMatches = matchChangeNames({
+    changes: changes.map((change) => ({
+      id: /** @type {string} */ (change.id),
+      text: /** @type {string} */ (change.text ?? ''),
+    })),
+    changedParts: changedPartRows.map((entry) => ({
+      changeId: /** @type {string} */ (entry.change.id),
+      partId: /** @type {string} */ (entry.part.id),
+      partName: /** @type {string} */ (entry.part.name),
+    })),
+    downstream: downstreamRecords,
+  });
+  for (const match of changeMatches) {
+    if (match.downstreamIndexes.length === 0) continue;
+    const records = match.downstreamIndexes.map((index) => downstreamRecords[index]);
+    const changeNodes = match.changeIds
+      .map((id) => changeById.get(id))
+      .filter((change) => change !== undefined)
+      .sort((left, right) => compareText(String(left.id), String(right.id)));
+    const part = match.partName
+      ? changedPartRows.find((entry) => entry.part.name === match.partName)?.part
+      : undefined;
+    const files = sortedUnique(
+      records
+        .map((record) => record.structure.path)
+        .filter((path) => typeof path === 'string' && path !== ''),
+    );
+    const sections = sortedUnique(
+      changeNodes.map((change) => String(change.section ?? '')).filter((text) => text !== ''),
+    );
+    /** @type {Array<Record<string, unknown>>} */
+    const evidence = [];
+    for (const change of changeNodes) {
+      evidence.push({
+        nodeId: change.id,
+        role: 'design-change',
+        sourceFile: change.path ?? null,
+        line: valueOrNull(change.line),
+        facts: {
+          section: valueOrNull(change.section),
+          text: valueOrNull(change.text),
+        },
+      });
+    }
+    if (part) {
+      evidence.push({
+        nodeId: part.id,
+        role: 'part',
+        sourceFile: sourceOf(/** @type {string} */ (part.id)),
+        line: null,
+        facts: {
+          categorySlug: valueOrNull(part.category_slug),
+          name: part.name,
+          slug: valueOrNull(part.slug),
+        },
+      });
+    }
+    for (const record of records) evidence.push(...downstreamEvidence(record));
+
+    const name = match.inferred ? match.displayName : match.partName ?? match.displayName;
+    findings.push({
+      causes: changedNameCauses({ files, inferred: match.inferred, name, sections }),
+      countermeasures: changedNameCountermeasures({ files, name }),
+      evidence: finalizeEvidence(evidence),
+      inferred: match.inferred,
+      queries: queryFor(ruleOf('R6')),
+      rule: 'R6',
+      severityFactors: {
+        overlap: 0,
+        processesReached: new Set(records.map((record) => record.structure.id)).size,
+        productVariantsReached: match.inferred || !part ? 0 : declaredVariantCount(part),
+        quantityDifference: 0,
+      },
+      subject: match.inferred
+        ? { key: match.key, kind: 'name', label: match.displayName, nodeId: null }
+        : {
+            key: /** @type {string} */ (match.partName),
+            kind: 'part',
+            label: /** @type {string} */ (match.partName),
+            nodeId: part ? part.id : null,
+          },
+      summary: match.inferred
+        ? `The Change Log removal statement names "${match.displayName}", but ${files.join(', ')} still list it.`
+        : `The Change Log links "${match.partName}", but ${files.join(', ')} still list it.`,
+    });
+  }
+
+  // R7: a changed part that reaches no assembly chapter, pre-assembly, packing
+  // list or service page. R5 pages and unresolved names are cause candidates.
+  /** @type {Map<string, Set<string>>} */
+  const unresolvedByPart = new Map();
+  for (const row of rows.get('unmatched-candidates.json')) {
+    const unmatched = nodeProperties(row.unmatched);
+    const part = nodeProperties(row.part);
+    if (typeof unmatched.display_name !== 'string' || typeof part.name !== 'string') continue;
+    addToSetMap(unresolvedByPart, part.name, unmatched.display_name);
+  }
+  /** @type {Map<string, Record<string, unknown>>} */
+  const changedPartsByName = new Map();
+  for (const entry of changedPartRows) {
+    const name = /** @type {string} */ (entry.part.name);
+    if (!changedPartsByName.has(name)) changedPartsByName.set(name, entry.part);
+  }
+  for (const part of [...changedPartsByName.values()].sort((left, right) =>
+    compareText(String(left.id), String(right.id)),
+  )) {
+    const partName = /** @type {string} */ (part.name);
+    if ((reachStructuresByPart.get(partName)?.size ?? 0) > 0) continue;
+    const partChanges = changeNodesForPart(changedPartRows, changeById, partName);
+    const evidence = [...partChanges.map((change) => changeEvidence(change))];
+    evidence.push({
+      nodeId: part.id,
+      role: 'part',
+      sourceFile: sourceOf(/** @type {string} */ (part.id)),
+      line: null,
+      facts: {
+        categorySlug: valueOrNull(part.category_slug),
+        name: part.name,
+        slug: valueOrNull(part.slug),
+      },
+    });
+    const unresolvedNames = sortedUnique(unresolvedByPart.get(partName) ?? []);
+    findings.push({
+      causes: changedPartUnreachedCauses({ partName, r5Paths, unresolvedNames }),
+      countermeasures: changedPartUnreachedCountermeasures({ partName }),
+      evidence: finalizeEvidence(evidence),
+      inferred: false,
+      queries: queryFor(ruleOf('R7')),
+      rule: 'R7',
+      severityFactors: {
+        overlap: 0,
+        processesReached: 0,
+        productVariantsReached: declaredVariantCount(part),
+        quantityDifference: 0,
+      },
+      subject: { key: partName, kind: 'part', label: partName, nodeId: part.id },
+      summary: `${partName} changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page.`,
+    });
+  }
+
+  // R8: a part named by a service page that no assembly chapter or pre-assembly
+  // references. A packed part and a part referenced by nothing are the two
+  // shapes the rule reports.
+  /** @type {Map<string, Record<string, unknown>>} */
+  const servicePartByName = new Map();
+  for (const reference of serviceReferences) {
+    const name = /** @type {string} */ (reference.part.name);
+    if (!servicePartByName.has(name)) servicePartByName.set(name, reference.part);
+  }
+  for (const part of [...servicePartByName.values()].sort((left, right) =>
+    compareText(String(left.id), String(right.id)),
+  )) {
+    const partName = /** @type {string} */ (part.name);
+    if (processStructuresByPart.has(partName)) continue;
+    const serviceRows = serviceReferences
+      .filter((reference) => reference.part.name === partName)
+      .sort((left, right) => compareText(String(left.structure.id), String(right.structure.id)));
+    const packedRows = (referencesByPart.get(partName) ?? [])
+      .filter((reference) => PACKING_INTENTS.includes(REFERENCE_INTENTS[reference.kind]))
+      .sort((left, right) => compareText(String(left.structure.id), String(right.structure.id)));
+    const evidence = [
+      {
+        nodeId: part.id,
+        role: 'part',
+        sourceFile: sourceOf(/** @type {string} */ (part.id)),
+        line: null,
+        facts: {
+          categorySlug: valueOrNull(part.category_slug),
+          name: part.name,
+          slug: valueOrNull(part.slug),
+        },
+      },
+    ];
+    for (const reference of serviceRows) {
+      evidence.push(
+        ...downstreamEvidence({
+          channel: 'service',
+          displayName: String(reference.usage.display_name ?? ''),
+          resolvedPart: partName,
+          structure: reference.structure,
+          usage: reference.usage,
+        }),
+      );
+    }
+    for (const reference of packedRows) {
+      evidence.push(
+        ...downstreamEvidence({
+          channel: 'packing',
+          displayName: String(reference.usage.display_name ?? ''),
+          resolvedPart: partName,
+          structure: reference.structure,
+          usage: reference.usage,
+        }),
+      );
+    }
+    const servicePages = sortedUnique(
+      serviceRows
+        .map((reference) => reference.structure.path)
+        .filter((path) => typeof path === 'string' && path !== ''),
+    );
+    const packedFiles = sortedUnique(
+      packedRows
+        .map((reference) => reference.structure.path)
+        .filter((path) => typeof path === 'string' && path !== ''),
+    );
+    findings.push({
+      causes: serviceOnlyPartCauses({
+        packedFiles,
+        partName,
+        r5Paths,
+        servicePages,
+        unreferenced: !packingStructuresByPart.has(partName),
+      }),
+      countermeasures: serviceOnlyPartCountermeasures({ partName }),
+      evidence: finalizeEvidence(evidence),
+      inferred: false,
+      queries: queryFor(ruleOf('R8')),
+      rule: 'R8',
+      severityFactors: {
+        overlap: 0,
+        processesReached: new Set([
+          ...serviceRows.map((reference) => reference.structure.id),
+          ...packedRows.map((reference) => reference.structure.id),
+        ]).size,
+        productVariantsReached: declaredVariantCount(part),
+        quantityDifference: 0,
+      },
+      subject: { key: partName, kind: 'part', label: partName, nodeId: part.id },
+      summary: `${partName} is named on ${servicePages.join(', ')} but no assembly chapter or pre-assembly references it.`,
+    });
+  }
+
+  // R9: an unresolved service-page reference, with the candidate parts the
+  // extract recorded and the packing or assembly pages that use the same name.
+  /** @type {Map<string, Set<string>>} */
+  const candidatesByNormalized = new Map();
+  /** @type {Map<string, Record<string, unknown>>} */
+  const candidatePartsByName = new Map();
+  for (const row of rows.get('unmatched-candidates.json')) {
+    const unmatched = nodeProperties(row.unmatched);
+    const part = nodeProperties(row.part);
+    if (typeof unmatched.display_name !== 'string' || typeof part.name !== 'string') continue;
+    addToSetMap(candidatesByNormalized, normalizeName(unmatched.display_name), part.name);
+    if (!candidatePartsByName.has(part.name)) candidatePartsByName.set(part.name, part);
+  }
+  /** @type {Map<string, Set<string>>} */
+  const unresolvedFilesByNormalized = new Map();
+  for (const [displayName, list] of unresolvedByName) {
+    for (const entry of list) {
+      const path = entry.structure.path;
+      if (typeof path !== 'string' || path === '') continue;
+      addToSetMap(unresolvedFilesByNormalized, normalizeName(displayName), path);
+    }
+  }
+  /** @type {Map<string, Array<{ structure: Record<string, unknown>, usage: Record<string, unknown> }>>} */
+  const unresolvedServiceByName = new Map();
+  for (const row of rows.get('r9-service-unmatched.json')) {
+    const structure = nodeProperties(row.structure);
+    const usage = nodeProperties(row.usage);
+    const displayName =
+      typeof usage.display_name === 'string' ? usage.display_name : String(usage.id);
+    let list = unresolvedServiceByName.get(displayName);
+    if (!list) {
+      list = [];
+      unresolvedServiceByName.set(displayName, list);
+    }
+    list.push({ structure, usage });
+  }
+  for (const [displayName, list] of [...unresolvedServiceByName.entries()].sort(
+    ([left], [right]) => compareText(left, right),
+  )) {
+    const candidates = sortedUnique(candidatesByNormalized.get(normalizeName(displayName)) ?? []);
+    const r2Names = sortedUnique(
+      unresolvedFilesByNormalized.get(normalizeName(displayName)) ?? [],
+    );
+    const evidence = [];
+    for (const entry of list) evidence.push(...downstreamEvidence({
+      channel: 'service',
+      displayName,
+      resolvedPart: null,
+      structure: entry.structure,
+      usage: entry.usage,
+    }));
+    for (const candidate of candidates) {
+      const part = candidatePartsByName.get(candidate);
+      if (!part) continue;
+      evidence.push({
+        nodeId: part.id,
+        role: 'part',
+        sourceFile: sourceOf(/** @type {string} */ (part.id)),
+        line: null,
+        facts: {
+          candidate: true,
+          categorySlug: valueOrNull(part.category_slug),
+          name: candidate,
+          slug: valueOrNull(part.slug),
+        },
+      });
+    }
+    const page = sortedUnique(
+      list
+        .map((entry) => entry.structure.path)
+        .filter((path) => typeof path === 'string' && path !== ''),
+    )[0] ?? '';
+    findings.push({
+      causes: unresolvedServiceCauses({ candidates, displayName, page, r2Names }),
+      countermeasures: unresolvedServiceCountermeasures({ displayName, page }),
+      evidence: finalizeEvidence(evidence),
+      inferred: false,
+      queries: queryFor(ruleOf('R9')),
+      rule: 'R9',
+      severityFactors: {
+        overlap: 0,
+        processesReached: new Set(list.map((entry) => entry.structure.id)).size,
+        productVariantsReached: 0,
+        quantityDifference: 0,
+      },
+      subject: { key: displayName, kind: 'unresolved-name', label: displayName, nodeId: null },
+      summary: `"${displayName}" appears on ${page} and resolves to no part.`,
+    });
+  }
+
+  // Every finding states whether its name match is a fact or an inference.
+  // Only R6 can be inferred; the other rules copy values or subtract sets.
+  for (const finding of findings) {
+    if (typeof finding.inferred !== 'boolean') finding.inferred = false;
   }
 
   // Overlap: the number of other findings with the same subject node id. A

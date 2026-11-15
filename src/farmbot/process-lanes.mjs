@@ -47,12 +47,14 @@ const STRUCTURE_LANES = Object.freeze({
   preassembly: 'assembly',
   container: 'packing',
   bag: 'packing',
+  service: 'service',
 });
 
 const USAGE_LANES = Object.freeze({
   assembly: 'assembly',
   preassembly: 'assembly',
   packing: 'packing',
+  service: 'service',
 });
 
 /** Code-unit comparison, independent of locale and input order. */
@@ -194,6 +196,17 @@ export function orderEvidenceRows(finding) {
  * - R4: the part → every packing line → the packing structure, plus a missing
  *   edge from the part to the assembly lane.
  * - R5: no edges; the page node stands alone.
+ * - R6: the design change → the part (fact) or → the matching downstream rows
+ *   (inferred); the part → each packing line and service reference that
+ *   resolves to it; a packing line → its packing structure; a service
+ *   reference → its service page, joined by the shared source file.
+ * - R7: the design change → the part, plus a missing edge from the part to the
+ *   assembly, packing and service lanes.
+ * - R8: the part → each service reference → its service page and → each
+ *   packing line → its packing structure, plus a missing edge from the part to
+ *   the assembly lane.
+ * - R9: the service page → its unresolved reference (shared source file), plus
+ *   a missing edge from the reference to the EBOM lane.
  *
  * A `missing` edge ends at a lane-level placeholder (`lane:<lane id>`), never
  * at an invented node. Rules without a pattern yield no edges.
@@ -257,6 +270,80 @@ export function edgesForFinding(finding) {
       for (const structure of structures) add(line, structure);
     }
     for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+  } else if (rule === 'R6' || rule === 'R8') {
+    const changes = uniqueNodeIds(rows, 'design-change');
+    const lines = uniqueNodeIds(rows, 'packing-line');
+    const structures = uniqueNodeIds(rows, 'packing-structure');
+    const references = uniqueNodeIds(rows, 'reference');
+    const services = uniqueNodeIds(rows, 'service');
+    const referenceFiles = sourceFilesByNodeId(rows, 'reference');
+    const serviceFiles = sourceFilesByNodeId(rows, 'service');
+
+    // The usage row records which part it resolved to, so a part-to-usage link
+    // is drawn only when that row names it.
+    const resolvedPartOf = new Map();
+    for (const row of rows) {
+      const resolved = row.facts && row.facts.resolvedPart;
+      if (typeof resolved === 'string') resolvedPartOf.set(row.nodeId, resolved);
+    }
+    const partName = (nodeId) =>
+      typeof nodeId === 'string' && nodeId.startsWith('part:') ? nodeId.slice(5) : '';
+
+    for (const change of changes) {
+      for (const part of parts) add(change, part);
+    }
+    if (parts.length === 0) {
+      for (const change of changes) {
+        for (const line of lines) add(change, line);
+        for (const reference of references) add(change, reference);
+      }
+    }
+    for (const part of parts) {
+      for (const line of lines) {
+        if (resolvedPartOf.get(line) === partName(part)) add(part, line);
+      }
+      for (const reference of references) {
+        if (resolvedPartOf.get(reference) === partName(part)) add(part, reference);
+      }
+    }
+    if (rule === 'R8') {
+      for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+    }
+    for (const line of lines) {
+      for (const structure of structures) add(line, structure);
+    }
+    for (const reference of references) {
+      for (const service of services) {
+        if (sharesSourceFile(serviceFiles.get(service), referenceFiles.get(reference))) {
+          add(reference, service);
+        }
+      }
+    }
+  } else if (rule === 'R7') {
+    const changes = uniqueNodeIds(rows, 'design-change');
+    for (const change of changes) {
+      for (const part of parts) add(change, part);
+    }
+    for (const part of parts) {
+      add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+      add(part, `${PLACEHOLDER_PREFIX}packing`, 'missing');
+      add(part, `${PLACEHOLDER_PREFIX}service`, 'missing');
+    }
+  } else if (rule === 'R9') {
+    const references = uniqueNodeIds(rows, 'reference');
+    const services = uniqueNodeIds(rows, 'service');
+    const referenceFiles = sourceFilesByNodeId(rows, 'reference');
+    const serviceFiles = sourceFilesByNodeId(rows, 'service');
+    for (const service of services) {
+      for (const reference of references) {
+        if (sharesSourceFile(serviceFiles.get(service), referenceFiles.get(reference))) {
+          add(service, reference);
+        }
+      }
+    }
+    for (const reference of references) {
+      add(reference, `${PLACEHOLDER_PREFIX}ebom-part`, 'missing');
+    }
   }
 
   const seen = new Map();
@@ -296,6 +383,9 @@ function labelOf(row) {
     if (typeof facts.version === 'string' && facts.version !== '') return facts.version;
     return row.nodeId;
   }
+  if (row.role === 'design-change' && typeof facts.section === 'string' && facts.section !== '') {
+    return facts.section;
+  }
   for (const value of [facts.displayName, facts.name, facts.title]) {
     if (typeof value === 'string' && value.trim() !== '') return value;
   }
@@ -313,7 +403,9 @@ function metaOf(row) {
 
 function isProblemRow(row, subjectNodeId) {
   if (row.role === 'quantity-difference') return true;
+  if (row.role === 'design-change') return true;
   if (row.role === 'reference' && row.facts && row.facts.matchMethod === 'unmatched') return true;
+  if (row.role === 'packing-line' && row.facts && row.facts.matchMethod === 'unmatched') return true;
   return subjectNodeId !== null && row.nodeId === subjectNodeId;
 }
 

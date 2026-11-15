@@ -1,10 +1,10 @@
 {
   "format": "farmbot-notify-v1",
-  "findingsDigest": "farmbot-findings-v1 sha256:41f33b8580ea58c5e0221d918a99d187e37c4aad2c57350afd7017b16316b987",
+  "findingsDigest": "farmbot-findings-v1 sha256:d50b8806b448b0d23ec7c9173c334c275fad12577b7849a132bcd6d8616cfe0d",
   "severityCounts": {
     "action": 11,
-    "review": 3,
-    "info": 72
+    "review": 6,
+    "info": 90
   },
   "findings": [
     {
@@ -186,7 +186,7 @@
       "id": "R3-10mm-nut-bar",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "10mm Nut Bar is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -214,7 +214,7 @@
       "id": "R3-30mm-cable-carrier-mount",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "30mm Cable Carrier Mount is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -228,7 +228,7 @@
       "id": "R3-5-5mm-and-8mm-combo-wrench",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "5.5mm and 8mm Combo Wrench is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -298,7 +298,7 @@
       "id": "R3-left-gantry-corner-bracket",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "Left Gantry Corner Bracket is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -389,7 +389,7 @@
       "id": "R3-shunt",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "Shunt is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -410,14 +410,14 @@
       "id": "R3-t10-bit",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "T10 Bit is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
       "id": "R3-t25-wood-screw",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "T25 Wood Screw is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -473,7 +473,7 @@
       "id": "R3-z-axis-extrusion",
       "rule": "R3",
       "severity": "info",
-      "severityScore": 2,
+      "severityScore": 4,
       "summary": "Z-Axis Extrusion is referenced by no assembly chapter, pre-assembly, bag or packing list."
     },
     {
@@ -522,7 +522,7 @@
       "id": "R4-leadscrew-block",
       "rule": "R4",
       "severity": "info",
-      "severityScore": 4,
+      "severityScore": 6,
       "summary": "Leadscrew Block is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
     },
     {
@@ -536,7 +536,7 @@
       "id": "R4-pressure-regulator",
       "rule": "R4",
       "severity": "info",
-      "severityScore": 4,
+      "severityScore": 6,
       "summary": "Pressure Regulator is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
     },
     {
@@ -550,7 +550,7 @@
       "id": "R4-shaft-coupler",
       "rule": "R4",
       "severity": "info",
-      "severityScore": 4,
+      "severityScore": 6,
       "summary": "Shaft Coupler is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
     },
     {
@@ -608,6 +608,153 @@
       "severity": "info",
       "severityScore": 2,
       "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/z-axis.md has no machine-readable parts table."
+    },
+    {
+      "id": "R6-90-degree-barb",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+    },
+    {
+      "id": "R6-belt-clip",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"Belt Clip\", but v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+    },
+    {
+      "id": "R6-crop-stickers",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The Change Log removal statement names \"Crop Stickers\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+    },
+    {
+      "id": "R6-gantry-column",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+    },
+    {
+      "id": "R6-power-supply",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"Power Supply\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it."
+    },
+    {
+      "id": "R6-ptfe-tape",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+    },
+    {
+      "id": "R6-tee-nuts",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log removal statement names \"Tee Nuts\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/hardware-kit.md still list it."
+    },
+    {
+      "id": "R6-track-extrusion",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still list it."
+    },
+    {
+      "id": "R6-x-axis-cable-carrier",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"X-Axis Cable Carrier\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still list it."
+    },
+    {
+      "id": "R7-10mm-nut-bar",
+      "rule": "R7",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "10mm Nut Bar changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page."
+    },
+    {
+      "id": "R7-30mm-cable-carrier-mount",
+      "rule": "R7",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "30mm Cable Carrier Mount changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page."
+    },
+    {
+      "id": "R7-5-5mm-and-8mm-combo-wrench",
+      "rule": "R7",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "5.5mm and 8mm Combo Wrench changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page."
+    },
+    {
+      "id": "R7-left-gantry-corner-bracket",
+      "rule": "R7",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Left Gantry Corner Bracket changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page."
+    },
+    {
+      "id": "R7-t10-bit",
+      "rule": "R7",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "T10 Bit changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page."
+    },
+    {
+      "id": "R7-t25-wood-screw",
+      "rule": "R7",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "T25 Wood Screw changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page."
+    },
+    {
+      "id": "R8-leadscrew-block",
+      "rule": "R8",
+      "severity": "info",
+      "severityScore": 8,
+      "summary": "Leadscrew Block is named on v1.7/extras/troubleshooting/z-axis-movements.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R8-pressure-regulator",
+      "rule": "R8",
+      "severity": "info",
+      "severityScore": 8,
+      "summary": "Pressure Regulator is named on v1.7/extras/troubleshooting/water-pressure.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R8-shaft-coupler",
+      "rule": "R8",
+      "severity": "info",
+      "severityScore": 8,
+      "summary": "Shaft Coupler is named on v1.7/extras/troubleshooting/z-axis-movements.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R8-shunt",
+      "rule": "R8",
+      "severity": "info",
+      "severityScore": 6,
+      "summary": "Shunt is named on v1.7/extras/troubleshooting/tool-verification.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R8-z-axis-extrusion",
+      "rule": "R8",
+      "severity": "info",
+      "severityScore": 6,
+      "summary": "Z-Axis Extrusion is named on v1.7/extras/troubleshooting/z-axis-movements.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R9-tee-nuts",
+      "rule": "R9",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"tee nuts\" appears on v1.7/extras/maintenance/storing-farmbot-for-winter.md and resolves to no part."
     }
   ],
   "rules": [
@@ -630,6 +777,22 @@
     {
       "id": "R5",
       "title": "A pre-assembly page has no machine-readable parts table"
+    },
+    {
+      "id": "R6",
+      "title": "A name changed or removed in the Change Log still appears in packing or service pages"
+    },
+    {
+      "id": "R7",
+      "title": "A changed part reaches no assembly chapter, pre-assembly, packing list or service page"
+    },
+    {
+      "id": "R8",
+      "title": "A part named by a service page is absent from assembly chapters and pre-assemblies"
+    },
+    {
+      "id": "R9",
+      "title": "A service-page reference does not resolve to a part"
     }
   ]
 }

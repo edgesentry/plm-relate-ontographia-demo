@@ -1,0 +1,15 @@
+{
+  "start": { "class": "DesignChange", "alias": "change" },
+  "traverse": [
+    {
+      "relationship": "AFFECTS_PART",
+      "direction": "out",
+      "to": { "class": "Part", "alias": "part" }
+    }
+  ],
+  "return": [
+    { "alias": "change", "as_name": "change" },
+    { "alias": "part", "as_name": "part" }
+  ],
+  "limit": 100
+}

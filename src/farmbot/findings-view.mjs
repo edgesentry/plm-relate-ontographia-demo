@@ -175,6 +175,55 @@ function summaryValues(finding) {
       path: text(page?.sourceFile) || text(finding.subject?.key) || fallback,
     };
   }
+  if (rule === 'R6') {
+    const rows = Array.isArray(finding.evidence) ? finding.evidence : [];
+    const files = [
+      ...new Set(
+        rows
+          .filter((row) => row && (row.role === 'packing-structure' || row.role === 'service'))
+          .map((row) => text(row.sourceFile))
+          .filter((file) => file !== ''),
+      ),
+    ].sort();
+    const sections = [
+      ...new Set(
+        rows
+          .filter((row) => row && row.role === 'design-change')
+          .map((row) => text(fact(row, 'section')))
+          .filter((section) => section !== ''),
+      ),
+    ].sort();
+    return { name: fallback, files, sections, inferred: finding.inferred === true };
+  }
+  if (rule === 'R7') {
+    return { partName: text(fact(part, 'name')) || fallback };
+  }
+  if (rule === 'R8') {
+    const servicePages = [
+      ...new Set(
+        (Array.isArray(finding.evidence) ? finding.evidence : [])
+          .filter((row) => row && row.role === 'service')
+          .map((row) => text(row.sourceFile))
+          .filter((file) => file !== ''),
+      ),
+    ].sort();
+    return { partName: text(fact(part, 'name')) || fallback, servicePages };
+  }
+  if (rule === 'R9') {
+    const references = (Array.isArray(finding.evidence) ? finding.evidence : []).filter(
+      (row) => row && row.role === 'reference',
+    );
+    const services = (Array.isArray(finding.evidence) ? finding.evidence : []).filter(
+      (row) => row && row.role === 'service',
+    );
+    const pages = [
+      ...new Set(services.map((row) => text(row.sourceFile)).filter((file) => file !== '')),
+    ].sort();
+    return {
+      displayName: text(fact(references[0], 'displayName')) || text(finding.subject?.key),
+      page: pages[0] ?? text(references[0]?.sourceFile),
+    };
+  }
   return { subject: fallback };
 }
 
@@ -216,6 +265,27 @@ export function summaryLine(finding, lang) {
     if (rule === 'R5') {
       return `プリ組立ページ ${values.path} には機械可読な部品表がありません。`;
     }
+    if (rule === 'R6') {
+      return (
+        `"${values.name}" は変更ログで変更または削除されましたが、` +
+        `${values.files.join('、')} に依然として記載されています。`
+      );
+    }
+    if (rule === 'R7') {
+      return (
+        `${values.partName} は変更ログで変更されましたが、組立チャプタ、プリ組立、` +
+        '梱包リスト、サービスページのいずれにも現れません。'
+      );
+    }
+    if (rule === 'R8') {
+      return (
+        `${values.partName} は ${values.servicePages.join('、')} で名前が挙がっていますが、` +
+        '組立チャプタからもプリ組立からも参照されていません。'
+      );
+    }
+    if (rule === 'R9') {
+      return `"${values.displayName}" は ${values.page} に現れ、どの部品にも解決しません。`;
+    }
     return `${values.subject} に関する検出です。`;
   }
 
@@ -236,6 +306,19 @@ export function summaryLine(finding, lang) {
   }
   if (rule === 'R5') {
     return `The pre-assembly page ${values.path} has no machine-readable parts table.`;
+  }
+  if (rule === 'R6') {
+    const verb = values.inferred ? 'Change Log removal statement names' : 'Change Log links';
+    return `The ${verb} "${values.name}", but ${values.files.join(', ')} still list it.`;
+  }
+  if (rule === 'R7') {
+    return `${values.partName} changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page.`;
+  }
+  if (rule === 'R8') {
+    return `${values.partName} is named on ${values.servicePages.join(', ')} but no assembly chapter or pre-assembly references it.`;
+  }
+  if (rule === 'R9') {
+    return `"${values.displayName}" appears on ${values.page} and resolves to no part.`;
   }
   return `Finding about ${values.subject}.`;
 }

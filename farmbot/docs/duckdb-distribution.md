@@ -34,6 +34,15 @@ After a successful build:
   runs of the same extract: the logical rows are the same, but a small
   number of storage bytes change. The sidecar is tracked.
 
+The current schema version is **2**. Schema version 1 had the same tables
+except `change_note`, `change_note_link`, `service_page` and
+`service_reference`; those four tables were added in version 2. Its canonical
+digest was `6c32e7067b21679531fd7b6959670b76dcad461227137c96e54078a70ac3ee84`.
+The current digest is
+`9bf30774ca18b815d2c7ba2bc6f221a0bf0e9e03acdeb1d11676b8cb22c4c040`.
+Every schema version 1 table keeps the same logical dump, so only
+`extract_metadata` and the four new tables differ.
+
 `npm run test:farmbot` rebuilds the database, computes the canonical digest,
 and compares it with the tracked sidecar. The test is scoped to the FarmBot
 tree and is not part of `npm run verify` or `npm run smoke`.
@@ -80,7 +89,22 @@ node --input-type=module -e "import { canonicalDigest } from './farmbot/scripts/
 | `quantity_comparison` | Packing-list quantity sums compared with part-page quantities, per page and version. |
 | `quantity_difference` | The subset of comparisons whose plain-count quantities disagree. |
 | `unmatched_name` | Display names that did not resolve, with source counts and diagnostic candidates. |
-| `extract_metadata` | Source pin, source label, schema version, row counts, and DuckDB version. |
+| `change_note` | One row per text unit of the v1.7 Change Log page: the section heading, the 0-based unit index within the section, the raw source text (plain text, no HTML rendering), the 1-based first source line, the linked display names in order, the link count, and a resolution status (`no_links`, `all_resolved`, `none_resolved` or `partially_resolved`). A unit is one paragraph or one list item; image-only lines and blank lines end a unit and are not units themselves. |
+| `change_note_link` | One row per `[[part name]]` link in the Change Log, in section/unit order: the section, unit index, 0-based link index within the unit, line, display name, normalized name, resolved part, match method and diagnostic candidates. |
+| `service_page` | Every troubleshooting or maintenance page under `v1.7/extras/troubleshooting/` and `v1.7/extras/maintenance/` that carries at least one part link: path, frontmatter title, kind (`troubleshooting` or `maintenance`) and reference count. Pages with no part links are not listed. `pallet-stacking.md` lives under `v1.7/manufacturing/packing/`, so it is not a service page at all. |
+| `service_reference` | One row per part link on a service page: page path, 1-based line, 0-based occurrence within the line, display name, normalized name, resolved part (null when unresolved), match method (`exact`, `normalized`, `singular`, `ambiguous` or `unmatched`) and diagnostic candidates. Rows are unique by (page, line, display name, occurrence), so the same name linked twice on one line keeps two rows. Unresolved service links are recorded here only; they are not added to `unmatched_name`, whose logical dump is unchanged. |
+| `extract_metadata` | Source pin, source label, schema version, row counts, and DuckDB version. Key `change_note_count` (23), `change_link_count` (19), `change_link_resolved_count` (19), `service_page_count` (5), `service_reference_count` (23) and `service_reference_resolved_count` (22). |
+
+The Change Log and service tables are extract-only: the graph seed does not map
+them, and the ontology change is a separate step.
+
+The current pinned source yields 9 Change Log sections and 23 text units; all
+19 Change Log links resolve. Fifteen pages make up the two service directories
+(nine troubleshooting, six maintenance); five of them carry part links, so
+`service_page` has 5 rows (3 troubleshooting, 2 maintenance). Those five pages
+hold 23 links, 22 of which resolve. The one unresolved name is `tee nuts`,
+recorded in `service_reference` with a null `resolved_part` and not added to
+`unmatched_name`.
 
 Name matching rules and the meaning of `not_comparable` are documented in
 `farmbot/docs/name-normalization.md`.

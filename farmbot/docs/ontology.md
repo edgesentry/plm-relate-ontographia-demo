@@ -13,6 +13,13 @@ names that the extract derives. It exists so that intents can be compiled
 into Cypher against a named, typed schema instead of against column names
 guessed at query time.
 
+The extract also carries the Change Log notes and the troubleshooting and
+maintenance service pages (`change_note`, `change_note_link`,
+`service_page`, `service_reference`). Those tables are not yet mapped to
+graph classes: the graph and the seed are unchanged, and this ontology does
+not declare them. Mapping them is a separate step that would change the seed
+digest.
+
 The file is self-contained. It does not import, extend, wrap or copy any
 other ontology in this repository or elsewhere, and it is not tied to the
 unrelated product-structure demo that also lives here: different namespace,
@@ -280,6 +287,18 @@ the row's keys.
 | reference_count | integer | `reference_count` |
 | source_kinds | string | `source_kinds` |
 | status | string | `status` |
+
+### Extract-only tables (`change_note`, `change_note_link`, `service_page`, `service_reference`)
+
+These four tables are in the extract but have no class in this ontology, so
+the generator never reads them and the seed is unchanged.
+
+| Table | Contents |
+|---|---|
+| `change_note` | One row per text unit of the v1.7 Change Log page: `section`, the 0-based `bullet` (unit index within the section), the raw `text`, the 1-based `line_number` of the unit's first line, `linked_names` (comma-separated display names in order), `link_count`, and `resolution` (`no_links`, `all_resolved`, `none_resolved`, `partially_resolved`). Rows are unique by (`section`, `bullet`). |
+| `change_note_link` | One row per Change Log part link: `section`, `bullet`, 0-based `link_index` within the unit, `line_number`, `display_name`, `normalized_name`, `resolved_part`, `match_method`, `candidates`. |
+| `service_page` | Every page under `v1.7/extras/troubleshooting/` and `v1.7/extras/maintenance/` with at least one part link: `path`, `title`, `kind` (`troubleshooting` or `maintenance`), `reference_count`. |
+| `service_reference` | One row per part link on those pages: `page_path`, `line_number`, 0-based `occurrence` within the line, `display_name`, `normalized_name`, `resolved_part`, `match_method`, `candidates`. Rows are unique by (`page_path`, `line_number`, `display_name`, `occurrence`). Unresolved service links stay here and are not added to `unmatched_name`. |
 
 ## Modelling rules
 

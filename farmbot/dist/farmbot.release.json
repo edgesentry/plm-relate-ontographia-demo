@@ -7,7 +7,7 @@
   "duckdb": {
     "file": "farmbot.duckdb",
     "digestFormat": "farmbot-canonical-v1",
-    "sha256": "6c32e7067b21679531fd7b6959670b76dcad461227137c96e54078a70ac3ee84"
+    "sha256": "9bf30774ca18b815d2c7ba2bc6f221a0bf0e9e03acdeb1d11676b8cb22c4c040"
   },
   "relateStore": {
     "file": "farmbot-relate-store.tar.gz",

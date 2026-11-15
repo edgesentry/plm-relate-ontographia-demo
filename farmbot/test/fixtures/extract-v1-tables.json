@@ -1,0 +1,27 @@
+{
+  "format": "farmbot-extract-tables-fixture-v1",
+  "tables": {
+    "assembly_page": "127fdeba7a4157dea2ceec334b43e2cea6f372c7f57d8e9a7000c5d531aa374c",
+    "assembly_reference": "38522ca7718542d89ce882acd2f9181117aaab35bc015351d00a36cfa91201c1",
+    "bom_category": "7322eb7c8dd701a40cd6c40d062e3ef2bd0ac801d96feeb0ab5c65e7558e6bb3",
+    "packing_item": "4a9c3881834efcbb1680a6d9250bcfe889a71f2c97f71d6e5f7573dbb5a9caa6",
+    "packing_page": "0de072217a08187a392a09a76f20b8861eacc5cc68d09922cbf2642ff3fe8149",
+    "part": "8987a44362da47fd54b9ef51415f2dd41b37fbd25ef572bf71ae6baad69f2a20",
+    "part_variant": "19e0ef064e6a599ebf1667bd5d6e36e5e0080aed5623b855dac693ab78d79856",
+    "preassembly_page": "8119b585148a829393e89aa36491db0965b2c1ee1d6efe147b24eb35165df6a2",
+    "preassembly_reference": "3c17335098cc570e313d1d0237257cdeb77e91b5799d107f3f62f6a08549e5b8",
+    "quantity_comparison": "f65b328ac2dfd591763a361befda3be845082eec70da002c8de4890536e3b10f",
+    "quantity_difference": "c6dd167ee62186868e647512aca50ec5f8832fb182d578927c7de13cecc283ff",
+    "unmatched_name": "21b0bf7e5738bd085f367358b80259a0853ff2d8a65c9dc02265582590931e5d"
+  },
+  "extractMetadata": {
+    "assembly_page_count": "9",
+    "duckdb_version": "v1.4.5",
+    "packing_page_count": "8",
+    "part_count": "149",
+    "preassembly_page_count": "12",
+    "schema_version": "1",
+    "source_label": "v1.7",
+    "source_pin": "44e0fa24d4a538dfa1255a4e89308ccabf3abaeb"
+  }
+}

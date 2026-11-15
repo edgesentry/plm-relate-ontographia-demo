@@ -25,6 +25,14 @@ import {
   stripMarkup,
 } from './lib/markdown.mjs';
 import {
+  CHANGE_LOG_PATH,
+  extractChangeNotes,
+} from './lib/change-log.mjs';
+import {
+  SERVICE_KINDS,
+  extractServicePages,
+} from './lib/service-pages.mjs';
+import {
   buildPartIndex,
   normalizeName,
   resolveName,
@@ -34,7 +42,7 @@ import {
 
 export const EXPECTED_PIN = '44e0fa24d4a538dfa1255a4e89308ccabf3abaeb';
 export const SOURCE_LABEL = 'v1.7';
-export const SCHEMA_VERSION = '1';
+export const SCHEMA_VERSION = '2';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const FARMBOT_DIR = resolve(SCRIPT_DIR, '..');
@@ -589,6 +597,29 @@ function readPacking(sourceDir, index, parts) {
   return { pages, items };
 }
 
+export function servicePageFiles(sourceDir) {
+  return SERVICE_KINDS.flatMap((entry) =>
+    listMarkdownFiles(join(sourceDir, entry.prefix.replace(/\/$/, ''))),
+  );
+}
+
+// The Change Log is a single page. It is read through the same page reader as
+// the other sources, and the parse below takes the page list.
+export function changeLogFiles(sourceDir) {
+  const file = join(sourceDir, CHANGE_LOG_PATH);
+  return existsSync(file) ? [file] : [];
+}
+
+// The parse step takes the page list, so a test can feed the same pages in
+// any order and confirm the rows do not depend on that order.
+export function readChangeLog(pages, index, parts) {
+  return extractChangeNotes(pages, { index, parts });
+}
+
+export function readServicePages(pages, index, parts) {
+  return extractServicePages(pages, { index, parts });
+}
+
 function deriveQuantityComparisons(parts, packingItems) {
   const partsByName = new Map(parts.map((part) => [part.name, part]));
   const groups = new Map();
@@ -856,6 +887,50 @@ async function buildDatabase(outFile, extract) {
       source_kinds VARCHAR,
       source_pages VARCHAR,
       status VARCHAR,
+      candidates VARCHAR
+    )
+  `);
+  await connection.run(`
+    CREATE TABLE change_note (
+      section VARCHAR,
+      bullet INTEGER,
+      text VARCHAR,
+      line_number INTEGER,
+      linked_names VARCHAR,
+      link_count INTEGER,
+      resolution VARCHAR
+    )
+  `);
+  await connection.run(`
+    CREATE TABLE change_note_link (
+      section VARCHAR,
+      bullet INTEGER,
+      link_index INTEGER,
+      line_number INTEGER,
+      display_name VARCHAR,
+      normalized_name VARCHAR,
+      resolved_part VARCHAR,
+      match_method VARCHAR,
+      candidates VARCHAR
+    )
+  `);
+  await connection.run(`
+    CREATE TABLE service_page (
+      path VARCHAR PRIMARY KEY,
+      title VARCHAR,
+      kind VARCHAR,
+      reference_count INTEGER
+    )
+  `);
+  await connection.run(`
+    CREATE TABLE service_reference (
+      page_path VARCHAR,
+      line_number INTEGER,
+      occurrence INTEGER,
+      display_name VARCHAR,
+      normalized_name VARCHAR,
+      resolved_part VARCHAR,
+      match_method VARCHAR,
       candidates VARCHAR
     )
   `);
@@ -1171,6 +1246,81 @@ async function buildDatabase(outFile, extract) {
     ]),
   );
 
+  await insert(
+    'change_note',
+    ['section', 'bullet', 'text', 'line_number', 'linked_names', 'link_count', 'resolution'],
+    extract.changeLog.notes.map((note) => [
+      note.section,
+      note.bullet,
+      note.text,
+      note.lineNumber,
+      note.linkedNames.join(', ') || null,
+      note.linkedNames.length,
+      note.resolution,
+    ]),
+  );
+
+  await insert(
+    'change_note_link',
+    [
+      'section',
+      'bullet',
+      'link_index',
+      'line_number',
+      'display_name',
+      'normalized_name',
+      'resolved_part',
+      'match_method',
+      'candidates',
+    ],
+    extract.changeLog.links.map((link) => [
+      link.section,
+      link.bullet,
+      link.linkIndex,
+      link.lineNumber,
+      link.displayName,
+      link.normalizedName,
+      link.resolvedPart,
+      link.matchMethod,
+      (link.candidates ?? []).join(', ') || null,
+    ]),
+  );
+
+  await insert(
+    'service_page',
+    ['path', 'title', 'kind', 'reference_count'],
+    extract.service.pages.map((page) => [
+      page.path,
+      page.title,
+      page.kind,
+      page.referenceCount,
+    ]),
+  );
+
+  await insert(
+    'service_reference',
+    [
+      'page_path',
+      'line_number',
+      'occurrence',
+      'display_name',
+      'normalized_name',
+      'resolved_part',
+      'match_method',
+      'candidates',
+    ],
+    extract.service.references.map((reference) => [
+      reference.pagePath,
+      reference.lineNumber,
+      reference.occurrence,
+      reference.displayName,
+      reference.normalizedName,
+      reference.resolvedPart,
+      reference.matchMethod,
+      (reference.candidates ?? []).join(', ') || null,
+    ]),
+  );
+
   const versionReader = await connection.runAndReadAll('SELECT version()');
   const duckdbVersion = String(versionReader.getRows()[0][0]);
   const metadata = [
@@ -1181,6 +1331,20 @@ async function buildDatabase(outFile, extract) {
     ['assembly_page_count', String(extract.assembly.pages.length)],
     ['preassembly_page_count', String(extract.preassembly.pages.length)],
     ['packing_page_count', String(extract.packing.pages.length)],
+    ['change_note_count', String(extract.changeLog.notes.length)],
+    ['change_link_count', String(extract.changeLog.links.length)],
+    [
+      'change_link_resolved_count',
+      String(extract.changeLog.links.filter((link) => link.resolvedPart).length),
+    ],
+    ['service_page_count', String(extract.service.pages.length)],
+    ['service_reference_count', String(extract.service.references.length)],
+    [
+      'service_reference_resolved_count',
+      String(
+        extract.service.references.filter((reference) => reference.resolvedPart).length,
+      ),
+    ],
     ['duckdb_version', duckdbVersion],
   ].sort((a, b) => a[0].localeCompare(b[0]));
   await insert('extract_metadata', ['key', 'value'], metadata);
@@ -1195,6 +1359,38 @@ function canonicalValue(value) {
   return value;
 }
 
+const CANONICAL_FORMAT = 'farmbot-canonical-v1\n';
+
+async function listTables(connection) {
+  const reader = await connection.runAndReadAll(
+    "SELECT table_name FROM information_schema.tables " +
+      "WHERE table_schema = 'main' AND table_type = 'BASE TABLE' " +
+      'ORDER BY table_name',
+  );
+  return reader.getRowObjectsJS().map((row) => row.table_name);
+}
+
+async function canonicalTableText(connection, table) {
+  const colReader = await connection.runAndReadAll(
+    'SELECT column_name FROM information_schema.columns ' +
+      "WHERE table_schema = 'main' AND table_name = ? " +
+      'ORDER BY ordinal_position',
+    [table],
+  );
+  const columns = colReader.getRowObjectsJS().map((row) => row.column_name);
+  const quoted = columns.map((column) => `"${column.replaceAll('"', '""')}"`).join(', ');
+  const safeTable = table.replaceAll('"', '""');
+  const rowReader = await connection.runAndReadAll(
+    `SELECT ${quoted} FROM "${safeTable}" ORDER BY ${quoted}`,
+  );
+  let text = `#${table}\n${JSON.stringify(columns)}\n`;
+  for (const row of rowReader.getRowObjectsJS()) {
+    const values = columns.map((column) => canonicalValue(row[column]));
+    text += `${JSON.stringify(values)}\n`;
+  }
+  return text;
+}
+
 // Hash of a stable dump of every table, not of the .duckdb file bytes.
 // DuckDB's native file is not bit-identical across runs of the same
 // insert (same logical rows; a small number of storage bytes change).
@@ -1202,35 +1398,34 @@ export async function canonicalDigest(dbPath) {
   const instance = await DuckDBInstance.create(dbPath);
   const connection = await instance.connect();
   try {
-    const tableReader = await connection.runAndReadAll(
-      "SELECT table_name FROM information_schema.tables " +
-        "WHERE table_schema = 'main' AND table_type = 'BASE TABLE' " +
-        'ORDER BY table_name',
-    );
-    const tables = tableReader.getRowObjectsJS().map((row) => row.table_name);
     const hash = createHash('sha256');
-    hash.update('farmbot-canonical-v1\n');
-    for (const table of tables) {
-      const colReader = await connection.runAndReadAll(
-        'SELECT column_name FROM information_schema.columns ' +
-          "WHERE table_schema = 'main' AND table_name = ? " +
-          'ORDER BY ordinal_position',
-        [table],
-      );
-      const columns = colReader.getRowObjectsJS().map((row) => row.column_name);
-      const quoted = columns.map((column) => `"${column.replaceAll('"', '""')}"`).join(', ');
-      const safeTable = table.replaceAll('"', '""');
-      const rowReader = await connection.runAndReadAll(
-        `SELECT ${quoted} FROM "${safeTable}" ORDER BY ${quoted}`,
-      );
-      hash.update(`#${table}\n`);
-      hash.update(`${JSON.stringify(columns)}\n`);
-      for (const row of rowReader.getRowObjectsJS()) {
-        const values = columns.map((column) => canonicalValue(row[column]));
-        hash.update(`${JSON.stringify(values)}\n`);
-      }
+    hash.update(CANONICAL_FORMAT);
+    for (const table of await listTables(connection)) {
+      hash.update(await canonicalTableText(connection, table));
     }
     return hash.digest('hex');
+  } finally {
+    connection.closeSync();
+    instance.closeSync();
+  }
+}
+
+// The same canonicalization as `canonicalDigest`, applied to one table at a
+// time: SHA-256 over the format token and the bytes that table contributes to
+// the full dump.
+export async function tableDigests(dbPath) {
+  const instance = await DuckDBInstance.create(dbPath);
+  const connection = await instance.connect();
+  try {
+    const digests = {};
+    for (const table of await listTables(connection)) {
+      const text = await canonicalTableText(connection, table);
+      digests[table] = createHash('sha256')
+        .update(CANONICAL_FORMAT)
+        .update(text)
+        .digest('hex');
+    }
+    return digests;
   } finally {
     connection.closeSync();
     instance.closeSync();
@@ -1278,6 +1473,16 @@ export async function runExtract(options = {}) {
   const assembly = readAssembly(sourceDir, index, parts);
   const preassembly = readPreassembly(sourceDir, index, parts);
   const packing = readPacking(sourceDir, index, parts);
+  const changeLog = readChangeLog(
+    changeLogFiles(sourceDir).map((file) => readPage(sourceDir, file)),
+    index,
+    parts,
+  );
+  const service = readServicePages(
+    servicePageFiles(sourceDir).map((file) => readPage(sourceDir, file)),
+    index,
+    parts,
+  );
 
   const comparisons = deriveQuantityComparisons(parts, packing.items);
   const unmatched = deriveUnmatched([
@@ -1298,6 +1503,8 @@ export async function runExtract(options = {}) {
     assembly,
     preassembly,
     packing,
+    changeLog,
+    service,
     comparisons,
     unmatched,
   };
@@ -1320,6 +1527,10 @@ export async function runExtract(options = {}) {
     preassemblyPages: preassembly.pages.length,
     packingPages: packing.pages.length,
     packingItems: packing.items.length,
+    changeNotes: changeLog.notes.length,
+    changeLinks: changeLog.links.length,
+    servicePages: service.pages.length,
+    serviceReferences: service.references.length,
     comparisons: comparisons.length,
     differences: comparisons.filter((comparison) => comparison.status === 'difference').length,
     unmatched: unmatched.length,
@@ -1339,6 +1550,12 @@ if (isMain) {
     console.log(`assembly pages/references: ${summary.assemblyPages}/${summary.assemblyReferences}`);
     console.log(`pre-assembly pages: ${summary.preassemblyPages}`);
     console.log(`packing pages/items: ${summary.packingPages}/${summary.packingItems}`);
+    console.log(
+      `change notes/links: ${summary.changeNotes}/${summary.changeLinks}`,
+    );
+    console.log(
+      `service pages/references: ${summary.servicePages}/${summary.serviceReferences}`,
+    );
     console.log(`quantity comparisons: ${summary.comparisons} (differences: ${summary.differences})`);
     console.log(`unmatched display names: ${summary.unmatched}`);
   } catch (error) {

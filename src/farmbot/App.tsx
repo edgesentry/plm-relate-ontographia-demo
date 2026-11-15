@@ -311,36 +311,51 @@ export function App() {
     return sessionPromise.current;
   };
 
-  const trapSession = (session: RelateSession, trapError: unknown) => {
+  /**
+   * Discard a trapped session and move the panel into the trapped state. The
+   * caller chooses which error box reports the trap: the question panel and
+   * the checks panel keep separate error state.
+   */
+  const trapSession = (
+    session: RelateSession,
+    trapError: unknown,
+    report: (trap: ScreenError) => void,
+  ) => {
     closeTrappedSession(session, trapError, (trap) => {
       sessionRef.current = null;
       sessionPromise.current = null;
       trappedRef.current = true;
       setRelate({ status: 'trapped' });
-      setError(trap);
+      report(trap);
     });
   };
 
-  /** Map a failure to open the session onto the shared error box. */
-  const reportSessionFailure = (openError: unknown) => {
+  /**
+   * Map a failure to open the session onto a screen error. A trap also moves the
+   * panel into the trapped state; the caller decides which banner shows the
+   * result.
+   */
+  const sessionFailure = (openError: unknown): ScreenError => {
     if (openError instanceof SeedRejectedError) {
-      setError({
+      return {
         kind: 'seed-digest',
         expected: SEED_DIGEST,
         actual: formatSeedDigest(openError.actualHex),
-      });
-    } else if (openError instanceof SeedFetchError) {
-      setError({ kind: 'seed-fetch', detail: openError.message });
-    } else if (openError instanceof RelateTrapError) {
+      };
+    }
+    if (openError instanceof SeedFetchError) {
+      return { kind: 'seed-fetch', detail: openError.message };
+    }
+    if (openError instanceof RelateTrapError) {
       trappedRef.current = true;
       sessionPromise.current = null;
       setRelate({ status: 'trapped' });
-      setError({ kind: 'wasm-trap', detail: openError.message });
-    } else if (trappedRef.current) {
-      setError({ kind: 'wasm-trap', detail: detailText(openError) });
-    } else {
-      setError({ kind: 'relate-load', detail: detailText(openError) });
+      return { kind: 'wasm-trap', detail: openError.message };
     }
+    if (trappedRef.current) {
+      return { kind: 'wasm-trap', detail: detailText(openError) };
+    }
+    return { kind: 'relate-load', detail: detailText(openError) };
   };
 
   const run = async () => {
@@ -372,7 +387,7 @@ export function App() {
         session = await ensureSession();
       } catch (openError) {
         if (runToken.current !== token) return;
-        reportSessionFailure(openError);
+        setError(sessionFailure(openError));
         return;
       }
       if (runToken.current !== token) return;
@@ -385,7 +400,7 @@ export function App() {
       } catch (executeError) {
         finishTiming(queryPrefix, queryMark);
         if (session.isTrap(executeError)) {
-          trapSession(session, executeError);
+          trapSession(session, executeError, setError);
         } else {
           setError({ kind: 'relate-query', detail: detailText(executeError) });
         }
@@ -432,15 +447,16 @@ export function App() {
     if (engine.status !== 'ready' || checksRunningRef.current) return;
     const checkEngine = engine.engine;
     checksRunningRef.current = true;
+    // Checks own `checks`; a preset-question error stays visible in its own box.
     setChecks({ status: 'running' });
-    setError(null);
 
     try {
       let session: RelateSession;
       try {
         session = await ensureSession();
       } catch (openError) {
-        reportSessionFailure(openError);
+        // Keep trap handling, but report only through the checks box.
+        sessionFailure(openError);
         setChecks({ status: 'error', detail: detailText(openError) });
         return;
       }
@@ -463,7 +479,8 @@ export function App() {
       } catch (checkError) {
         finishTiming('farmbot:checks', mark);
         if (session.isTrap(checkError)) {
-          trapSession(session, checkError);
+          // Quarantine the trapped session; the checks box reports the failure.
+          trapSession(session, checkError, () => {});
         }
         setChecks({ status: 'error', detail: detailText(checkError) });
         return;

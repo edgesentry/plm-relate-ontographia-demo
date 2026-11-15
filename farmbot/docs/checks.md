@@ -180,8 +180,8 @@ browser smoke reads.
 
 Opening a finding from the panel, or loading a deep link, shows:
 
-- a one-line summary from the per-rule template filled from `subject`,
-  `severityFactors` and evidence `facts` / `sourceFile` (Japanese and English);
+- a one-line summary from the per-rule template filled from `subject` and
+  evidence `facts` / `sourceFile` (Japanese and English);
 - one row per evidence entry: role, seed node id, source file and, when the
   row has one, the line number; the values from that node; and a collapsible
   list of the Intent, Cypher and bound parameters that produced the row;

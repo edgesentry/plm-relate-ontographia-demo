@@ -888,6 +888,55 @@ async function main() {
       relateAfterTamper.length === 0,
       `a rejected seed must not load Relate: ${relateAfterTamper.join(', ')}`,
     );
+    // Run checks after a preset question failed: the checks box reports its own
+    // failure, and the question box neither duplicates nor disappears.
+    const questionErrorsBeforeChecks = await tamper.page
+      .locator('[data-testid="error"]')
+      .count();
+    const questionErrorBefore = await tamper.page
+      .locator('[data-testid="error"]')
+      .textContent();
+    const questionErrorBeforeChecks = (questionErrorBefore ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    assert(
+      questionErrorsBeforeChecks === 1,
+      `the tampered-seed context shows ${questionErrorsBeforeChecks} question error ` +
+        'banner(s) before Run checks, expected 1',
+    );
+    await tamper.page.click('[data-testid="run-checks"]');
+    await tamper.page.waitForSelector('[data-testid="checks-error"]', { timeout: 30000 });
+    const tamperChecksState = await tamper.page.evaluate(() => {
+      const checksError = document.querySelector('[data-testid="checks-error"]');
+      const questionError = document.querySelector('[data-testid="error"]');
+      return {
+        checksErrorCount: document.querySelectorAll('[data-testid="checks-error"]').length,
+        checksErrorVisible: Boolean(
+          checksError && checksError.getBoundingClientRect().height > 0,
+        ),
+        checksErrorText: (checksError?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        questionErrorCount: document.querySelectorAll('[data-testid="error"]').length,
+        questionErrorText: (questionError?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      };
+    });
+    assert(
+      tamperChecksState.checksErrorCount === 1,
+      `the tampered-seed checks failure shows ` +
+        `${tamperChecksState.checksErrorCount} checks error banner(s), expected 1`,
+    );
+    assert(
+      tamperChecksState.checksErrorVisible,
+      'the tampered-seed checks error box is not visible',
+    );
+    assert(
+      tamperChecksState.questionErrorCount === questionErrorsBeforeChecks,
+      `Run checks changed the question error banner count from ` +
+        `${questionErrorsBeforeChecks} to ${tamperChecksState.questionErrorCount}`,
+    );
+    assert(
+      tamperChecksState.questionErrorText === questionErrorBeforeChecks,
+      'Run checks cleared or changed the question error banner',
+    );
     const tamperCsp = await readCspViolations(tamper.page);
     assert(tamperCsp.length === 0, `tampered-seed CSP violation(s): ${JSON.stringify(tamperCsp)}`);
     const tamperExternal = externalRequests(tamper.requests);
@@ -895,12 +944,26 @@ async function main() {
       tamperExternal.length === 0,
       `tampered-seed non-same-origin request(s): ${tamperExternal.join(', ')}`,
     );
+    assert(
+      tamper.pageErrors.length === 0,
+      `tampered-seed page error(s): ${tamper.pageErrors.join(' | ')}`,
+    );
     summary.tamperedSeed = {
       rejected: true,
       error: tamperState.errorText.replace(/\s+/g, ' ').trim().slice(0, 400),
       relateRequests: relateAfterTamper.length,
       rows: null,
       cspViolations: tamperCsp.length,
+      pageErrors: [...tamper.pageErrors],
+      checks: {
+        questionErrorsBefore: questionErrorsBeforeChecks,
+        questionErrorsAfter: tamperChecksState.questionErrorCount,
+        questionErrorUnchanged:
+          tamperChecksState.questionErrorText === questionErrorBeforeChecks,
+        checksErrorCount: tamperChecksState.checksErrorCount,
+        checksErrorVisible: tamperChecksState.checksErrorVisible,
+        checksError: tamperChecksState.checksErrorText.slice(0, 400),
+      },
     };
 
     // Deep link: a well-formed hash runs the checks and opens the finding.
@@ -1019,6 +1082,7 @@ async function main() {
         opened: false,
         checksRan: false,
         relateRequests: relate.length,
+        pageErrors: [...malformed.pageErrors],
         ...malformedClean,
       });
     }
@@ -1032,8 +1096,10 @@ async function main() {
     };
     summary.pageErrors = [
       ...happy.pageErrors,
+      ...tamper.pageErrors,
       ...deep.pageErrors,
       ...unknown.pageErrors,
+      ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
     ];
     summary.nonSameOriginRequests = [
       ...new Set([

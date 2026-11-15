@@ -1,8 +1,8 @@
 // Pure view helpers for the FarmBot notification panel and finding view.
 //
 // No DOM and no imports: `node --test` and the React screen share these
-// functions. The summary line is a template per rule filled only from the
-// finding's subject, severity factors and evidence values. Every value is
+// functions. The summary line is a template per rule filled from the finding's
+// subject and evidence `facts` / `sourceFile`. Every value is
 // rendered as text; nothing here produces or accepts HTML.
 
 /** Prefix of a finding deep link. */

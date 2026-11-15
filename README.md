@@ -59,6 +59,17 @@ npm run smoke:farmbot
 
 `npm run smoke:farmbot` requires `dist/` and checks the five preset questions against `farmbot/oracle/default-results.gold.json`.
 
+Worker notification checks (no account, no email sent):
+
+```bash
+npm run types:worker   # refresh the committed worker/worker-configuration.d.ts
+npm run test:worker
+npm run build && npm run test:worker:contract
+npm run smoke:wrangler
+```
+
+`smoke:wrangler` starts a local `wrangler dev` and runs both browser smoke suites against it. See [farmbot/docs/notifications.md](farmbot/docs/notifications.md).
+
 ### Live demo
 
 - Live demo: <https://ontographia-plm-demo.egdesentry.workers.dev/> (HTTP 200 confirmed 2026-11-14)
@@ -174,6 +185,8 @@ npm run verify
 
 `npm run verify` checks:
 - TypeScript typecheck (`tsc --noEmit`)
+- Committed Worker env types (`wrangler types --check worker/worker-configuration.d.ts`)
+- The committed notify bundle matches a fresh digest-checked rebuild
 - Data and i18n structure checks
 - Ontographia WASM smoke compilation (all five Intents plus a malformed Intent, ABI rejection)
 - Intent executor gold tests and schema rejection tests
@@ -286,10 +299,14 @@ gh release create <tag> release-assets/* --target <merge-commit-sha> --title "..
 
 Deployment targets Cloudflare Workers with static assets via Workers Builds (Git integration), not Cloudflare Pages. `npm run build` emits `dist/`; `public/_headers` is copied into `dist/` by Vite and is honored by Workers Assets, where it carries the CSP, the `application/wasm` content type, and immutable caching for hashed `/assets/*`. Deployment is a maintainer step; CI does not deploy.
 
-`wrangler.jsonc` at the repository root is an assets-only Worker configuration:
+`wrangler.jsonc` at the repository root configures a Worker with a small script plus static assets:
 - Worker name: `ontographia-plm-demo`
-- Assets directory: `./dist`
-- Deliberately omits `not_found_handling` so unknown paths return 404 instead of falling back to `index.html`.
+- Script entry: `worker/index.ts` (notification endpoint and digest cron; no WASM)
+- Assets directory: `./dist`, bound as `ASSETS`
+- `assets.run_worker_first: ["/api/*"]`: only API paths run the script first; every other path is served directly by Workers Assets with the same `_headers` behavior
+- Deliberately omits `not_found_handling` so unknown paths return 404 instead of falling back to `index.html`
+
+`npm run build` first runs `npm run build:notify`, which checks `farmbot/dist/farmbot.findings.json` against its `.sha256` sidecar and regenerates the committed `worker/generated/notify-bundle.json`. The Worker sends email only from that bundle. `worker/worker-configuration.d.ts` is also committed; regenerate it with `npm run types:worker` after editing `wrangler.jsonc`, and `npm run verify` fails if it is stale. See [farmbot/docs/notifications.md](farmbot/docs/notifications.md) for Email Routing / Email Sending onboarding, the `NOTIFY_TO`, `NOTIFY_FROM`, and `NOTIFY_TOKEN` secrets, KV auto-provisioning, the hourly cron, how to disable sending, and how to run `types:worker`, `test:worker`, `test:worker:contract`, and `smoke:wrangler`.
 
 ### Workers Builds settings
 

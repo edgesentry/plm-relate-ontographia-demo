@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { basename, dirname, join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import ts from 'typescript';
+import { BUNDLE_PATH, generateBundle } from './build-notify-bundle.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const fail = (message) => {
@@ -34,6 +35,22 @@ async function loadTsModule(relativePath) {
 
 section('typecheck');
 sh('npx', ['tsc', '--noEmit']);
+sh('npx', ['tsc', '-p', 'worker/tsconfig.json', '--noEmit']);
+// Keep the committed Worker env types current. `--check` compares the file
+// with what `npm run types:worker` would write and exits non-zero on drift.
+sh('npx', ['wrangler', 'types', '--check', 'worker/worker-configuration.d.ts']);
+
+section('notify bundle');
+const committedBundle = readFileSync(BUNDLE_PATH, 'utf8');
+let freshBundle;
+try {
+  freshBundle = generateBundle();
+} catch (error) {
+  fail(`cannot regenerate the notify bundle: ${error.message}`);
+}
+if (committedBundle !== freshBundle) {
+  fail('worker/generated/notify-bundle.json is stale (run `npm run build:notify`)');
+}
 
 section('vendored data');
 const dataDir = join(root, 'vendor/ontographia/data');

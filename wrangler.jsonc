@@ -2,13 +2,54 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ontographia-plm-demo",
   "compatibility_date": "2026-11-10",
-  // Assets-only Worker: no `main` script. `not_found_handling` is intentionally
-  // omitted so it defaults to "none" and unknown paths return 404; this app has
-  // no client-side routes, so there is no SPA fallback to index.html.
+  // The static site is still served by Workers Assets. `main` adds a small
+  // script for the owner-only notification endpoint and the hourly digest
+  // cron; it never runs WASM and never reads findings from a request.
+  "main": "worker/index.ts",
+  // Assets-only paths keep their existing behavior: Cloudflare serves them
+  // directly. Only `/api/*` runs the script first. `not_found_handling` is
+  // intentionally omitted so it defaults to "none" and unknown paths return
+  // 404; this app has no client-side routes, so there is no SPA fallback.
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
   },
   // Required by `npx wrangler preview` (Workers Builds preview builds on
   // non-production branches). Empty: previews inherit the top-level assets.
-  "previews": {}
+  "previews": {},
+  // Email Routing / Email Sending binding. No destination override: the
+  // recipient is checked at runtime from the NOTIFY_TO secret and `to` is
+  // only ever that value.
+  "send_email": [{ "name": "EMAIL" }],
+  // No `id`: wrangler auto-provisions the namespace on the first deploy.
+  // The binding stores the last-notified findings digest and the daily send
+  // counter (`sent:<UTC date>`).
+  "kv_namespaces": [{ "binding": "NOTIFY_STATE" }],
+  "ratelimits": [
+    {
+      "name": "NOTIFY_GLOBAL_LIMITER",
+      "namespace_id": "5001",
+      "simple": { "limit": 1, "period": 60 }
+    },
+    {
+      "name": "NOTIFY_CLIENT_LIMITER",
+      "namespace_id": "5002",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+  "triggers": {
+    // Hourly: one digest-checked summary at most.
+    "crons": ["0 * * * *"]
+  },
+  // Non-secret values only. Secrets are set out of band:
+  //   npx wrangler secret put NOTIFY_TO
+  //   npx wrangler secret put NOTIFY_FROM
+  //   npx wrangler secret put NOTIFY_TOKEN
+  // Leaving NOTIFY_TO/NOTIFY_FROM unset disables sending (cron skips, the
+  // endpoint returns 503).
+  "vars": {
+    "PUBLIC_BASE_URL": "https://ontographia-plm-demo.egdesentry.workers.dev",
+    "NOTIFY_DAILY_CAP": "10"
+  }
 }

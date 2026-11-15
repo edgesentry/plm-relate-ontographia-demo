@@ -1,0 +1,4 @@
+# Generated files stay committed so CI, typecheck, and offline tests need no
+# code generation step. Mark them as generated for GitHub language stats.
+worker/worker-configuration.d.ts linguist-generated=true
+worker/generated/notify-bundle.json linguist-generated=true

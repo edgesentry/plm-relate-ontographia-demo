@@ -1,0 +1,635 @@
+{
+  "format": "farmbot-notify-v1",
+  "findingsDigest": "farmbot-findings-v1 sha256:1a97433fe98d21362e5130e0dc170b76927bf2a96d7bc67cc68e97e394b41e29",
+  "severityCounts": {
+    "action": 11,
+    "review": 3,
+    "info": 72
+  },
+  "findings": [
+    {
+      "id": "R1-40mm-nut-bar-standard",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 14,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for 40mm Nut Bar disagree by 4 for standard."
+    },
+    {
+      "id": "R1-40mm-nut-bar-xl",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 20,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for 40mm Nut Bar disagree by 12 for xl."
+    },
+    {
+      "id": "R1-60mm-nut-bar-xl",
+      "rule": "R1",
+      "severity": "review",
+      "severityScore": 9,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for 60mm Nut Bar disagree by 4 for xl."
+    },
+    {
+      "id": "R1-m3-locknut-standard",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 22,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M3 Locknut disagree by -8 for standard."
+    },
+    {
+      "id": "R1-m3-locknut-xl",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 22,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M3 Locknut disagree by -8 for xl."
+    },
+    {
+      "id": "R1-m3-x-12mm-screw-standard",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 21,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M3 x 12mm Screw disagree by 5 for standard."
+    },
+    {
+      "id": "R1-m3-x-12mm-screw-xl",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 21,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M3 x 12mm Screw disagree by 5 for xl."
+    },
+    {
+      "id": "R1-m5-x-10mm-screw-xl",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 17,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M5 x 10mm Screw disagree by 25 for xl."
+    },
+    {
+      "id": "R1-m5-x-16mm-screw-standard",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 24,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M5 x 16mm Screw disagree by 13 for standard."
+    },
+    {
+      "id": "R1-m5-x-16mm-screw-xl",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 24,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M5 x 16mm Screw disagree by 13 for xl."
+    },
+    {
+      "id": "R1-m5-x-30mm-screw-standard",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 13,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M5 x 30mm Screw disagree by -3 for standard."
+    },
+    {
+      "id": "R1-m5-x-30mm-screw-xl",
+      "rule": "R1",
+      "severity": "action",
+      "severityScore": 13,
+      "summary": "The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for M5 x 30mm Screw disagree by -3 for xl."
+    },
+    {
+      "id": "R2-barb",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Barb\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-crop-stickers",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Crop Stickers\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-getting-started-guide",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Getting Started Guide\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-luer-lock-needle-w-cover-16-gauge",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Luer Lock Needle w/ cover (16 Gauge)\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-luer-lock-needle-w-cover-19-gauge",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Luer Lock Needle w/ cover (19 Gauge)\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-m5-to-luer-lock-adapter",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"M5 to Luer Lock Adapter\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-magnets",
+      "rule": "R2",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "\"Magnets\" appears on 3 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-ptfe-tape",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"PTFE Tape\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-ring-magnet",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Ring Magnet\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-tee-nuts",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Tee Nuts\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-wood-screws-1251ae65",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"Wood Screws\" appears on 2 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-wood-screws-2a4f4b65",
+      "rule": "R2",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "\"wood screws\" appears on 4 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R2-x-profile-o-ring",
+      "rule": "R2",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "\"X-Profile O-Ring\" appears on 1 reference line(s) and resolves to no part."
+    },
+    {
+      "id": "R3-10mm-nut-bar",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "10mm Nut Bar is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-16-gauge-luer-lock-needle",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "16 Gauge Luer Lock Needle is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-19-gauge-luer-lock-needle",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "19 Gauge Luer Lock Needle is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-2mm-allen-key",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "2mm Allen Key is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-30mm-cable-carrier-mount",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "30mm Cable Carrier Mount is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-3mm-hex-driver",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "3mm Hex Driver is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-5-5mm-and-8mm-combo-wrench",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "5.5mm and 8mm Combo Wrench is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-blue-led-indicator",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Blue LED Indicator is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-cable-carrier-spacer-block",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Cable Carrier Spacer Block is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-camera-mount-half",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Camera Mount Half is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-farmduino-data-cable",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Farmduino Data Cable is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-fuse",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Fuse is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-green-led-indicator",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Green LED Indicator is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-led-indicator-nut",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "LED Indicator Nut is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-led-indicator-o-ring",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "LED Indicator O-Ring is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-led-indicator-wiring-harness",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "LED Indicator Wiring Harness is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-left-gantry-corner-bracket",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Left Gantry Corner Bracket is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-m2-5-x-4mm-screw",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "M2.5 x 4mm Screw is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-m3-x-16mm-flat-head-screw",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "M3 x 16mm Flat Head Screw is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-m3-x-35mm-screw",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "M3 x 35mm Screw is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-m3-x-4mm-setscrew",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "M3 x 4mm Setscrew is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-m5-barb",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "M5 Barb is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-o-ring",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "O-Ring is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-push-button-nut",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Push Button Nut is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-push-button-o-ring",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Push Button O-Ring is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-push-button-wiring-harness",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Push Button Wiring Harness is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-raspberry-pi-power-cable",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Raspberry Pi Power Cable is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-realtime-clock-battery",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Realtime Clock Battery is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-red-push-button",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Red Push Button is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-shunt",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Shunt is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-solenoid-valve-mount",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Solenoid Valve Mount is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-standard-magnet",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Standard Magnet is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-t10-bit",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "T10 Bit is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-t25-wood-screw",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "T25 Wood Screw is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-vacuum-pump-cover",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Vacuum Pump Cover is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-vacuum-pump-mount",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Vacuum Pump Mount is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-vertical-cable-carrier-support",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Vertical Cable Carrier Support is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-vertical-motor-housing",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Vertical Motor Housing is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-white-led-indicator",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "White LED Indicator is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-white-push-button",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "White Push Button is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-yellow-push-button",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Yellow Push Button is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-z-axis-extrusion",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Z-Axis Extrusion is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-z-axis-hardstop",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Z-Axis Hardstop is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R3-z-axis-motor-mount",
+      "rule": "R3",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "Z-Axis Motor Mount is referenced by no assembly chapter, pre-assembly, bag or packing list."
+    },
+    {
+      "id": "R4-100mm-nut-bar",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "100mm Nut Bar is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-200mm-zip-tie",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "200mm Zip Tie is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-camera-calibration-card",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Camera Calibration Card is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-inline-air-filter",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Inline Air Filter is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-leadscrew-block",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Leadscrew Block is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-m3-x-6mm-screw",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "M3 x 6mm Screw is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-pressure-regulator",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Pressure Regulator is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-rubber-gasket",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Rubber Gasket is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-shaft-coupler",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Shaft Coupler is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-standard-spacer",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Standard Spacer is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R4-vacuum-tube",
+      "rule": "R4",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "Vacuum Tube is packed on v1.7/manufacturing/packing/hardware-kit.md but no assembly chapter or pre-assembly references it."
+    },
+    {
+      "id": "R5-v1-7-manufacturing-pre-assembly-cable-carrier-md",
+      "rule": "R5",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/cable-carrier.md has no machine-readable parts table."
+    },
+    {
+      "id": "R5-v1-7-manufacturing-pre-assembly-cross-slide-md",
+      "rule": "R5",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/cross-slide.md has no machine-readable parts table."
+    },
+    {
+      "id": "R5-v1-7-manufacturing-pre-assembly-electronics-box-9b652676",
+      "rule": "R5",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/electronics-box.md has no machine-readable parts table."
+    },
+    {
+      "id": "R5-v1-7-manufacturing-pre-assembly-gantry-md",
+      "rule": "R5",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/gantry.md has no machine-readable parts table."
+    },
+    {
+      "id": "R5-v1-7-manufacturing-pre-assembly-tools-md",
+      "rule": "R5",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/tools.md has no machine-readable parts table."
+    },
+    {
+      "id": "R5-v1-7-manufacturing-pre-assembly-z-axis-md",
+      "rule": "R5",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/z-axis.md has no machine-readable parts table."
+    }
+  ],
+  "rules": [
+    {
+      "id": "R1",
+      "title": "Packing quantity differs from the part page quantity"
+    },
+    {
+      "id": "R2",
+      "title": "A reference in process documentation does not resolve to a part"
+    },
+    {
+      "id": "R3",
+      "title": "A part is referenced by no process"
+    },
+    {
+      "id": "R4",
+      "title": "A part is packed but not referenced by an assembly chapter or pre-assembly"
+    },
+    {
+      "id": "R5",
+      "title": "A pre-assembly page has no machine-readable parts table"
+    }
+  ]
+}

@@ -11,5 +11,5 @@
     { "alias": "unmatched", "as_name": "unmatched" },
     { "alias": "part", "as_name": "part" }
   ],
-  "limit": 100
+  "limit": 1000
 }

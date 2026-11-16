@@ -87,12 +87,12 @@
     {
       "file": "refs-service.json",
       "params": {},
-      "query": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100"
+      "query": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000"
     },
     {
       "file": "unmatched-candidates.json",
       "params": {},
-      "query": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100"
+      "query": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000"
     }
   ]
 }

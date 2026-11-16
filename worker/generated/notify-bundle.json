@@ -1,6 +1,6 @@
 {
   "format": "farmbot-notify-v1",
-  "findingsDigest": "farmbot-findings-v1 sha256:d50b8806b448b0d23ec7c9173c334c275fad12577b7849a132bcd6d8616cfe0d",
+  "findingsDigest": "farmbot-findings-v1 sha256:655be8b050cb341d2a617266931d1b76347132097d69c5db08f3958e71e9419f",
   "severityCounts": {
     "action": 11,
     "review": 6,
@@ -614,7 +614,7 @@
       "rule": "R6",
       "severity": "info",
       "severityScore": 4,
-      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
       "id": "R6-belt-clip",
@@ -628,14 +628,14 @@
       "rule": "R6",
       "severity": "info",
       "severityScore": 2,
-      "summary": "The Change Log removal statement names \"Crop Stickers\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+      "summary": "The Change Log removal statement names \"Crop Stickers\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
       "id": "R6-gantry-column",
       "rule": "R6",
       "severity": "info",
       "severityScore": 4,
-      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still lists it."
     },
     {
       "id": "R6-power-supply",
@@ -649,7 +649,7 @@
       "rule": "R6",
       "severity": "info",
       "severityScore": 2,
-      "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+      "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
       "id": "R6-tee-nuts",
@@ -663,7 +663,7 @@
       "rule": "R6",
       "severity": "info",
       "severityScore": 4,
-      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still list it."
+      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still lists it."
     },
     {
       "id": "R6-x-axis-cable-carrier",

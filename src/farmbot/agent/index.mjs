@@ -66,6 +66,38 @@ import { nodeProperties } from './values.mjs';
 const SEVERITY_LEVELS = Object.freeze(['action', 'info', 'review']);
 
 /**
+ * A bag reference is an Accessory bag BOM row, not a packing item. Bags named
+ * `bag:accessory:` own the pre-assembly section the extract records as
+ * `Accessory bag BOM`; R6 reads the `packing_item` rows only.
+ *
+ * @param {{ kind: string, structure: Record<string, unknown>, usage: Record<string, unknown> }} reference
+ * @returns {boolean}
+ */
+function isAccessoryBagReference(reference) {
+  return (
+    reference.kind === 'bag' &&
+    (String(reference.structure.id ?? '').startsWith('bag:accessory:') ||
+      String(reference.usage.id ?? '').startsWith('usage:preassembly:'))
+  );
+}
+
+/**
+ * A ManufacturingContainer row belongs to the R6 packing channel only when it
+ * is a kit, the carton or a pack bag. PreAssembly pages are manufacturing
+ * containers too, but their usages are not `packing_item` rows.
+ *
+ * @param {Record<string, unknown>} structure
+ * @param {Record<string, unknown>} usage
+ * @returns {boolean}
+ */
+function isPackingManufacturingRow(structure, usage) {
+  const structureId = String(structure.id ?? '');
+  const usageId = String(usage.id ?? '');
+  if (usageId.startsWith('usage:preassembly:')) return false;
+  return structureId.startsWith('container:') || structureId.startsWith('bag:pack:');
+}
+
+/**
  * @param {unknown} value
  * @returns {unknown}
  */
@@ -659,6 +691,7 @@ export function collectFindings(options) {
   const downstreamRecords = [];
   for (const reference of references) {
     if (!['bag', 'kit', 'carton'].includes(reference.kind)) continue;
+    if (isAccessoryBagReference(reference)) continue;
     if (typeof reference.usage.display_name !== 'string') continue;
     downstreamRecords.push({
       displayName: reference.usage.display_name,
@@ -672,6 +705,7 @@ export function collectFindings(options) {
   for (const row of rows.get('r2-manufacturing-unmatched.json')) {
     const structure = nodeProperties(row.structure);
     const usage = nodeProperties(row.usage);
+    if (!isPackingManufacturingRow(structure, usage)) continue;
     if (typeof usage.display_name !== 'string') continue;
     downstreamRecords.push({
       displayName: usage.display_name,
@@ -855,6 +889,7 @@ export function collectFindings(options) {
     for (const record of records) evidence.push(...downstreamEvidence(record));
 
     const name = match.inferred ? match.displayName : match.partName ?? match.displayName;
+    const still = files.length === 1 ? 'still lists it' : 'still list it';
     findings.push({
       causes: changedNameCauses({ files, inferred: match.inferred, name, sections }),
       countermeasures: changedNameCountermeasures({ files, name }),
@@ -877,8 +912,8 @@ export function collectFindings(options) {
             nodeId: part ? part.id : null,
           },
       summary: match.inferred
-        ? `The Change Log removal statement names "${match.displayName}", but ${files.join(', ')} still list it.`
-        : `The Change Log links "${match.partName}", but ${files.join(', ')} still list it.`,
+        ? `The Change Log removal statement names "${match.displayName}", but ${files.join(', ')} ${still}.`
+        : `The Change Log links "${match.partName}", but ${files.join(', ')} ${still}.`,
     });
   }
 
@@ -1094,14 +1129,15 @@ export function collectFindings(options) {
         },
       });
     }
-    const page = sortedUnique(
+    const pages = sortedUnique(
       list
         .map((entry) => entry.structure.path)
         .filter((path) => typeof path === 'string' && path !== ''),
-    )[0] ?? '';
+    );
+    const pageText = pages.join(', ');
     findings.push({
-      causes: unresolvedServiceCauses({ candidates, displayName, page, r2Names }),
-      countermeasures: unresolvedServiceCountermeasures({ displayName, page }),
+      causes: unresolvedServiceCauses({ candidates, displayName, pages, r2Names }),
+      countermeasures: unresolvedServiceCountermeasures({ displayName, pages }),
       evidence: finalizeEvidence(evidence),
       inferred: false,
       queries: queryFor(ruleOf('R9')),
@@ -1113,7 +1149,7 @@ export function collectFindings(options) {
         quantityDifference: 0,
       },
       subject: { key: displayName, kind: 'unresolved-name', label: displayName, nodeId: null },
-      summary: `"${displayName}" appears on ${page} and resolves to no part.`,
+      summary: `"${displayName}" appears on ${pageText} and resolves to no part.`,
     });
   }
 

@@ -198,15 +198,17 @@ export function orderEvidenceRows(finding) {
  * - R5: no edges; the page node stands alone.
  * - R6: the design change → the part (fact) or → the matching downstream rows
  *   (inferred); the part → each packing line and service reference that
- *   resolves to it; a packing line → its packing structure; a service
- *   reference → its service page, joined by the shared source file.
+ *   resolves to it or, when the finding has one part, each unmatched row; a
+ *   packing line → its packing structure, joined by the shared source file; a
+ *   service reference → its service page, joined by the shared source file.
  * - R7: the design change → the part, plus a missing edge from the part to the
  *   assembly, packing and service lanes.
  * - R8: the part → each service reference → its service page and → each
- *   packing line → its packing structure, plus a missing edge from the part to
- *   the assembly lane.
- * - R9: the service page → its unresolved reference (shared source file), plus
- *   a missing edge from the reference to the EBOM lane.
+ *   packing line → its packing structure, joined by the shared source file,
+ *   plus a missing edge from the part to the assembly lane.
+ * - R9: the service page → its unresolved reference (shared source file), the
+ *   reference → each candidate part the extract recorded, plus a missing edge
+ *   from the reference to the EBOM lane.
  *
  * A `missing` edge ends at a lane-level placeholder (`lane:<lane id>`), never
  * at an invented node. Rules without a pattern yield no edges.
@@ -276,6 +278,8 @@ export function edgesForFinding(finding) {
     const structures = uniqueNodeIds(rows, 'packing-structure');
     const references = uniqueNodeIds(rows, 'reference');
     const services = uniqueNodeIds(rows, 'service');
+    const lineFiles = sourceFilesByNodeId(rows, 'packing-line');
+    const structureFiles = sourceFilesByNodeId(rows, 'packing-structure');
     const referenceFiles = sourceFilesByNodeId(rows, 'reference');
     const serviceFiles = sourceFilesByNodeId(rows, 'service');
 
@@ -298,19 +302,31 @@ export function edgesForFinding(finding) {
         for (const reference of references) add(change, reference);
       }
     }
-    for (const part of parts) {
-      for (const line of lines) {
-        if (resolvedPartOf.get(line) === partName(part)) add(part, line);
+    for (const row of [...lines, ...references]) {
+      const resolved = resolvedPartOf.get(row);
+      let linked = false;
+      for (const part of parts) {
+        if (resolved === partName(part)) {
+          add(part, row);
+          linked = true;
+        }
       }
-      for (const reference of references) {
-        if (resolvedPartOf.get(reference) === partName(part)) add(part, reference);
-      }
+      // A row with no resolved part (the fact plus unmatched merge) is still
+      // downstream of the change: attach it to the single part when the finding
+      // has one, otherwise to the change itself.
+      if (linked) continue;
+      if (parts.length === 1) add(parts[0], row);
+      else for (const change of changes) add(change, row);
     }
     if (rule === 'R8') {
       for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
     }
     for (const line of lines) {
-      for (const structure of structures) add(line, structure);
+      for (const structure of structures) {
+        if (sharesSourceFile(lineFiles.get(line), structureFiles.get(structure))) {
+          add(line, structure);
+        }
+      }
     }
     for (const reference of references) {
       for (const service of services) {
@@ -334,6 +350,15 @@ export function edgesForFinding(finding) {
     const services = uniqueNodeIds(rows, 'service');
     const referenceFiles = sourceFilesByNodeId(rows, 'reference');
     const serviceFiles = sourceFilesByNodeId(rows, 'service');
+    const candidates = uniqueNodeIds(rows, 'part').filter((nodeId) =>
+      rows.some(
+        (row) =>
+          row.role === 'part' &&
+          row.nodeId === nodeId &&
+          row.facts &&
+          row.facts.candidate === true,
+      ),
+    );
     for (const service of services) {
       for (const reference of references) {
         if (sharesSourceFile(serviceFiles.get(service), referenceFiles.get(reference))) {
@@ -342,6 +367,10 @@ export function edgesForFinding(finding) {
       }
     }
     for (const reference of references) {
+      // A candidate part is the extract's possible resolution of the same name,
+      // so it sits downstream of the unresolved reference rather than alone in
+      // the EBOM lane.
+      for (const candidate of candidates) add(reference, candidate);
       add(reference, `${PLACEHOLDER_PREFIX}ebom-part`, 'missing');
     }
   }

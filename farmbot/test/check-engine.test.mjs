@@ -345,6 +345,55 @@ test('R6 findings equal the SQL oracle, fact and inferred rows apart', async () 
   );
 });
 
+test('R6 evidence comes only from the packing and service channels', () => {
+  const r6 = findingsByRule('R6');
+  assert.ok(r6.length > 0, 'the committed file has no R6 finding');
+  for (const finding of r6) {
+    for (const row of finding.evidence) {
+      const nodeId = String(row.nodeId);
+      assert.equal(
+        nodeId.startsWith('preassembly:'),
+        false,
+        `${finding.id}: ${nodeId} is a pre-assembly page, not a packing item`,
+      );
+      assert.equal(
+        nodeId.startsWith('bag:accessory:'),
+        false,
+        `${finding.id}: ${nodeId} is an Accessory bag BOM owner`,
+      );
+      assert.equal(
+        nodeId.startsWith('usage:preassembly:'),
+        false,
+        `${finding.id}: ${nodeId} is a pre-assembly usage line`,
+      );
+      if (row.role === 'packing-structure') {
+        assert.ok(
+          nodeId.startsWith('container:') || nodeId.startsWith('bag:pack:'),
+          `${finding.id}: ${nodeId} is not a packing container`,
+        );
+      }
+      if (row.role === 'packing-line') {
+        assert.ok(
+          nodeId.startsWith('usage:packing:'),
+          `${finding.id}: ${nodeId} is not a packing item usage`,
+        );
+      }
+      if (row.role === 'service') {
+        assert.ok(
+          nodeId.startsWith('service:'),
+          `${finding.id}: ${nodeId} is not a service page`,
+        );
+      }
+      if (row.role === 'reference') {
+        assert.ok(
+          nodeId.startsWith('usage:service:'),
+          `${finding.id}: ${nodeId} is not a service usage`,
+        );
+      }
+    }
+  }
+});
+
 test('R7 findings equal the SQL oracle', async () => {
   const oracle = await oracleRows('r7-unreached-changed-parts.sql');
   assert.deepEqual(
@@ -403,8 +452,8 @@ test('R9 findings equal the SQL oracle line for line', async () => {
   );
   assert.equal(
     findings.rules.find((rule) => rule.id === 'R9').findingCount,
-    oracle.length,
-    'R9 finding count differs from the oracle',
+    new Set(oracle.map((row) => row.name)).size,
+    'R9 finding count differs from the distinct names in the oracle',
   );
 });
 

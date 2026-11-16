@@ -219,9 +219,12 @@ function summaryValues(finding) {
     const pages = [
       ...new Set(services.map((row) => text(row.sourceFile)).filter((file) => file !== '')),
     ].sort();
+    if (pages.length === 0 && text(references[0]?.sourceFile) !== '') {
+      pages.push(text(references[0]?.sourceFile));
+    }
     return {
       displayName: text(fact(references[0], 'displayName')) || text(finding.subject?.key),
-      page: pages[0] ?? text(references[0]?.sourceFile),
+      pages,
     };
   }
   return { subject: fallback };
@@ -284,7 +287,7 @@ export function summaryLine(finding, lang) {
       );
     }
     if (rule === 'R9') {
-      return `"${values.displayName}" は ${values.page} に現れ、どの部品にも解決しません。`;
+      return `"${values.displayName}" は ${values.pages.join('、')} に現れ、どの部品にも解決しません。`;
     }
     return `${values.subject} に関する検出です。`;
   }
@@ -309,7 +312,8 @@ export function summaryLine(finding, lang) {
   }
   if (rule === 'R6') {
     const verb = values.inferred ? 'Change Log removal statement names' : 'Change Log links';
-    return `The ${verb} "${values.name}", but ${values.files.join(', ')} still list it.`;
+    const still = values.files.length === 1 ? 'still lists it' : 'still list it';
+    return `The ${verb} "${values.name}", but ${values.files.join(', ')} ${still}.`;
   }
   if (rule === 'R7') {
     return `${values.partName} changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page.`;
@@ -318,7 +322,7 @@ export function summaryLine(finding, lang) {
     return `${values.partName} is named on ${values.servicePages.join(', ')} but no assembly chapter or pre-assembly references it.`;
   }
   if (rule === 'R9') {
-    return `"${values.displayName}" appears on ${values.page} and resolves to no part.`;
+    return `"${values.displayName}" appears on ${values.pages.join(', ')} and resolves to no part.`;
   }
   return `Finding about ${values.subject}.`;
 }

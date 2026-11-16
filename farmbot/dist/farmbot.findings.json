@@ -7814,7 +7814,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -7834,7 +7834,7 @@
         "label": "90-Degree Barb",
         "nodeId": "part:90-Degree Barb"
       },
-      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
       "causes": [
@@ -7963,7 +7963,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8078,7 +8078,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8098,7 +8098,7 @@
         "label": "Crop Stickers",
         "nodeId": null
       },
-      "summary": "The Change Log removal statement names \"Crop Stickers\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+      "summary": "The Change Log removal statement names \"Crop Stickers\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
       "causes": [
@@ -8205,7 +8205,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8225,7 +8225,7 @@
         "label": "Gantry Column",
         "nodeId": "part:Gantry Column"
       },
-      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still lists it."
     },
     {
       "causes": [
@@ -8365,7 +8365,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8480,7 +8480,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8500,7 +8500,7 @@
         "label": "PTFE Tape",
         "nodeId": null
       },
-      "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still list it."
+      "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
       "causes": [
@@ -8617,7 +8617,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8755,7 +8755,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -8775,7 +8775,7 @@
         "label": "Track Extrusion",
         "nodeId": "part:Track Extrusion"
       },
-      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still list it."
+      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still lists it."
     },
     {
       "causes": [
@@ -8915,7 +8915,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -9023,12 +9023,12 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -9136,12 +9136,12 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -9249,12 +9249,12 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -9362,12 +9362,12 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -9475,12 +9475,12 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -9593,12 +9593,12 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -9739,7 +9739,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -9880,7 +9880,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -10021,7 +10021,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -10141,7 +10141,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -10261,7 +10261,7 @@
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-service.json",
           "params": {}
         }
@@ -10288,7 +10288,7 @@
         {
           "kind": "fact",
           "rule": null,
-          "text": "The service page v1.7/extras/maintenance/storing-farmbot-for-winter.md names \"tee nuts\", and it resolves to no part page."
+          "text": "The unresolved name \"tee nuts\" appears on v1.7/extras/maintenance/storing-farmbot-for-winter.md, and it resolves to no part page."
         },
         {
           "kind": "inference",
@@ -10338,6 +10338,20 @@
       "inferred": false,
       "queries": [
         {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
           "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
           "intent": "farmbot/checks/r9-service-unmatched.json",
           "params": {
@@ -10345,7 +10359,7 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 100",
+          "cypher": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/unmatched-candidates.json",
           "params": {}
         }
@@ -10521,7 +10535,9 @@
       "id": "R9",
       "intents": [
         "r9-service-unmatched.json",
-        "unmatched-candidates.json"
+        "unmatched-candidates.json",
+        "r2-assembly-unmatched.json",
+        "r2-manufacturing-unmatched.json"
       ],
       "severityCounts": {
         "action": 0,

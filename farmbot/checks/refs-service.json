@@ -17,5 +17,5 @@
     { "alias": "usage", "as_name": "usage" },
     { "alias": "part", "as_name": "part" }
   ],
-  "limit": 100
+  "limit": 1000
 }

@@ -83,11 +83,17 @@ One finding per name. A name reaches R6 in one of two ways:
   as "Replaced the black oxide wood screws with stainless steel
   [[T25 wood screws]]" from reporting the old word "wood screws".
 
+The packing channel is `packing_item` only: kits, the carton and pack bags.
+Pre-assembly pages and the Accessory bag BOM are manufacturing containers, but
+their usage lines are not packing items, so R6 does not read them. A service
+reference is `service_reference`.
+
 The inference uses the same normalization as the extract
 (`farmbot/docs/name-normalization.md`): case, punctuation, parentheticals and
 plural endings do not distinguish names. Two display names that normalize to
 one key (`Tee Nuts` and `tee nuts`) produce one finding with both evidence
-rows. A name that is both linked and inferred stays one finding; the fact wins.
+rows. A name that is both linked and inferred stays one finding; the fact wins,
+including when the only matching downstream row is unresolved.
 
 Every finding carries the boolean `inferred`. It is `true` only for the prose
 match; the finding view labels it `fact` or `inferred`. On the current seed R6
@@ -116,8 +122,9 @@ they apply, and R5 is always listed.
 
 One finding per distinct unresolved display name on a service page. The
 finding lists the candidate parts the extract recorded (none on the current
-seed) and names any packing or assembly page that uses the same normalized
-name. The current seed has one: `tee nuts` on the winter-storage page.
+seed) and names every service page, packing page and assembly page that uses
+the same normalized name. The current seed has one: `tee nuts` on the
+winter-storage page.
 
 ## Check Intents
 
@@ -133,8 +140,8 @@ the rule module (upstream issues `edgesentry/ontographia#166` and
 | `r1-quantity-difference.json` | `QuantityDifference` | `COMPARES_PART` → `Part` | R1 |
 | `r1-compared-in.json` | `QuantityDifference` | `COMPARED_IN` → `ManufacturingContainer` | R1 |
 | `r1-for-variant.json` | `QuantityDifference` | `FOR_VARIANT` → `ProductVariant` | R1 |
-| `r2-assembly-unmatched.json` | `AssemblyChapter` | `HAS_USAGE` → `Usage` | R2 |
-| `r2-manufacturing-unmatched.json` | `ManufacturingContainer` | `HAS_USAGE` → `Usage` | R2 |
+| `r2-assembly-unmatched.json` | `AssemblyChapter` | `HAS_USAGE` → `Usage` | R2, R9 |
+| `r2-manufacturing-unmatched.json` | `ManufacturingContainer` | `HAS_USAGE` → `Usage` | R2, R6, R9 |
 | `r3-parts.json` | `Part` | — | R3 |
 | `refs-assembly.json` | `AssemblyChapter` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R7, R8 |
 | `refs-preassembly.json` | `PreAssembly` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R7, R8 |
@@ -315,16 +322,22 @@ Edges come only from the evidence rows, by rule:
 | R3 | dashed missing edges from the part to the assembly and packing lanes |
 | R4 | the part → each packing line → the packing structure, plus a dashed missing edge from the part to the assembly lane |
 | R5 | none; the page node stands alone |
-| R6 | the design change → the part (fact) or → each matching packing line and service reference (inferred); the part → each packing line and service reference that resolved to it; a packing line → its packing structure; a service reference → its service page, joined by the same source file |
+| R6 | the design change → the part (fact) or → each matching packing line and service reference (inferred); the part → each packing line and service reference that resolved to it, or each unmatched line and reference when the finding has one part; a packing line → its packing structure; a service reference → its service page, both joined by the same source file |
 | R7 | the design change → the part, plus a dashed missing edge from the part to the assembly, packing and service lanes |
-| R8 | the part → each service reference → its service page and → each packing line → its packing structure, plus a dashed missing edge from the part to the assembly lane |
-| R9 | the service page → its unresolved reference, plus a dashed missing edge from the reference to the EBOM lane |
+| R8 | the part → each service reference → its service page and → each packing line → its packing structure, joined by the same source file, plus a dashed missing edge from the part to the assembly lane |
+| R9 | the service page → its unresolved reference, the reference → each candidate part the extract recorded, plus a dashed missing edge from the reference to the EBOM lane |
 
 For R6, R8 and R9, a service reference and its service page are linked only when
-both rows name the same `sourceFile`, exactly as for R2. A reference with no
-service page from the same source file gets no page link. R6 inferred findings
-have no part node, so the design change links straight to the downstream rows
-it matched.
+both rows name the same `sourceFile`, exactly as for R2. R6 and R8 also join a
+packing line to a packing structure only when both rows name the same
+`sourceFile`, so a finding that cites two packing pages keeps two links rather
+than a Cartesian product. A reference with no service page from the same source
+file gets no page link. R6 inferred findings have no part node, so the design
+change links straight to the downstream rows it matched. An R6 fact that also
+absorbed an unmatched row attaches that row to the part (or to the design change
+when the finding has more than one part), so every downstream node stays
+reachable from the change. An R9 candidate part hangs off the unresolved
+reference and is not left alone in the EBOM lane.
 
 For R2, a structure → reference link is drawn only when the structure evidence
 row and the reference evidence row name the same `sourceFile`. A reference with
@@ -507,7 +520,11 @@ or add the missing reference.
 
 Each rule has an independent DuckDB query under `farmbot/oracle/`. The test
 compares the findings with these queries as sets, except R2 and R9, which keep
-one row per reference line and are compared as multisets:
+one row per reference line and are compared as multisets. `r6-changed-names.sql`
+applies the same name normalization as the rule module (parentheticals, `&`,
+`w/`, `×`, and a singular fallback) and promotes an inferred match whose key
+equals a changed part to a fact row, including an unmatched row that other
+rules would not treat as a packing item.
 
 | Oracle | Returned key | Rows on the current seed |
 |---|---|---|

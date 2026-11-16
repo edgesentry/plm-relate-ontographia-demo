@@ -227,8 +227,51 @@ test('a block that mentions both the job and the artifact passes only with both 
   assert.equal(blockProblems(staleCodeAndArtifact, artifact, jobIds).length, 1);
 });
 
+/**
+ * The rows of the rule-id table: everything between the `## Rules` heading and
+ * the next heading. A rule id mentioned elsewhere in the document is not a
+ * table row.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+function rulesTableText(text) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => /^##\s+Rules\s*$/.test(line));
+  assert.notEqual(start, -1, 'farmbot/docs/checks.md has no "## Rules" heading');
+  const rows = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^#{1,6}\s+/.test(line)) break;
+    rows.push(line);
+  }
+  return rows.join('\n');
+}
+
+test('the rule table is scoped to its own section', () => {
+  const fixture = [
+    '## Rules',
+    '',
+    '| ID | Direction | Check |',
+    '|---|---|---|',
+    '| R1 | a | in the rule table |',
+    '',
+    '## Other',
+    '',
+    '| ID | Note |',
+    '|---|---|',
+    '| R9 | outside the rule table |',
+    '',
+  ].join('\n');
+  const scoped = rulesTableText(fixture);
+  assert.match(scoped, /\|\s*R1\s*\|/);
+  assert.doesNotMatch(scoped, /\|\s*R9\s*\|/);
+  // The whole file would match the id that the scoped table must exclude.
+  assert.match(fixture, /\|\s*R9\s*\|/);
+});
+
 test('every rule id is documented and has an oracle file', () => {
-  const checksDoc = readFileSync(CHECKS_DOC, 'utf8');
+  const checksDoc = rulesTableText(readFileSync(CHECKS_DOC, 'utf8'));
   const oracleFiles = readdirSync(ORACLE_DIR).filter((name) => name.endsWith('.sql'));
   for (const rule of CHECKS) {
     assert.match(

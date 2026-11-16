@@ -314,14 +314,15 @@ export function serviceOnlyPartCountermeasures(facts) {
 }
 
 /**
- * @param {{ displayName: string, page: string, candidates: readonly string[], r2Names: readonly string[] }} facts
+ * @param {{ displayName: string, pages: readonly string[], candidates: readonly string[], r2Names: readonly string[] }} facts
  * @returns {Cause[]}
  */
 export function unresolvedServiceCauses(facts) {
+  const where = facts.pages.join(', ');
   const causes = [
     cause(
       'fact',
-      `The service page ${facts.page} names "${facts.displayName}", and it resolves to no part page.`,
+      `The unresolved name "${facts.displayName}" appears on ${where}, and it resolves to no part page.`,
     ),
   ];
   if (facts.candidates.length > 0) {
@@ -355,12 +356,12 @@ export function unresolvedServiceCauses(facts) {
 }
 
 /**
- * @param {{ displayName: string, page: string }} facts
+ * @param {{ displayName: string, pages: readonly string[] }} facts
  * @returns {string[]}
  */
 export function unresolvedServiceCountermeasures(facts) {
   return [
-    `Add a part page for "${facts.displayName}" or correct it on ${facts.page}.`,
+    `Add a part page for "${facts.displayName}" or correct it on ${facts.pages.join(', ')}.`,
     'If the name is a synonym, record the mapping so the service reference resolves on the next extract.',
   ];
 }

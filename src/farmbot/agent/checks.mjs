@@ -119,7 +119,12 @@ export const CHECKS = Object.freeze([
     id: 'R9',
     direction: 'service-to-design',
     title: 'A service-page reference does not resolve to a part',
-    intents: Object.freeze(['r9-service-unmatched.json', 'unmatched-candidates.json']),
+    intents: Object.freeze([
+      'r9-service-unmatched.json',
+      'unmatched-candidates.json',
+      'r2-assembly-unmatched.json',
+      'r2-manufacturing-unmatched.json',
+    ]),
   }),
 ]);
 

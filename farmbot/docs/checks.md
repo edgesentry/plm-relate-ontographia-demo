@@ -16,17 +16,22 @@ supplies the same values from committed files (see [Browser entry](#browser-entr
 
 ## Rules
 
-| ID | Direction | Check | Findings on the current seed |
-|---|---|---|---|
-| R1 | packing → design | packing quantity differs from the part page quantity | 12 |
-| R2 | process → design | a reference in assembly, pre-assembly or packing does not resolve to a part | 13 names (19 lines) |
-| R3 | design → process | part referenced by no process: no assembly chapter, pre-assembly, bag or packing list | 44 |
-| R4 | packing → process | part packed but not referenced by any assembly chapter, pre-assembly or bag | 11 |
-| R5 | all → document | pre-assembly page with no machine-readable parts table | 6 |
-| R6 | design → packing/service | a name changed or removed in the Change Log still appears in a packing or service page | 9 (6 facts, 3 inferred) |
-| R7 | design → downstream | a changed part reaches no assembly chapter, pre-assembly, packing list or service page | 6 |
-| R8 | service → design | a part named by a service page is absent from assembly chapters and pre-assemblies | 5 |
-| R9 | service → design | a service-page reference does not resolve to a part | 1 |
+| ID | Direction | Check |
+|---|---|---|
+| R1 | packing → design | packing quantity differs from the part page quantity |
+| R2 | process → design | a reference in assembly, pre-assembly or packing does not resolve to a part |
+| R3 | design → process | part referenced by no process: no assembly chapter, pre-assembly, bag or packing list |
+| R4 | packing → process | part packed but not referenced by any assembly chapter, pre-assembly or bag |
+| R5 | all → document | pre-assembly page with no machine-readable parts table |
+| R6 | design → packing/service | a name changed or removed in the Change Log still appears in a packing or service page |
+| R7 | design → downstream | a changed part reaches no assembly chapter, pre-assembly, packing list or service page |
+| R8 | service → design | a part named by a service page is absent from assembly chapters and pre-assemblies |
+| R9 | service → design | a service-page reference does not resolve to a part |
+
+Current per-rule totals are in `farmbot/dist/farmbot.findings.json`: each
+`rules[]` entry carries `findingCount` and `severityCounts`, and each finding
+carries its own `inferred` flag. `npm run agent:farmbot` regenerates that
+document.
 
 ### R1: packing quantity differs from the part page
 
@@ -40,8 +45,7 @@ part, the packing container and the product variant. A part compared for both
 One finding per distinct `display_name`, grouped in the rule module. The two
 Intents keep the usage lines whose `match_method` is `unmatched`: one starts on
 `AssemblyChapter`, the other on `ManufacturingContainer` (pre-assembly pages,
-kits, the carton and bags). On the current seed the 19 lines are 4 in assembly
-chapters, 9 in pre-assembly pages and 6 in packing lists.
+kits, the carton and bags).
 
 ### R3: a part referenced by no process
 
@@ -60,18 +64,18 @@ also covers pre-assembly and bag), and the compiler has no `OR` between
 finding set: one starts on `Kit` and one on `Carton`, each traversing to a
 `Part` and carrying `not_exists` entries for the assembly chapter, pre-assembly
 and bag. A part is reported when it is packed in a kit or the carton and absent
-from those three. On the current seed this is 11 parts. A part referenced only
-by pre-assembly pages or an Accessory bag is not reported; on the current seed
-`M3 Locknut` is referenced by four pre-assembly pages. The kit and carton
-reference Intents still supply the packing-structure and packing-line evidence.
+from those three. A part referenced only by pre-assembly pages or an Accessory
+bag is not reported; `M3 Locknut` is referenced by pre-assembly pages. The kit
+and carton reference Intents still supply the packing-structure and packing-line
+evidence.
 
 ### R5: a pre-assembly page with no machine-readable parts table
 
 One finding per `PreAssembly` node whose `machine_readable` property is false.
-On the current seed there are 6: 5 marked `pdf-only` and one index page with no
-component list. The page contributes no usage lines, so its components cannot
-appear in R3 or R4. R5 is a coverage limit and is always listed as a cause
-candidate in those two rules.
+A page is either marked `pdf-only` or is an index page with no component list.
+The page contributes no usage lines, so its components cannot appear in R3 or
+R4. R5 is a coverage limit and is always listed as a cause candidate in those
+two rules.
 
 ### R6: a Change Log name still appears downstream
 
@@ -101,31 +105,32 @@ rows. A name that is both linked and inferred stays one finding; the fact wins,
 including when the only matching downstream row is unresolved.
 
 Every finding carries the boolean `inferred`. It is `true` only for the prose
-match; the finding view labels it `fact` or `inferred`. On the current seed R6
-has 6 facts and 3 inferred names (Tee Nuts, PTFE Tape, Crop Stickers).
+match; the finding view labels it `fact` or `inferred`. Names matched from a
+removal statement include Tee Nuts, PTFE Tape and Crop Stickers; the current
+totals come from `farmbot/dist/farmbot.findings.json` (`rules[].findingCount`
+and `inferred` on each finding).
 
 ### R7: a changed part reaches nothing
 
-A changed part is the target of a resolved `change_note_link`; the current seed
-has 19. One Intent starts on `DesignChange`, traverses `AFFECTS_PART` to `Part`
-and carries six `not_exists` entries — assembly chapter, pre-assembly, bag, kit,
-carton and service procedure — so a row is a changed part that reaches no
-resolved usage anywhere downstream. One finding is emitted per such part, so 6
-of 19. The changed-part Intent still supplies the design-change and part
-evidence. The R5 pages and unresolved names are cause candidates: the part may
-be listed on a page the extract cannot read, or under a name that did not
-resolve.
+A changed part is the target of a resolved `change_note_link`. One Intent starts
+on `DesignChange`, traverses `AFFECTS_PART` to `Part` and carries six
+`not_exists` entries — assembly chapter, pre-assembly, bag, kit, carton and
+service procedure — so a row is a changed part that reaches no resolved usage
+anywhere downstream. One finding is emitted per such part. The changed-part
+Intent still supplies the design-change and part evidence. The R5 pages and
+unresolved names are cause candidates: the part may be listed on a page the
+extract cannot read, or under a name that did not resolve.
 
 ### R8: a service-only part
 
 One Intent starts on `ServiceProcedure`, traverses `HAS_USAGE` → `Usage` →
 `USES_ITEM` to a `Part` and carries three `not_exists` entries: an assembly
 chapter, a pre-assembly page and a bag. A row is therefore a part named by a
-service page and absent from all process documentation. The current seed has 19
-service-referenced parts and 5 findings: Leadscrew Block, Shaft Coupler and
-Pressure Regulator are also packed, while Shunt and Z-Axis Extrusion have no
-other reference. The packing rows are evidence, not a reason to exclude the
-part. R4 and R3 are cause candidates when they apply, and R5 is always listed.
+service page and absent from all process documentation. Leadscrew Block, Shaft
+Coupler and Pressure Regulator are also packed, while Shunt and Z-Axis Extrusion
+have no other reference. The packing rows are evidence, not a reason to exclude
+the part. R4 and R3 are cause candidates when they apply, and R5 is always
+listed.
 
 ### R9: a service-page reference that does not resolve
 
@@ -509,9 +514,8 @@ with `action` at 10 or more, `review` at 6 to 9, and `info` below 6. R3, R4,
 R7 and R8 are always `info`: they report a gap in the extract rather than a
 disagreement between two documents, and the missing pre-assembly data can
 explain them without any action on the part. The score and its factors are
-written into the finding. On the current seed R1 has 11 action and 1 review, R2
-has 2 review and 11 info, R3, R4 and R5 are all info, R6 has 3 review and 6
-info, R7 and R8 are all info, and R9 is info.
+written into the finding. Per-rule severity counts on the committed seed are in
+`severityCounts` in `farmbot/dist/farmbot.findings.json`.
 
 Overlap counts the other findings with the same subject node id. R1 findings for
 the same part under `standard` and `xl` therefore both carry overlap 1; an R2
@@ -543,17 +547,20 @@ applies the same name normalization as the rule module (parentheticals, `&`,
 equals a changed part to a fact row, including an unmatched row that other
 rules would not treat as a packing item.
 
-| Oracle | Returned key | Rows on the current seed |
-|---|---|---|
-| `r1-packing-quantity.sql` | part, version, packing quantity, part quantity, difference, packing page | 12 |
-| `r2-unresolved-references.sql` | display name, source file, line, source kind | 19 |
-| `r3-unreferenced-parts.sql` | part name | 44 |
-| `r4-packed-unreferenced-parts.sql` | part name | 11 |
-| `r5-unreadable-preassemblies.sql` | page path, title, reason, PDF count | 6 |
-| `r6-changed-names.sql` | subject name, inferred flag, source file | 13 rows (9 findings) |
-| `r7-unreached-changed-parts.sql` | changed part name | 6 |
-| `r8-service-only-parts.sql` | part name, packed flag | 5 |
-| `r9-unresolved-service.sql` | display name, source file, line, candidates | 1 |
+| Oracle | Returned key |
+|---|---|
+| `r1-packing-quantity.sql` | part, version, packing quantity, part quantity, difference, packing page |
+| `r2-unresolved-references.sql` | display name, source file, line, source kind |
+| `r3-unreferenced-parts.sql` | part name |
+| `r4-packed-unreferenced-parts.sql` | part name |
+| `r5-unreadable-preassemblies.sql` | page path, title, reason, PDF count |
+| `r6-changed-names.sql` | subject name, inferred flag, source file |
+| `r7-unreached-changed-parts.sql` | changed part name |
+| `r8-service-only-parts.sql` | part name, packed flag |
+| `r9-unresolved-service.sql` | display name, source file, line, candidates |
+
+`npm run test:farmbot` runs each oracle and compares it with the engine result on
+the committed seed.
 
 ## Verification
 

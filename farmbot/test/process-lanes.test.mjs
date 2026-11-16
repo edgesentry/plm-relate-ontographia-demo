@@ -584,7 +584,6 @@ test('R4 packing lines join only a packing structure from the same source file',
   );
 });
 
-
 test('R9 candidate parts hang off the unresolved reference', () => {
   const finding = {
     id: 'R9-candidate',

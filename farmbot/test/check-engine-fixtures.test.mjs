@@ -511,8 +511,7 @@ test('the R6 result ignores the input order of the Intent rows', () => {
   };
 
   const reference = runChecks(rows).findings.filter((finding) => finding.rule === 'R6');
-  const forward = runChecks(rows).findings.filter((finding) => finding.rule === 'R6');
-  assert.deepEqual(forward, reference, 'the forward order must be stable');
+  assert.ok(reference.length > 0, 'the R6 fixture must produce findings');
 
   for (const [label, transform] of [
     ['reversed', (list) => [...list].reverse()],

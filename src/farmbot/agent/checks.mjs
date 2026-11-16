@@ -118,7 +118,7 @@ export const CHECKS = Object.freeze([
  * when no single rule records them as its own query. They stay in the executed
  * Intent set so absence rules can be checked against the reference rows.
  */
-export const SHARED_INTENTS = Object.freeze([
+const SHARED_INTENTS = Object.freeze([
   'refs-assembly.json',
   'refs-preassembly.json',
   'refs-bag.json',

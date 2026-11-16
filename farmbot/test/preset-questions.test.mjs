@@ -57,7 +57,7 @@ const ORACLE_PARAMS = {
   'q5-unmatched-references.json': { status: 'unmatched' },
 };
 
-// Q2 and Q3 project unique owners. Ontographia 0.1.9 cannot emit DISTINCT, so
+// Q2 and Q3 project unique owners. Ontographia 0.1.10 still cannot emit DISTINCT, so
 // the compiled statement is post-processed after compilation and before
 // execution by `insertDistinctReturn`, the shared step in
 // src/farmbot/distinct-return.mjs that the screen also uses. Everything else,

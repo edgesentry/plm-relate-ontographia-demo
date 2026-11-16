@@ -8,7 +8,7 @@
 //   2. build a seed graph that follows farmbot/ontology/farmbot.native.yaml,
 //      including ancestor labels on concrete nodes for the abstract classes,
 //   3. load it into an in-memory RelateDb with UNWIND $rows,
-//   4. compile the five preset-question Intents with Ontographia 0.1.9 and run
+//   4. compile the five preset-question Intents with Ontographia and run
 //      each through db.execute(query, JSON.stringify(params)),
 //   5. print one machine-readable JSON result (optionally also written to
 //      --out <path>).

@@ -92,7 +92,7 @@ The screen provides five preset questions with localized labels (`src/farmbot/i1
 - **Q4 · Kit parts in a category** — "Which kit parts belong to this category?" — default filter: `fasteners-and-hardware` — 24 rows
 - **Q5 · Unmatched references** — "Which references did not resolve to a part page?" — 18 rows (14 distinct `display_name` values, including one unresolved service name) — filter `status = unmatched` is embedded in the Intent, no on-screen selector
 
-*Note on query compilation*: Ontographia 0.1.9 cannot express `DISTINCT`; Q2 and Q3 receive a documented post-compile `RETURN DISTINCT` step. Q1, Q4, and Q5 are not modified. Q1 projects only `part` and `packing_minus_part`. Quantity differences are reported, not corrected. Q3 traverses any `Structure`, so it returns a `ServiceProcedure` page when the part has a service reference; the selector lists the parts that appear in an assembly chapter, a pre-assembly and a kit.
+*Note on query compilation*: Ontographia 0.1.10 still cannot express `DISTINCT`; Q2 and Q3 receive a documented post-compile `RETURN DISTINCT` step. Q1, Q4, and Q5 are not modified. Q1 projects only `part` and `packing_minus_part`. Quantity differences are reported, not corrected. Q3 traverses any `Structure`, so it returns a `ServiceProcedure` page when the part has a service reference; the selector lists the parts that appear in an assembly chapter, a pre-assembly and a kit.
 
 ### Check findings panel
 

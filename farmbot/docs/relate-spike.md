@@ -26,7 +26,7 @@ graph.
 | Component | Version |
 |---|---|
 | Node.js | v22.23.5 |
-| `@edgesentry/ontographia-wasm` | 0.1.9 |
+| `@edgesentry/ontographia-wasm` | 0.1.9 (the version this spike ran on; the current pin is 0.1.10) |
 | `@relate/relate-wasm` | 1.0.1 |
 | DuckDB extract schema | 1, canonical SHA-256 `6c32e7067b21679531fd7b6959670b76dcad461227137c96e54078a70ac3ee84` |
 

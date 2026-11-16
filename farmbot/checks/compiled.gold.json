@@ -36,9 +36,19 @@
       "query": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100"
     },
     {
-      "file": "r3-parts.json",
+      "file": "r3-parts-without-reference.json",
       "params": {},
-      "query": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000"
+      "query": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000"
+    },
+    {
+      "file": "r4-carton-parts-without-process.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000"
+    },
+    {
+      "file": "r4-kit-parts-without-process.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000"
     },
     {
       "file": "r5-unreadable-preassemblies.json",
@@ -51,6 +61,16 @@
       "file": "r6-changes.json",
       "params": {},
       "query": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100"
+    },
+    {
+      "file": "r7-changed-parts-unreached.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100"
+    },
+    {
+      "file": "r8-service-parts-without-process.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000"
     },
     {
       "file": "r9-service-unmatched.json",

@@ -43,23 +43,15 @@ export const CHECKS = Object.freeze([
     id: 'R3',
     direction: 'design-to-process',
     title: 'A part is referenced by no process',
-    intents: Object.freeze([
-      'r3-parts.json',
-      'refs-assembly.json',
-      'refs-preassembly.json',
-      'refs-bag.json',
-      'refs-kit.json',
-      'refs-carton.json',
-    ]),
+    intents: Object.freeze(['r3-parts-without-reference.json']),
   }),
   Object.freeze({
     id: 'R4',
     direction: 'packing-to-process',
     title: 'A part is packed but not referenced by an assembly chapter or pre-assembly',
     intents: Object.freeze([
-      'refs-assembly.json',
-      'refs-preassembly.json',
-      'refs-bag.json',
+      'r4-kit-parts-without-process.json',
+      'r4-carton-parts-without-process.json',
       'refs-kit.json',
       'refs-carton.json',
     ]),
@@ -90,13 +82,8 @@ export const CHECKS = Object.freeze([
     direction: 'design-to-downstream',
     title: 'A changed part reaches no assembly chapter, pre-assembly, packing list or service page',
     intents: Object.freeze([
+      'r7-changed-parts-unreached.json',
       'changed-parts.json',
-      'refs-assembly.json',
-      'refs-preassembly.json',
-      'refs-bag.json',
-      'refs-kit.json',
-      'refs-carton.json',
-      'refs-service.json',
       'r5-unreadable-preassemblies.json',
       'unmatched-candidates.json',
     ]),
@@ -106,10 +93,8 @@ export const CHECKS = Object.freeze([
     direction: 'service-to-design',
     title: 'A part named by a service page is absent from assembly chapters and pre-assemblies',
     intents: Object.freeze([
+      'r8-service-parts-without-process.json',
       'refs-service.json',
-      'refs-assembly.json',
-      'refs-preassembly.json',
-      'refs-bag.json',
       'refs-kit.json',
       'refs-carton.json',
       'r5-unreadable-preassemblies.json',
@@ -128,9 +113,23 @@ export const CHECKS = Object.freeze([
   }),
 ]);
 
-/** Every Intent file the rules need, sorted by file name. */
+/**
+ * Reference Intents the engine reads for evidence, causes and severity even
+ * when no single rule records them as its own query. They stay in the executed
+ * Intent set so absence rules can be checked against the reference rows.
+ */
+export const SHARED_INTENTS = Object.freeze([
+  'refs-assembly.json',
+  'refs-preassembly.json',
+  'refs-bag.json',
+  'refs-kit.json',
+  'refs-carton.json',
+  'refs-service.json',
+]);
+
+/** Every Intent file the engine loads, sorted by file name. */
 export const INTENT_FILES = Object.freeze(
-  [...new Set(CHECKS.flatMap((rule) => rule.intents))].sort(),
+  [...new Set([...CHECKS.flatMap((rule) => rule.intents), ...SHARED_INTENTS])].sort(),
 );
 
 /** Reference Intents grouped by the structure class they start from. */
@@ -142,12 +141,19 @@ export const REFERENCE_INTENTS = Object.freeze({
   carton: 'refs-carton.json',
 });
 
-/** Structures that count as process documentation for R4. */
-export const PROCESS_INTENTS = Object.freeze([
-  'refs-assembly.json',
-  'refs-preassembly.json',
-  'refs-bag.json',
-]);
-
 /** Structures that count as packing for R4. */
 export const PACKING_INTENTS = Object.freeze(['refs-kit.json', 'refs-carton.json']);
+
+/**
+ * Membership Intents that state an absence with `not_exists`: a part that is
+ * referenced by no process (R3), packed but absent from process (R4, two
+ * Intents whose union is the set), a changed part that reaches nothing (R7)
+ * and a service-named part absent from process (R8).
+ */
+export const ABSENCE_INTENTS = Object.freeze([
+  'r3-parts-without-reference.json',
+  'r4-kit-parts-without-process.json',
+  'r4-carton-parts-without-process.json',
+  'r7-changed-parts-unreached.json',
+  'r8-service-parts-without-process.json',
+]);

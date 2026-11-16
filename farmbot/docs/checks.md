@@ -2,8 +2,9 @@
 
 The check engine turns check Intents into findings. A check Intent is the same
 JSON shape as a preset-question Intent: it names a start class, a linear
-traversal chain, optional property filters and the projections to return. The
-engine compiles it with `@edgesentry/ontographia-wasm` 0.1.9, executes it with
+traversal chain, optional property filters and the projections to return. An
+absence rule adds a `not_exists` list of correlated sub-patterns. The engine
+compiles each Intent with `@edgesentry/ontographia-wasm` 0.1.10, executes it with
 `@relate/relate-wasm` 1.0.1 against the committed seed, and evaluates a
 deterministic rule in `src/farmbot/agent/`.
 
@@ -44,21 +45,25 @@ chapters, 9 in pre-assembly pages and 6 in packing lists.
 
 ### R3: a part referenced by no process
 
-The engine has no negation, so the rule takes the part list and subtracts the
-union of five reference Intents: assembly chapters, pre-assembly pages, bags,
-kits and the carton. A bag owns the `Accessory bag BOM` section of a
-pre-assembly page, so bags are a separate reference source.
+One Intent starts on `Part` and adds five `not_exists` entries: an assembly
+chapter, a pre-assembly page, a bag, a kit and the carton. Each entry starts on
+the structure class, traverses `HAS_USAGE` → `Usage` → `USES_ITEM` to the same
+`Part` and compiles to a correlated `NOT EXISTS`. The rows are the finding set;
+no reference set is subtracted in the rule module. A bag owns the `Accessory bag
+BOM` section of a pre-assembly page, so bags are a separate reference source.
 
 ### R4: a part packed but not referenced by a process
 
-The packing references are the kit and carton Intents; the process references
-are the assembly chapter, pre-assembly and bag Intents. Every packing reference
-row carries its whole `Part` node, so R4 is derived from those rows; only R3
-reads the full part list (`r3-parts.json`). A part is reported when it appears in
-the packing references and in none of the process references. On the current
-seed this is 11 parts. A part referenced only by pre-assembly pages is not
-reported by R4; on the current seed `M3 Locknut` is referenced by four
-pre-assembly pages.
+Kit and the carton have no common packing-only superclass (`ManufacturingContainer`
+also covers pre-assembly and bag), and the compiler has no `OR` between
+`not_exists` entries. The rule therefore uses two Intents whose union is the
+finding set: one starts on `Kit` and one on `Carton`, each traversing to a
+`Part` and carrying `not_exists` entries for the assembly chapter, pre-assembly
+and bag. A part is reported when it is packed in a kit or the carton and absent
+from those three. On the current seed this is 11 parts. A part referenced only
+by pre-assembly pages or an Accessory bag is not reported; on the current seed
+`M3 Locknut` is referenced by four pre-assembly pages. The kit and carton
+reference Intents still supply the packing-structure and packing-line evidence.
 
 ### R5: a pre-assembly page with no machine-readable parts table
 
@@ -102,37 +107,44 @@ has 6 facts and 3 inferred names (Tee Nuts, PTFE Tape, Crop Stickers).
 ### R7: a changed part reaches nothing
 
 A changed part is the target of a resolved `change_note_link`; the current seed
-has 19. Reach is any resolved usage line in an assembly chapter, a
-pre-assembly (including its Accessory bag BOM rows), a packing list or a
-service page. One finding is emitted for each changed part with no such
-reference, so 6 of 19. The R5 pages and unresolved names are cause candidates:
-the part may be listed on a page the extract cannot read, or under a name that
-did not resolve.
+has 19. One Intent starts on `DesignChange`, traverses `AFFECTS_PART` to `Part`
+and carries six `not_exists` entries — assembly chapter, pre-assembly, bag, kit,
+carton and service procedure — so a row is a changed part that reaches no
+resolved usage anywhere downstream. One finding is emitted per such part, so 6
+of 19. The changed-part Intent still supplies the design-change and part
+evidence. The R5 pages and unresolved names are cause candidates: the part may
+be listed on a page the extract cannot read, or under a name that did not
+resolve.
 
 ### R8: a service-only part
 
-One finding per part named by a service page that no assembly chapter or
-pre-assembly references. The current seed has 19 service-referenced parts and 5
-findings: Leadscrew Block, Shaft Coupler and Pressure Regulator are also packed,
-while Shunt and Z-Axis Extrusion have no other reference. The packing rows are
-evidence, not a reason to exclude the part. R4 and R3 are cause candidates when
-they apply, and R5 is always listed.
+One Intent starts on `ServiceProcedure`, traverses `HAS_USAGE` → `Usage` →
+`USES_ITEM` to a `Part` and carries three `not_exists` entries: an assembly
+chapter, a pre-assembly page and a bag. A row is therefore a part named by a
+service page and absent from all process documentation. The current seed has 19
+service-referenced parts and 5 findings: Leadscrew Block, Shaft Coupler and
+Pressure Regulator are also packed, while Shunt and Z-Axis Extrusion have no
+other reference. The packing rows are evidence, not a reason to exclude the
+part. R4 and R3 are cause candidates when they apply, and R5 is always listed.
 
 ### R9: a service-page reference that does not resolve
 
 One finding per distinct unresolved display name on a service page. The
 finding lists the candidate parts the extract recorded (none on the current
-seed) and names every service page, packing page and assembly page that uses
-the same normalized name. The current seed has one: `tee nuts` on the
-winter-storage page.
+seed) and names the pages where R2 records the same name as unresolved, not
+every page that happens to use it. On the current seed R2 records the one name
+`tee nuts` as unresolved on the winter-storage page.
 
 ## Check Intents
 
 Every file under `farmbot/checks/` is a complete Intent. All traversals use
 `direction: out` and start on the relationship's `from_class` side, because
-Ontographia 0.1.9 rejects inbound steps (`edgesentry/ontographia#164`). No
-Intent uses `DISTINCT`, negation, sums or branching; those operations belong to
-the rule module (upstream issues `edgesentry/ontographia#166` and
+Ontographia 0.1.10 still rejects inbound steps (`edgesentry/ontographia#164`).
+The absence Intents add a `not_exists` list, which 0.1.10 compiles to a
+correlated `NOT EXISTS` sub-pattern. No Intent uses `DISTINCT`, sums or
+branching; 0.1.10 still cannot express those, so the documented post-compile
+`RETURN DISTINCT` step for Q2 and Q3 stays, and sums and branching belong to the
+rule module (upstream issues `edgesentry/ontographia#166` and
 `edgesentry/ontographia#167`).
 
 | File | Start | Chain | Rule |
@@ -142,26 +154,31 @@ the rule module (upstream issues `edgesentry/ontographia#166` and
 | `r1-for-variant.json` | `QuantityDifference` | `FOR_VARIANT` → `ProductVariant` | R1 |
 | `r2-assembly-unmatched.json` | `AssemblyChapter` | `HAS_USAGE` → `Usage` | R2, R9 |
 | `r2-manufacturing-unmatched.json` | `ManufacturingContainer` | `HAS_USAGE` → `Usage` | R2, R6, R9 |
-| `r3-parts.json` | `Part` | — | R3 |
-| `refs-assembly.json` | `AssemblyChapter` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R7, R8 |
-| `refs-preassembly.json` | `PreAssembly` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R7, R8 |
-| `refs-bag.json` | `Bag` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R6, R7, R8 |
-| `refs-kit.json` | `Kit` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R6, R7, R8 |
-| `refs-carton.json` | `Carton` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R3, R4, R6, R7, R8 |
+| `r3-parts-without-reference.json` | `Part` | five `not_exists` entries (assembly chapter, pre-assembly, bag, kit, carton) | R3 |
+| `r4-kit-parts-without-process.json` | `Kit` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part`, `not_exists` (assembly chapter, pre-assembly, bag) | R4 |
+| `r4-carton-parts-without-process.json` | `Carton` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part`, `not_exists` (assembly chapter, pre-assembly, bag) | R4 |
+| `refs-assembly.json` | `AssemblyChapter` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | shared |
+| `refs-preassembly.json` | `PreAssembly` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | shared |
+| `refs-bag.json` | `Bag` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R6 |
+| `refs-kit.json` | `Kit` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R4, R6, R8 |
+| `refs-carton.json` | `Carton` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R4, R6, R8 |
 | `r5-unreadable-preassemblies.json` | `PreAssembly` | filter `machine_readable = false` | R5, R7, R8 |
 | `r6-changes.json` | `DesignChange` | — | R6 |
 | `changed-parts.json` | `DesignChange` | `AFFECTS_PART` → `Part` | R6, R7 |
-| `refs-service.json` | `ServiceProcedure` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R6, R7, R8 |
+| `r7-changed-parts-unreached.json` | `DesignChange` | `AFFECTS_PART` → `Part`, six `not_exists` entries | R7 |
+| `refs-service.json` | `ServiceProcedure` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part` | R6, R8, shared |
+| `r8-service-parts-without-process.json` | `ServiceProcedure` | `HAS_USAGE` → `Usage` → `USES_ITEM` → `Part`, `not_exists` (assembly chapter, pre-assembly, bag) | R8 |
 | `r9-service-unmatched.json` | `ServiceProcedure` | `HAS_USAGE` → `Usage`, filter `match_method = unmatched` | R6, R9 |
 | `unmatched-candidates.json` | `UnmatchedName` | `CANDIDATE` → `Part` | R7, R9 |
 
-The two R2 Intents and the R9 service Intent bind `"unmatched"` as `$param_0`;
-the R5 Intent binds `false` as `$param_0`. No other Intent carries a filter.
-Limits are 100 for the small rules and 1000 for the part, reference and
-candidate lists; the runner throws if a result reaches its limit, so a limit
-never truncates a finding silently. `changed-parts.json` is shared by R6 and
-R7, and `refs-service.json` is shared by R6–R8; a shared Intent is recorded in
-every rule that reads it.
+The three R2/R9 filters bind `"unmatched"` as `$param_0`; the R5 Intent binds
+`false` as `$param_0`. No other Intent carries a filter. Limits are 100 for the
+small rules and 1000 for the part, reference and candidate lists; the runner
+throws if a result reaches its limit, so a limit never truncates a finding
+silently. `changed-parts.json` is shared by R6 and R7. The five reference
+Intents and `refs-service.json` are `shared`: the engine loads them for
+evidence, causes and severity even when a rule does not record them as its own
+query. A shared Intent is recorded in every rule that reads it for queries.
 
 `farmbot/checks/compiled.gold.json` pins the compiler output for every Intent
 (query text and params). A test recompiles each file and requires an exact

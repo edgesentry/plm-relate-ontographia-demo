@@ -203,11 +203,12 @@ export function unreadablePageCountermeasures(facts) {
 export function changedNameCauses(facts) {
   const where = facts.files.join(', ');
   const sections = facts.sections.join(', ');
+  const stillList = facts.files.length === 1 ? 'still lists it' : 'still list it';
   return [
     cause(
       'fact',
       facts.inferred
-        ? `The Change Log removal statement in ${sections} names "${facts.name}", and ${where} still list it.`
+        ? `The Change Log removal statement in ${sections} names "${facts.name}", and ${where} ${stillList}.`
         : `The Change Log links ${facts.name} to its part page in ${sections}, and ${where} still reference that part.`,
     ),
     cause(

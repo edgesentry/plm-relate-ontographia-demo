@@ -1,9 +1,8 @@
 -- R3: parts referenced by no assembly chapter, pre-assembly, bag or packing
 -- list.
 --
--- The graph query is the union of the five reference Intents. Ontographia
--- 0.1.9 has no negation, so the rule module subtracts that union from the part
--- list; this query states the same difference in SQL.
+-- The graph Intent states this absence with five correlated `not_exists`
+-- entries; this query states the same NOT EXISTS conditions in SQL.
 SELECT p.name AS part
 FROM part AS p
 WHERE NOT EXISTS (

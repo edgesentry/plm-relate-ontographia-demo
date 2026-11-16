@@ -6,16 +6,17 @@
 // from the committed seed and a Relate session; the browser screen will supply
 // the same values later.
 //
-// Set differences, deduplication and arithmetic happen here, in the rule
-// module, because Ontographia 0.1.9 emits no negation, no sums and no DISTINCT.
-// No Cypher is written by this module: every statement is the compiler's output
-// for a check Intent under farmbot/checks/.
+// Absence is expressed by the check Intents themselves: Ontographia 0.1.10
+// compiles a `not_exists` entry to a correlated `NOT EXISTS` sub-pattern, so the
+// rule module reads the membership rows directly instead of subtracting one
+// traversal from another. Deduplication and arithmetic still happen here, and
+// no sums or DISTINCT are available. No Cypher is written by this module: every
+// statement is the compiler's output for a check Intent under farmbot/checks/.
 
 import {
   CHECKS,
   INTENT_FILES,
   PACKING_INTENTS,
-  PROCESS_INTENTS,
   REFERENCE_INTENTS,
 } from './checks.mjs';
 import { compileCheck } from './compile.mjs';
@@ -301,12 +302,13 @@ export function collectFindings(options) {
     }
   }
 
+  // Reference rows are still indexed to build evidence and causes. Membership
+  // for R3, R4, R7 and R8 comes from the `not_exists` Intents, not from these
+  // maps, so no reference set is subtracted here.
   /** @type {Map<string, Array<typeof references[number]>>} */
   const referencesByPart = new Map();
   /** @type {Map<string, Set<string>>} */
   const allStructuresByPart = new Map();
-  /** @type {Map<string, Set<string>>} */
-  const processStructuresByPart = new Map();
   /** @type {Map<string, Set<string>>} */
   const packingStructuresByPart = new Map();
   for (const reference of references) {
@@ -319,9 +321,6 @@ export function collectFindings(options) {
     }
     list.push(reference);
     addToSetMap(allStructuresByPart, partName, reference.structure.id);
-    if (PROCESS_INTENTS.includes(REFERENCE_INTENTS[reference.kind])) {
-      addToSetMap(processStructuresByPart, partName, reference.structure.id);
-    }
     if (PACKING_INTENTS.includes(REFERENCE_INTENTS[reference.kind])) {
       addToSetMap(packingStructuresByPart, partName, reference.structure.id);
     }
@@ -334,19 +333,6 @@ export function collectFindings(options) {
     usage: nodeProperties(row.usage),
     part: nodeProperties(row.part),
   }));
-  /** @type {Map<string, Set<string>>} */
-  const serviceStructuresByPart = new Map();
-  /** @type {Map<string, Set<string>>} */
-  const reachStructuresByPart = new Map();
-  for (const [partName, structures] of allStructuresByPart) {
-    for (const id of structures) addToSetMap(reachStructuresByPart, partName, id);
-  }
-  for (const reference of serviceReferences) {
-    const partName = reference.part.name;
-    if (typeof partName !== 'string') throw new Error('service reference row has no part name');
-    addToSetMap(serviceStructuresByPart, partName, reference.structure.id);
-    addToSetMap(reachStructuresByPart, partName, reference.structure.id);
-  }
 
   /** @type {Array<Record<string, unknown>>} */
   const findings = [];
@@ -561,13 +547,14 @@ export function collectFindings(options) {
     });
   }
 
-  // R3: parts with no reference at all.
+  // R3: parts with no reference at all. The membership Intent already excludes
+  // every part that an assembly chapter, pre-assembly, bag, kit or the carton
+  // references, so the rows are the finding set.
   const parts = rows
-    .get('r3-parts.json')
+    .get('r3-parts-without-reference.json')
     .map((row) => nodeProperties(row.part))
     .sort((left, right) => compareText(left.id, right.id));
   for (const part of parts) {
-    if (referencesByPart.has(part.name)) continue;
     findings.push({
       causes: unreferencedPartCauses({
         categorySlug: part.category_slug ?? '',
@@ -601,22 +588,24 @@ export function collectFindings(options) {
     });
   }
 
-  // R4: parts packed but absent from process documentation. Every packing
-  // reference row carries its whole Part node, so the rule is derived from the
-  // kit and carton rows and does not scan the full part list.
+  // R4: parts packed but absent from process documentation. Kit and carton
+  // have no common packing-only superclass, so two `not_exists` Intents state
+  // the union: packed in a kit or the carton, and absent from assembly,
+  // pre-assembly and bag. Their rows are the finding set; the packing reference
+  // rows still supply the evidence below.
   /** @type {Map<string, Record<string, unknown>>} */
   const packedPartsByName = new Map();
-  for (const reference of references) {
-    if (!PACKING_INTENTS.includes(REFERENCE_INTENTS[reference.kind])) continue;
-    const partName = reference.part.name;
-    if (typeof partName !== 'string') continue;
-    packedPartsByName.set(partName, reference.part);
+  for (const name of ['r4-kit-parts-without-process.json', 'r4-carton-parts-without-process.json']) {
+    for (const row of rows.get(name)) {
+      const part = nodeProperties(row.part);
+      if (typeof part.name !== 'string') continue;
+      packedPartsByName.set(part.name, part);
+    }
   }
   const packedParts = [...packedPartsByName.values()].sort((left, right) =>
     compareText(/** @type {string} */ (left.id), /** @type {string} */ (right.id)),
   );
   for (const part of packedParts) {
-    if (processStructuresByPart.has(part.name)) continue;
     const packingLines = (referencesByPart.get(part.name) ?? []).filter(
       (reference) => reference.kind === 'kit' || reference.kind === 'carton',
     );
@@ -918,7 +907,9 @@ export function collectFindings(options) {
   }
 
   // R7: a changed part that reaches no assembly chapter, pre-assembly, packing
-  // list or service page. R5 pages and unresolved names are cause candidates.
+  // list or service page. The membership Intent states that absence with
+  // `not_exists`; the changed-part rows still supply the design-change and part
+  // evidence. R5 pages and unresolved names are cause candidates.
   /** @type {Map<string, Set<string>>} */
   const unresolvedByPart = new Map();
   for (const row of rows.get('unmatched-candidates.json')) {
@@ -926,6 +917,12 @@ export function collectFindings(options) {
     const part = nodeProperties(row.part);
     if (typeof unmatched.display_name !== 'string' || typeof part.name !== 'string') continue;
     addToSetMap(unresolvedByPart, part.name, unmatched.display_name);
+  }
+  /** @type {Set<string>} */
+  const unreachedPartNames = new Set();
+  for (const row of rows.get('r7-changed-parts-unreached.json')) {
+    const part = nodeProperties(row.part);
+    if (typeof part.name === 'string') unreachedPartNames.add(part.name);
   }
   /** @type {Map<string, Record<string, unknown>>} */
   const changedPartsByName = new Map();
@@ -937,7 +934,7 @@ export function collectFindings(options) {
     compareText(String(left.id), String(right.id)),
   )) {
     const partName = /** @type {string} */ (part.name);
-    if ((reachStructuresByPart.get(partName)?.size ?? 0) > 0) continue;
+    if (!unreachedPartNames.has(partName)) continue;
     const partChanges = changeNodesForPart(changedPartRows, changeById, partName);
     const evidence = [...partChanges.map((change) => changeEvidence(change))];
     evidence.push({
@@ -970,20 +967,27 @@ export function collectFindings(options) {
     });
   }
 
-  // R8: a part named by a service page that no assembly chapter or pre-assembly
-  // references. A packed part and a part referenced by nothing are the two
-  // shapes the rule reports.
+  // R8: a part named by a service page that no assembly chapter, pre-assembly or
+  // bag references. The membership Intent states that absence with `not_exists`;
+  // the service rows still supply the service page evidence. A packed part and a
+  // part referenced by nothing are the two shapes the rule reports.
+  /** @type {Set<string>} */
+  const serviceOnlyPartNames = new Set();
+  for (const row of rows.get('r8-service-parts-without-process.json')) {
+    const part = nodeProperties(row.part);
+    if (typeof part.name === 'string') serviceOnlyPartNames.add(part.name);
+  }
   /** @type {Map<string, Record<string, unknown>>} */
   const servicePartByName = new Map();
   for (const reference of serviceReferences) {
     const name = /** @type {string} */ (reference.part.name);
+    if (!serviceOnlyPartNames.has(name)) continue;
     if (!servicePartByName.has(name)) servicePartByName.set(name, reference.part);
   }
   for (const part of [...servicePartByName.values()].sort((left, right) =>
     compareText(String(left.id), String(right.id)),
   )) {
     const partName = /** @type {string} */ (part.name);
-    if (processStructuresByPart.has(partName)) continue;
     const serviceRows = serviceReferences
       .filter((reference) => reference.part.name === partName)
       .sort((left, right) => compareText(String(left.structure.id), String(right.structure.id)));

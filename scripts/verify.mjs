@@ -146,7 +146,7 @@ section('WASM package smoke');
 const require = createRequire(import.meta.url);
 const pkgDir = dirname(require.resolve('@edgesentry/ontographia-wasm/package.json'));
 const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8'));
-if (pkg.version !== '0.1.9') fail(`expected @edgesentry/ontographia-wasm 0.1.9, got ${pkg.version}`);
+if (pkg.version !== '0.1.10') fail(`expected @edgesentry/ontographia-wasm 0.1.10, got ${pkg.version}`);
 const wasmPath = join(pkgDir, 'ontographia_wasm.wasm');
 if (!existsSync(wasmPath)) fail(`WASM missing from package at ${wasmPath}`);
 const wasmBytes = readFileSync(wasmPath);

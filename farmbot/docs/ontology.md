@@ -382,7 +382,7 @@ derives it from `service_reference` itself. A display name that already has an
    `change_note_link.resolved_part`. The Change Log text itself stays on the
    `DesignChange` node as text; it is not parsed for extra part names.
 
-9. **Ontographia 0.1.9 limitations.**
+9. **Ontographia 0.1.10 limitations.**
    (a) With `direction: in`, validation still checks the relationship's
    `from_class` against the previous node's class. Intents must therefore
    start from the `from_class` side and traverse outward.

@@ -1,6 +1,6 @@
 // Shared post-compile step for the two preset questions whose answer is a set.
 //
-// Ontographia 0.1.9 cannot express DISTINCT: the Intent schema has no such
+// Ontographia 0.1.10 still cannot express DISTINCT: the Intent schema has no such
 // field (unknown keys are rejected) and the Cypher 25 emitter writes RETURN
 // without DISTINCT. This module is the single implementation of the documented
 // rewrite, used by the preset-question tests and by the FarmBot screen, so the

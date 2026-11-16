@@ -525,6 +525,65 @@ test('packing lines join only a packing structure from the same source file', ()
   );
 });
 
+test('R4 packing lines join only a packing structure from the same source file', () => {
+  const finding = {
+    id: 'R4-two-packing-pages',
+    rule: 'R4',
+    subject: { key: 'Tee Nuts', kind: 'part', label: 'Tee Nuts', nodeId: 'part:Tee Nuts' },
+    evidence: [
+      {
+        role: 'part',
+        nodeId: 'part:Tee Nuts',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: { name: 'Tee Nuts' },
+      },
+      ...[
+        ['hardware-kit.md', 'usage:packing:hardware-kit.md@0/0/0'],
+        ['main-carton.md', 'usage:packing:main-carton.md@0/0/1'],
+      ].flatMap(([file, line]) => [
+        {
+          role: 'packing-line',
+          nodeId: line,
+          sourceFile: file,
+          line: null,
+          facts: { displayName: 'Tee Nuts', quantity: 4 },
+        },
+        {
+          role: 'packing-structure',
+          nodeId: `container:${file}`,
+          sourceFile: file,
+          line: null,
+          facts: { title: file },
+        },
+      ]),
+    ],
+    queries: [],
+  };
+
+  const edges = edgesForFinding(finding).filter((edge) => edge.kind === 'link');
+  const lineToStructure = edges.filter(
+    (edge) => edge.from.startsWith('usage:packing:') && edge.to.startsWith('container:'),
+  );
+  const expected = finding.evidence
+    .filter((row) => row.role === 'packing-line')
+    .map((row) => [row.nodeId, `container:${row.sourceFile}`])
+    .sort();
+  assert.deepEqual(
+    lineToStructure
+      .map((edge) => [edge.from, edge.to])
+      .sort((left, right) => (left[0] < right[0] ? -1 : 1)),
+    expected,
+    'an R4 packing line must not link to a structure from another page',
+  );
+  assert.ok(
+    lineToStructure.length <
+      finding.evidence.filter((row) => row.role === 'packing-line').length *
+        finding.evidence.filter((row) => row.role === 'packing-structure').length,
+    'the fixture must have fewer edges than the Cartesian product',
+  );
+});
+
 test('R9 candidate parts hang off the unresolved reference', () => {
   const finding = {
     id: 'R9-candidate',

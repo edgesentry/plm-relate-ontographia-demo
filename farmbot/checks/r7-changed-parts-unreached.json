@@ -1,0 +1,107 @@
+{
+  "start": { "class": "DesignChange", "alias": "change" },
+  "traverse": [
+    {
+      "relationship": "AFFECTS_PART",
+      "direction": "out",
+      "to": { "class": "Part", "alias": "part" }
+    }
+  ],
+  "not_exists": [
+    {
+      "start": { "class": "AssemblyChapter", "alias": "assembly" },
+      "traverse": [
+        {
+          "relationship": "HAS_USAGE",
+          "direction": "out",
+          "to": { "class": "Usage", "alias": "assembly_usage" }
+        },
+        {
+          "relationship": "USES_ITEM",
+          "direction": "out",
+          "to": { "class": "Part", "alias": "part" }
+        }
+      ]
+    },
+    {
+      "start": { "class": "PreAssembly", "alias": "preassembly" },
+      "traverse": [
+        {
+          "relationship": "HAS_USAGE",
+          "direction": "out",
+          "to": { "class": "Usage", "alias": "preassembly_usage" }
+        },
+        {
+          "relationship": "USES_ITEM",
+          "direction": "out",
+          "to": { "class": "Part", "alias": "part" }
+        }
+      ]
+    },
+    {
+      "start": { "class": "Bag", "alias": "bag" },
+      "traverse": [
+        {
+          "relationship": "HAS_USAGE",
+          "direction": "out",
+          "to": { "class": "Usage", "alias": "bag_usage" }
+        },
+        {
+          "relationship": "USES_ITEM",
+          "direction": "out",
+          "to": { "class": "Part", "alias": "part" }
+        }
+      ]
+    },
+    {
+      "start": { "class": "Kit", "alias": "kit" },
+      "traverse": [
+        {
+          "relationship": "HAS_USAGE",
+          "direction": "out",
+          "to": { "class": "Usage", "alias": "kit_usage" }
+        },
+        {
+          "relationship": "USES_ITEM",
+          "direction": "out",
+          "to": { "class": "Part", "alias": "part" }
+        }
+      ]
+    },
+    {
+      "start": { "class": "Carton", "alias": "carton" },
+      "traverse": [
+        {
+          "relationship": "HAS_USAGE",
+          "direction": "out",
+          "to": { "class": "Usage", "alias": "carton_usage" }
+        },
+        {
+          "relationship": "USES_ITEM",
+          "direction": "out",
+          "to": { "class": "Part", "alias": "part" }
+        }
+      ]
+    },
+    {
+      "start": { "class": "ServiceProcedure", "alias": "service" },
+      "traverse": [
+        {
+          "relationship": "HAS_USAGE",
+          "direction": "out",
+          "to": { "class": "Usage", "alias": "service_usage" }
+        },
+        {
+          "relationship": "USES_ITEM",
+          "direction": "out",
+          "to": { "class": "Part", "alias": "part" }
+        }
+      ]
+    }
+  ],
+  "return": [
+    { "alias": "change", "as_name": "change" },
+    { "alias": "part", "as_name": "part" }
+  ],
+  "limit": 100
+}

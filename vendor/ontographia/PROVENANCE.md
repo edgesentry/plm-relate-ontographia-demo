@@ -2,8 +2,8 @@
 
 ## Engine / WASM binding
 
-- Package: `@edgesentry/ontographia-wasm` `0.1.9` (exact pin in `package.json`)
-- Registry: npm, published with provenance; dist-tag `latest` is `0.1.9`
+- Package: `@edgesentry/ontographia-wasm` `0.1.10` (exact pin in `package.json`)
+- Registry: npm, published with provenance; dist-tag `latest` is `0.1.10`
 - License: Apache-2.0
 - Intake: installed from npm via `npm ci`; this repo does not clone a git pin and does not build the WASM with Cargo.
 

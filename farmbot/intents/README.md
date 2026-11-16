@@ -1,7 +1,7 @@
 # Preset question Intents
 
 Five Intents, one per preset question, compiled by `@edgesentry/ontographia-wasm`
-0.1.9 against `farmbot/ontology/farmbot.native.yaml` and executed by
+0.1.10 against `farmbot/ontology/farmbot.native.yaml` and executed by
 `@relate/relate-wasm` 1.0.1 against the committed seed
 `farmbot/dist/farmbot.seed.json` in `farmbot/test/preset-questions.test.mjs`
 and on the `/farmbot/` screen.
@@ -22,7 +22,7 @@ answer silently.
 
 ## Parameters
 
-A filter value is stored in the Intent JSON because the 0.1.9 Intent schema
+A filter value is stored in the Intent JSON because the 0.1.10 Intent schema
 takes a literal `value`; the compiler then emits it as `$param_N` and returns
 the value in `params`. The compiled Cypher text contains no part name, category
 slug or status literal. The test compiles each Intent and asserts both the
@@ -60,7 +60,7 @@ filter value used by the five Intents is a member of its domain.
 
 ## Forward traversal only
 
-Ontographia 0.1.9 rejects `direction: in` when the previous node is not the
+Ontographia 0.1.10 still rejects `direction: in` when the previous node is not the
 relationship's `from_class`, even though the requested edge would arrive from
 `to_class` (`edgesentry/ontographia#164`). Every shipped Intent therefore starts
 on the relationship's `from_class` and traverses `direction: out`, filtering on
@@ -74,7 +74,7 @@ A part can be referenced more than once by the same chapter or structure, and
 the raw pattern then returns one row per usage line. Both questions want unique
 owners.
 
-Ontographia 0.1.9 cannot express `DISTINCT`: the Intent schema has no such
+Ontographia 0.1.10 still cannot express `DISTINCT`: the Intent schema has no such
 field (unknown keys are rejected) and the Cypher 25 emitter writes `RETURN`
 without `DISTINCT`. For Q2 and Q3 only, a post-compile step runs before
 execution: it replaces the statement's single `\nRETURN ` with
@@ -93,7 +93,7 @@ post-processed and keep the engine's row multiplicity.
 
 The committed graph attaches the packing container through `COMPARED_IN` and
 the product variant through `FOR_VARIANT`. Both are separate outgoing edges
-from the same `QuantityDifference` node, while a 0.1.9 traversal is one linear
+from the same `QuantityDifference` node, while a 0.1.10 traversal is one linear
 chain, and the far side cannot be entered with `direction: in`
 (`edgesentry/ontographia#164`). One Intent therefore cannot bind the compared
 part, its container and its variant together. The shipped Q1 Intent starts on

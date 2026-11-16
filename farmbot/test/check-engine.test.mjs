@@ -17,7 +17,7 @@ import { loadOntographia } from '@edgesentry/ontographia-wasm';
 import initRelate, { RelateDb } from '@relate/relate-wasm';
 
 import { canonicalize, canonicalJson } from '../../src/farmbot/agent/canonical.mjs';
-import { CHECKS, INTENT_FILES } from '../../src/farmbot/agent/checks.mjs';
+import { ABSENCE_INTENTS, CHECKS, INTENT_FILES } from '../../src/farmbot/agent/checks.mjs';
 import { compileCheck } from '../../src/farmbot/agent/compile.mjs';
 import { collectFindings } from '../../src/farmbot/agent/index.mjs';
 import { parseRelationshipEndpoints } from '../../src/farmbot/ontology-relationships.mjs';
@@ -501,6 +501,30 @@ test('reversing or shuffling the rows of every check Intent keeps the findings b
   );
   assert.equal(reversed, reference, 'reversed Intent rows changed the findings');
   assert.equal(shuffled, reference, 'shuffled Intent rows changed the findings');
+});
+
+test('every absence Intent compiles to NOT EXISTS with no set difference', () => {
+  for (const file of ABSENCE_INTENTS) {
+    assert.ok(INTENT_FILES.includes(file), `${file} is not in the executed Intent set`);
+    const intent = checks[file];
+    assert.ok(Array.isArray(intent.not_exists) && intent.not_exists.length > 0, `${file}: no not_exists`);
+    const compiled = compileCheck(engine, ontologyText, intent);
+    assert.ok(compiled.query.includes('NOT EXISTS'), `${file}: Cypher has no NOT EXISTS`);
+    // Every EXISTS must be a correlated NOT EXISTS; there is no positive EXISTS.
+    const all = compiled.query.match(/\bEXISTS\b/g) ?? [];
+    const negated = compiled.query.match(/\bNOT EXISTS\b/g) ?? [];
+    assert.equal(all.length, negated.length, `${file}: unexpected positive EXISTS`);
+    assert.equal(negated.length, intent.not_exists.length, `${file}: one NOT EXISTS per entry`);
+    const filters = intent.filter ?? [];
+    assert.equal(Object.keys(compiled.params).length, filters.length);
+    for (const filter of filters) {
+      assert.equal(
+        compiled.query.includes(String(filter.value)),
+        false,
+        `${file}: filter value ${filter.value} leaked into Cypher text`,
+      );
+    }
+  }
 });
 
 test('every check Intent compiles to the pinned Cypher and params', () => {

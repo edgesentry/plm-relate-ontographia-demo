@@ -1,6 +1,6 @@
 {
   "format": "farmbot-notify-v1",
-  "findingsDigest": "farmbot-findings-v1 sha256:655be8b050cb341d2a617266931d1b76347132097d69c5db08f3958e71e9419f",
+  "findingsDigest": "farmbot-findings-v1 sha256:9de39a97d890068e0b246e5b5e183937f01f4a468d101f3f0a945303284406d5",
   "severityCounts": {
     "action": 11,
     "review": 6,

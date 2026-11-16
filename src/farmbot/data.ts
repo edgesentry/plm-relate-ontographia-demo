@@ -20,7 +20,11 @@ import r1ForVariantJson from '../../farmbot/checks/r1-for-variant.json';
 import r1QuantityDifferenceJson from '../../farmbot/checks/r1-quantity-difference.json';
 import r2AssemblyUnmatchedJson from '../../farmbot/checks/r2-assembly-unmatched.json';
 import r2ManufacturingUnmatchedJson from '../../farmbot/checks/r2-manufacturing-unmatched.json';
-import r3PartsJson from '../../farmbot/checks/r3-parts.json';
+import r3PartsWithoutReferenceJson from '../../farmbot/checks/r3-parts-without-reference.json';
+import r4KitPartsWithoutProcessJson from '../../farmbot/checks/r4-kit-parts-without-process.json';
+import r4CartonPartsWithoutProcessJson from '../../farmbot/checks/r4-carton-parts-without-process.json';
+import r7ChangedPartsUnreachedJson from '../../farmbot/checks/r7-changed-parts-unreached.json';
+import r8ServicePartsWithoutProcessJson from '../../farmbot/checks/r8-service-parts-without-process.json';
 import refsAssemblyJson from '../../farmbot/checks/refs-assembly.json';
 import refsBagJson from '../../farmbot/checks/refs-bag.json';
 import refsCartonJson from '../../farmbot/checks/refs-carton.json';
@@ -70,7 +74,11 @@ export const checkIntents: Record<string, object> = {
   'r1-quantity-difference.json': r1QuantityDifferenceJson,
   'r2-assembly-unmatched.json': r2AssemblyUnmatchedJson,
   'r2-manufacturing-unmatched.json': r2ManufacturingUnmatchedJson,
-  'r3-parts.json': r3PartsJson,
+  'r3-parts-without-reference.json': r3PartsWithoutReferenceJson,
+  'r4-kit-parts-without-process.json': r4KitPartsWithoutProcessJson,
+  'r4-carton-parts-without-process.json': r4CartonPartsWithoutProcessJson,
+  'r7-changed-parts-unreached.json': r7ChangedPartsUnreachedJson,
+  'r8-service-parts-without-process.json': r8ServicePartsWithoutProcessJson,
   'r5-unreadable-preassemblies.json': r5UnreadablePreassembliesJson,
   'r6-changes.json': r6ChangesJson,
   'r9-service-unmatched.json': r9ServiceUnmatchedJson,

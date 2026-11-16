@@ -2288,33 +2288,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2379,33 +2354,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2470,33 +2420,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2561,33 +2486,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2652,33 +2552,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2743,33 +2618,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2834,33 +2684,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -2925,33 +2750,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3016,33 +2816,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3107,33 +2882,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3198,33 +2948,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3289,33 +3014,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3380,33 +3080,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3471,33 +3146,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3562,33 +3212,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3653,33 +3278,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3744,33 +3344,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3835,33 +3410,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -3926,33 +3476,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4017,33 +3542,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4108,33 +3608,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4199,33 +3674,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4290,33 +3740,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4381,33 +3806,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4472,33 +3872,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4563,33 +3938,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4654,33 +4004,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4745,33 +4070,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4836,33 +4136,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -4927,33 +4202,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5018,33 +4268,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5109,33 +4334,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5200,33 +4400,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5291,33 +4466,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5382,33 +4532,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5473,33 +4598,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5564,33 +4664,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5655,33 +4730,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5746,33 +4796,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5837,33 +4862,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -5928,33 +4928,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -6019,33 +4994,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -6110,33 +5060,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -6201,33 +5126,8 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (part:Part)\nRETURN part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/r3-parts.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
+          "cypher": "CYPHER 25\nMATCH (part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r3-parts-without-reference.json",
           "params": {}
         }
       ],
@@ -6306,13 +5206,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6323,11 +5223,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -6406,13 +5301,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6423,11 +5318,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -6506,13 +5396,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6523,11 +5413,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -6606,13 +5491,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6623,11 +5508,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -6706,13 +5586,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6723,11 +5603,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -6816,13 +5691,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6833,11 +5708,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -6916,13 +5786,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -6933,11 +5803,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -7016,13 +5881,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -7033,11 +5898,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -7116,13 +5976,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -7133,11 +5993,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -7226,13 +6081,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -7243,11 +6098,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -7326,13 +6176,13 @@
       "inferred": false,
       "queries": [
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-carton-parts-without-process.json",
           "params": {}
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r4-kit-parts-without-process.json",
           "params": {}
         },
         {
@@ -7343,11 +6193,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         }
       ],
@@ -7990,7 +6835,7 @@
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log removal statement in Miscellaneous names \"Crop Stickers\", and v1.7/manufacturing/packing/hardware-kit.md still list it."
+          "text": "The Change Log removal statement in Miscellaneous names \"Crop Stickers\", and v1.7/manufacturing/packing/hardware-kit.md still lists it."
         },
         {
           "kind": "inference",
@@ -8392,7 +7237,7 @@
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log removal statement in Miscellaneous names \"PTFE Tape\", and v1.7/manufacturing/packing/hardware-kit.md still list it."
+          "text": "The Change Log removal statement in Miscellaneous names \"PTFE Tape\", and v1.7/manufacturing/packing/hardware-kit.md still lists it."
         },
         {
           "kind": "inference",
@@ -8998,33 +7843,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-service.json",
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/r7-changed-parts-unreached.json",
           "params": {}
         },
         {
@@ -9111,33 +7931,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-service.json",
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/r7-changed-parts-unreached.json",
           "params": {}
         },
         {
@@ -9224,33 +8019,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-service.json",
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/r7-changed-parts-unreached.json",
           "params": {}
         },
         {
@@ -9337,33 +8107,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-service.json",
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/r7-changed-parts-unreached.json",
           "params": {}
         },
         {
@@ -9450,33 +8195,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-service.json",
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/r7-changed-parts-unreached.json",
           "params": {}
         },
         {
@@ -9568,33 +8288,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-carton.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-service.json",
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (kit:Kit)-[:HAS_USAGE]->(kit_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (carton:Carton)-[:HAS_USAGE]->(carton_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (service:ServiceProcedure)-[:HAS_USAGE]->(service_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/r7-changed-parts-unreached.json",
           "params": {}
         },
         {
@@ -9714,13 +8409,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r8-service-parts-without-process.json",
           "params": {}
         },
         {
@@ -9731,11 +8421,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         },
         {
@@ -9855,13 +8540,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r8-service-parts-without-process.json",
           "params": {}
         },
         {
@@ -9872,11 +8552,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         },
         {
@@ -9996,13 +8671,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r8-service-parts-without-process.json",
           "params": {}
         },
         {
@@ -10013,11 +8683,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         },
         {
@@ -10116,13 +8781,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r8-service-parts-without-process.json",
           "params": {}
         },
         {
@@ -10133,11 +8793,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         },
         {
@@ -10236,13 +8891,8 @@
           }
         },
         {
-          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-assembly.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-bag.json",
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nFILTER NOT EXISTS { MATCH (assembly:AssemblyChapter)-[:HAS_USAGE]->(assembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (preassembly:PreAssembly)-[:HAS_USAGE]->(preassembly_usage:Usage)-[:USES_ITEM]->(part) } AND NOT EXISTS { MATCH (bag:Bag)-[:HAS_USAGE]->(bag_usage:Usage)-[:USES_ITEM]->(part) }\nRETURN part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/r8-service-parts-without-process.json",
           "params": {}
         },
         {
@@ -10253,11 +8903,6 @@
         {
           "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
           "intent": "farmbot/checks/refs-kit.json",
-          "params": {}
-        },
-        {
-          "cypher": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
-          "intent": "farmbot/checks/refs-preassembly.json",
           "params": {}
         },
         {
@@ -10420,12 +9065,7 @@
       "findingCount": 44,
       "id": "R3",
       "intents": [
-        "r3-parts.json",
-        "refs-assembly.json",
-        "refs-preassembly.json",
-        "refs-bag.json",
-        "refs-kit.json",
-        "refs-carton.json"
+        "r3-parts-without-reference.json"
       ],
       "severityCounts": {
         "action": 0,
@@ -10439,9 +9079,8 @@
       "findingCount": 11,
       "id": "R4",
       "intents": [
-        "refs-assembly.json",
-        "refs-preassembly.json",
-        "refs-bag.json",
+        "r4-kit-parts-without-process.json",
+        "r4-carton-parts-without-process.json",
         "refs-kit.json",
         "refs-carton.json"
       ],
@@ -10492,13 +9131,8 @@
       "findingCount": 6,
       "id": "R7",
       "intents": [
+        "r7-changed-parts-unreached.json",
         "changed-parts.json",
-        "refs-assembly.json",
-        "refs-preassembly.json",
-        "refs-bag.json",
-        "refs-kit.json",
-        "refs-carton.json",
-        "refs-service.json",
         "r5-unreadable-preassemblies.json",
         "unmatched-candidates.json"
       ],
@@ -10514,10 +9148,8 @@
       "findingCount": 5,
       "id": "R8",
       "intents": [
+        "r8-service-parts-without-process.json",
         "refs-service.json",
-        "refs-assembly.json",
-        "refs-preassembly.json",
-        "refs-bag.json",
         "refs-kit.json",
         "refs-carton.json",
         "r5-unreadable-preassemblies.json"

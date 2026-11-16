@@ -27,7 +27,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@edgesentry/ontographia-wasm": "0.1.9",
+    "@edgesentry/ontographia-wasm": "0.1.10",
     "@mlc-ai/web-llm": "^0.2.88",
     "@relate/relate-wasm": "1.0.1",
     "react": "^18.3.1",

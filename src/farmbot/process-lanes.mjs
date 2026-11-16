@@ -265,11 +265,17 @@ export function edgesForFinding(finding) {
   } else if (rule === 'R4') {
     const lines = uniqueNodeIds(rows, 'packing-line');
     const structures = uniqueNodeIds(rows, 'packing-structure');
+    const lineFiles = sourceFilesByNodeId(rows, 'packing-line');
+    const structureFiles = sourceFilesByNodeId(rows, 'packing-structure');
     for (const part of parts) {
       for (const line of lines) add(part, line);
     }
     for (const line of lines) {
-      for (const structure of structures) add(line, structure);
+      for (const structure of structures) {
+        if (sharesSourceFile(lineFiles.get(line), structureFiles.get(structure))) {
+          add(line, structure);
+        }
+      }
     }
     for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
   } else if (rule === 'R6' || rule === 'R8') {

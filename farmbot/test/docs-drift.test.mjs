@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { parse } from 'yaml';
 
-import { CHECKS } from '../../src/farmbot/agent/checks.mjs';
+import { CHECKS, INTENT_FILES } from '../../src/farmbot/agent/checks.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -17,6 +17,7 @@ const DUCKDB_DOC = join(DOCS_DIR, 'duckdb-distribution.md');
 const README = resolve(ROOT, 'README.md');
 const CHECKS_DOC = join(DOCS_DIR, 'checks.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
+const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
 
 const ARTIFACT_CONTEXT = /artifact|gh run download/i;
 const JOB_CONTEXT = /\b(?:job|workflow)\b/i;
@@ -147,6 +148,168 @@ function markdownFiles(directory) {
     .filter((name) => name.endsWith('.md'))
     .map((name) => join(directory, name));
 }
+
+const NUMBER_WORDS = [
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+  'eleven',
+  'twelve',
+  'thirteen',
+  'fourteen',
+  'fifteen',
+  'sixteen',
+  'seventeen',
+  'eighteen',
+  'nineteen',
+  'twenty',
+  'thirty',
+  'forty',
+  'fifty',
+  'sixty',
+  'seventy',
+  'eighty',
+  'ninety',
+  'hundred',
+].join('|');
+
+/**
+ * Shapes that state an inventory of check Intents, findings or rules. The
+ * check is syntactic on purpose: a hardcoded count fails even when it happens
+ * to match the committed data today, because it goes stale on the next data
+ * change. A doc must point at the artifact or the command instead.
+ *
+ * The number is not compared with the live data. A structural sentence such as
+ * "one finding per name", "two findings that share the part node", "the two
+ * Intents", "rules R1–R9", "one entry per rule" or a field name such as
+ * `findingCount` names no inventory and is left alone.
+ */
+const INVENTORY_SHAPES = [
+  {
+    label: 'a count before "check Intent(s)"',
+    pattern: new RegExp(`\\b(?:\\d+|${NUMBER_WORDS})\\s+check\\s+Intents?\\b`, 'i'),
+  },
+  { label: 'a per-rule finding count', pattern: /\bR\d+\s+\d{1,4}\b/ },
+  { label: 'a finding total', pattern: /\bfor\s+\d+\s+in\s+total\b/i },
+  {
+    label: 'a count stated on the seed',
+    pattern: /\bon\s+the\s+(?:current|committed)\s+seed\b[^.!?]*[^\w-]\d+(?![\w-])/i,
+  },
+  {
+    label: 'a count the seed is said to have',
+    pattern: /\bthe\s+(?:current|committed)\s+seed\s+has\s+\d+/i,
+  },
+  { label: 'a fact and inferred count', pattern: /\bhas\s+\d+\s+facts?\b/i },
+  { label: 'a findings count', pattern: /\b\d+\s+findings\b/ },
+  { label: 'a rules count', pattern: /\b\d+\s+rules\b/ },
+  { label: 'a tests count', pattern: /\b\d+\s+tests\b/ },
+  {
+    label: 'a seed-count table column',
+    pattern: /\b(?:findings|rows)\s+on\s+the\s+(?:current|committed)\s+seed\b/i,
+  },
+];
+
+/**
+ * @param {string} block
+ * @returns {string[]}
+ */
+function inventoryProblems(block) {
+  return INVENTORY_SHAPES.filter(({ pattern }) => pattern.test(block)).map(
+    ({ label }) => label,
+  );
+}
+
+function documentedInventoryPaths() {
+  return [README, ...markdownFiles(DOCS_DIR)];
+}
+
+test('the docs state no hardcoded check-Intent, finding or rule count', () => {
+  const findings = JSON.parse(readFileSync(FINDINGS_DOC, 'utf8'));
+  const live = {
+    intents: INTENT_FILES.length,
+    rules: CHECKS.length,
+    findings: findings.findings.length,
+  };
+  assert.ok(
+    live.intents > 0 && live.rules > 0 && live.findings > 0,
+    'the live count source is empty, so this test could not mean anything',
+  );
+
+  for (const path of documentedInventoryPaths()) {
+    for (const block of markdownBlocks(readFileSync(path, 'utf8'))) {
+      const problems = inventoryProblems(block);
+      assert.deepEqual(
+        problems,
+        [],
+        `${path}: states ${problems.join(', ')} instead of pointing at ` +
+          `farmbot/dist/farmbot.findings.json, INTENT_FILES or the reporting ` +
+          `command: ${block}`,
+      );
+    }
+  }
+});
+
+test('a hardcoded inventory count fails even when it matches the committed data', () => {
+  const findings = JSON.parse(readFileSync(FINDINGS_DOC, 'utf8'));
+  const perRule = new Map(findings.rules.map((rule) => [rule.id, rule.findingCount]));
+  const live = {
+    intents: INTENT_FILES.length,
+    rules: CHECKS.length,
+    findings: findings.findings.length,
+  };
+
+  const failing = [
+    '**Run checks** compiles the seventeen check Intents in `farmbot/checks/`.',
+    `**Run checks** compiles the ${live.intents} check Intents in \`farmbot/checks/\`.`,
+    `On the committed seed the findings are R1 ${perRule.get('R1')}, R2 ${perRule.get('R2')}, for ${live.findings} in total.`,
+    `On the current seed there are ${perRule.get('R5')} pages with no machine-readable table.`,
+    'On the current seed R6 has 6 facts and 3 inferred names.',
+    `The current seed has 19 service-referenced parts and ${perRule.get('R8')} findings: Leadscrew Block and Shunt.`,
+    'The oracle returns 13 rows (9 findings).',
+    'The engine evaluates 9 rules in the browser.',
+    'The farmbot suite has 43 tests.',
+    '| ID | Direction | Check | Findings on the current seed |',
+    '| Oracle | Returned key | Rows on the current seed |',
+  ];
+  for (const fixture of failing) {
+    const blocks = markdownBlocks(`${fixture}\n`);
+    assert.ok(
+      blocks.some((block) => inventoryProblems(block).length > 0),
+      `this hardcoded inventory must fail: ${fixture}`,
+    );
+  }
+
+  const passing = [
+    'One finding per distinct `display_name`, grouped in the rule module.',
+    'A part compared for both `standard` and `xl` produces two findings that share the part node.',
+    'The two Intents keep the usage lines whose `match_method` is `unmatched`.',
+    'The rule therefore uses two Intents whose union is the finding set.',
+    'The rule joins three Intents on the difference node id.',
+    'R5 is a cause candidate in those two rules.',
+    'The engine evaluates rules R1–R9 in the browser.',
+    '`rules` has one entry per rule: direction, finding count, intent files, severity counts, title.',
+    'Current per-rule totals are in `farmbot/dist/farmbot.findings.json`: each `rules[]` entry carries `findingCount` and `severityCounts`.',
+    '`INTENT_FILES` in `src/farmbot/agent/checks.mjs` is the executed check-Intent set.',
+    '`npm run agent:farmbot` regenerates the findings document; `npm run test:farmbot` compares each oracle on the committed seed.',
+    '16 commits reached `main` before the Contest Period start.',
+    '- **Q1 · Packing differences** — 12 rows — no selector',
+    'The committed seed graph is verified by SHA-256 and loaded into memory.',
+  ];
+  for (const fixture of passing) {
+    const blocks = markdownBlocks(`${fixture}\n`);
+    assert.ok(
+      blocks.every((block) => inventoryProblems(block).length === 0),
+      `this structural sentence or data pointer must pass: ${fixture}`,
+    );
+  }
+});
 
 test('the allowed-values domains and the intents README table agree', () => {
   const domains = allowedValueDomains();

@@ -126,19 +126,22 @@ extract cannot read, or under a name that did not resolve.
 One Intent starts on `ServiceProcedure`, traverses `HAS_USAGE` → `Usage` →
 `USES_ITEM` to a `Part` and carries three `not_exists` entries: an assembly
 chapter, a pre-assembly page and a bag. A row is therefore a part named by a
-service page and absent from all process documentation. Leadscrew Block, Shaft
-Coupler and Pressure Regulator are also packed, while Shunt and Z-Axis Extrusion
-have no other reference. The packing rows are evidence, not a reason to exclude
-the part. R4 and R3 are cause candidates when they apply, and R5 is always
-listed.
+service page and absent from all process documentation. Current subjects and
+their evidence are listed in `farmbot/dist/farmbot.findings.json`. A packed part
+is not excluded: the packing rows are evidence, not a reason to exclude the part.
+R4 and R3 are cause candidates when they apply, and R5 is always listed.
 
 ### R9: a service-page reference that does not resolve
 
 One finding per distinct unresolved display name on a service page. The
-finding lists the candidate parts the extract recorded (none on the current
-seed) and names the pages where R2 records the same name as unresolved, not
-every page that happens to use it. On the current seed R2 records the one name
-`tee nuts` as unresolved on the winter-storage page.
+finding lists any candidate parts the extract recorded and names the pages where
+R2 records the same name as unresolved, not every page that happens to use it.
+R9 records lowercase `tee nuts` on
+`v1.7/extras/maintenance/storing-farmbot-for-winter.md`; R2 separately records
+the packing occurrence `Tee Nuts` on
+`v1.7/manufacturing/packing/hardware-kit.md`. R2 does not execute the service
+Intent `r9-service-unmatched.json`. Current subjects and evidence are in
+`farmbot/dist/farmbot.findings.json`.
 
 ## Check Intents
 
@@ -180,10 +183,12 @@ The three R2/R9 filters bind `"unmatched"` as `$param_0`; the R5 Intent binds
 `false` as `$param_0`. No other Intent carries a filter. Limits are 100 for the
 small rules and 1000 for the part, reference and candidate lists; the runner
 throws if a result reaches its limit, so a limit never truncates a finding
-silently. `changed-parts.json` is shared by R6 and R7. The five reference
-Intents and `refs-service.json` are `shared`: the engine loads them for
-evidence, causes and severity even when a rule does not record them as its own
-query. A shared Intent is recorded in every rule that reads it for queries.
+silently. `changed-parts.json` is shared by R6 and R7. The reference Intents
+and `refs-service.json` are `shared`; `INTENT_FILES` in
+`src/farmbot/agent/checks.mjs` lists the complete executed set. The engine loads
+shared Intents for evidence, causes and severity even when a rule does not
+record them as its own query. A shared Intent is recorded in every rule that
+reads it for queries.
 
 `farmbot/checks/compiled.gold.json` pins the compiler output for every Intent
 (query text and params). A test recompiles each file and requires an exact

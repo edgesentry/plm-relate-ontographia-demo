@@ -17,6 +17,7 @@ import { createServer } from 'node:http';
 import { basename, extname, join, resolve, sep } from 'node:path';
 import { chromium } from 'playwright';
 
+import { CHECK_CATALOG } from '../src/farmbot/check-catalog.mjs';
 import { summaryLine } from '../src/farmbot/findings-view.mjs';
 import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
 
@@ -75,6 +76,37 @@ const isExternal = (url) => {
     parsed.origin !== baseOrigin
   );
 };
+
+const isModelHost = (url) => {
+  const hostname = new URL(url).hostname;
+  return (
+    hostname === 'huggingface.co' ||
+    hostname === 'hf.co' ||
+    hostname.endsWith('.hf.co') ||
+    hostname === 'raw.githubusercontent.com'
+  );
+};
+
+const isLazyWebllmUrl = (url) =>
+  /webllm-package/.test(pathOf(url)) || /\/lib-[^/]+\.js$/.test(pathOf(url));
+
+function findLazyWebllmChunk() {
+  const assets = join(root, 'dist/assets');
+  if (!existsSync(assets)) throw new Error('dist/assets is missing; run the production build first');
+  return readdirSync(assets)
+    .filter((file) => file.endsWith('.js'))
+    .find((file) =>
+      readFileSync(join(assets, file), 'utf8').includes('ontographia-webllm-package-v1'),
+    );
+}
+
+function assertNoModelRequests(requests, label) {
+  const modelHosts = requests.filter(isModelHost);
+  assert(modelHosts.length === 0, `${label} requested model host(s): ${modelHosts.join(', ')}`);
+  const lazyChunks = requests.filter(isLazyWebllmUrl);
+  assert(lazyChunks.length === 0, `${label} loaded lazy WebLLM chunk(s): ${lazyChunks.join(', ')}`);
+  return { modelHosts: modelHosts.length, lazyChunks: lazyChunks.length };
+}
 
 /** Mirrors `cellText` in src/farmbot/App.tsx. */
 const cellText = (value) => {
@@ -520,6 +552,7 @@ async function main() {
     processLanes: null,
     unknownFinding: null,
     malformedHashes: [],
+    checkRouting: { beforeConsent: null, noWebgpu: null, invalidModelOutputs: null },
     tamperedSeed: null,
     cspViolations: null,
     nonSameOriginRequests: [],
@@ -636,11 +669,14 @@ async function main() {
       unexpectedJs.length === 0,
       `first paint requested a JS chunk the entry HTML does not reference: ${unexpectedJs.join(', ')}`,
     );
+    const firstPaintModel = assertNoModelRequests(firstPaintRequests, 'FarmBot first paint');
     summary.firstPaint = {
       requests: firstPaintRequests.map((url) => pathOf(url)),
       questionChips: chips.length,
+      checkChips: CHECK_CATALOG.length,
       relateRequests: relateBeforeRun.length,
       unexpectedJs,
+      ...firstPaintModel,
     };
 
     // The seed actually served to this origin must hash to the committed digest.
@@ -885,6 +921,288 @@ async function main() {
       happyExternal.length === 0,
       `non-same-origin request(s): ${happyExternal.join(', ')}`,
     );
+
+    // Consent is an explicit gate on FarmBot too. Merely typing and attempting
+    // Convert cannot fetch model hosts or cross the lazy-package boundary.
+    const consentFixture = await prepareContext(browser, 'check-routing-before-consent');
+    await consentFixture.context.addInitScript(() => {
+      Object.defineProperty(navigator, 'gpu', {
+        configurable: true,
+        value: { requestAdapter: async () => ({}) },
+      });
+    });
+    await consentFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await consentFixture.page.waitForSelector('[data-testid="farmbot-free-text-consent"]', {
+      timeout: 30000,
+    });
+    await consentFixture.page.waitForSelector('[data-testid="run"]:not([disabled])', {
+      timeout: 30000,
+    });
+    await consentFixture.page.fill(
+      '[data-testid="farmbot-free-text-input"]',
+      'Which service references are unresolved?',
+    );
+    await consentFixture.page.evaluate(() => {
+      document.querySelector('[data-testid="farmbot-free-text-convert"]')?.click();
+    });
+    await delay(200);
+    const consentState = await consentFixture.page.evaluate(() => ({
+      convertDisabled:
+        document.querySelector('[data-testid="farmbot-free-text-convert"]')?.disabled ?? null,
+      modelText: document.querySelector('[data-testid="farmbot-free-text-consent"]')?.textContent ?? '',
+      checkChips: [...document.querySelectorAll('[data-testid^="check-chip-"]')].map((element) =>
+        element.getAttribute('data-testid'),
+      ),
+      proposal: Boolean(document.querySelector('[data-testid="farmbot-check-proposal"]')),
+    }));
+    assert(consentState.convertDisabled === true, 'FarmBot Convert is enabled before consent');
+    assert(!consentState.proposal, 'FarmBot Convert produced a proposal before consent');
+    assert(
+      JSON.stringify(consentState.checkChips) ===
+        JSON.stringify(CHECK_CATALOG.map((check) => `check-chip-${check.id}`)),
+      `FarmBot check chips differ from the catalog: ${consentState.checkChips.join(', ')}`,
+    );
+    for (const needle of ['Llama-3.2-1B-Instruct-q4f16_1-MLC', '879.04 MB', '695,242,752']) {
+      assert(
+        consentState.modelText.includes(needle),
+        `FarmBot consent metadata does not include ${needle}`,
+      );
+    }
+    await consentFixture.page.click('[data-testid="farmbot-free-text-decline-button"]');
+    await consentFixture.page.waitForSelector('[data-testid="farmbot-free-text-declined"]');
+    await consentFixture.page.click('[data-testid="check-chip-R3"]');
+    await consentFixture.page.waitForSelector('[data-testid="farmbot-check-proposal"]');
+    assert(
+      !(await consentFixture.page.locator('[data-testid="farmbot-free-text-consent"]').count()),
+      'declining consent left the consent card visible',
+    );
+    assert(
+      (await consentFixture.page.locator('[data-testid="farmbot-free-text-convert"]').isDisabled()),
+      'declining consent enabled Convert',
+    );
+    const consentClean = await assertContextClean(consentFixture);
+    summary.checkRouting.beforeConsent = {
+      convertDisabled: consentState.convertDisabled,
+      declinedChipProposal: true,
+      ...assertNoModelRequests(consentFixture.requests, 'before FarmBot consent'),
+      ...consentClean,
+      pageErrors: [...consentFixture.pageErrors],
+    };
+    await consentFixture.context.close();
+
+    // No WebGPU: no consent card, but a parameterized chip proposal and the
+    // already-loaded Relate question/check paths still work end to end.
+    const noGpuFixture = await prepareContext(browser, 'check-routing-no-webgpu');
+    await noGpuFixture.context.addInitScript(() => {
+      Object.defineProperty(navigator, 'gpu', { configurable: true, value: undefined });
+    });
+    await noGpuFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await noGpuFixture.page.waitForSelector('[data-testid="farmbot-webgpu-notice"]', {
+      timeout: 30000,
+    });
+    await noGpuFixture.page.waitForSelector('[data-testid="run"]:not([disabled])', {
+      timeout: 30000,
+    });
+    assert(
+      !(await noGpuFixture.page.locator('[data-testid="farmbot-free-text-consent"]').count()),
+      'the FarmBot consent card appeared without WebGPU',
+    );
+    assert(
+      (await noGpuFixture.page.locator('[data-testid="farmbot-free-text-convert"]').isDisabled()),
+      'FarmBot Convert is enabled without WebGPU',
+    );
+    const routingValues = JSON.parse(
+      readFileSync(join(root, 'farmbot/dist/farmbot.allowed-values.json'), 'utf8'),
+    );
+    const parameterizedCheck = CHECK_CATALOG.find((check) => check.id === 'R8');
+    assert(parameterizedCheck?.parameter, 'R8 must expose its service-part selector fixture');
+    const values = routingValues[parameterizedCheck.parameter.domain];
+    const value = values[1] ?? values[0];
+    await noGpuFixture.page.click('[data-testid="check-chip-R8"]');
+    await noGpuFixture.page.selectOption('[data-testid="check-parameter"]', value);
+    const expectedRouting = {
+      check: 'R8',
+      parameter: { domain: parameterizedCheck.parameter.domain, value },
+    };
+    await noGpuFixture.page.waitForFunction(
+      (expected) =>
+        document.querySelector('[data-testid="farmbot-check-proposal-routing"]')?.textContent &&
+        JSON.stringify(JSON.parse(document.querySelector('[data-testid="farmbot-check-proposal-routing"]').textContent)) ===
+          JSON.stringify(expected),
+      expectedRouting,
+      { timeout: 30000 },
+    );
+    const expandedProposal = JSON.parse(
+      await noGpuFixture.page.locator('[data-testid="farmbot-check-proposal-intents"]').textContent(),
+    );
+    assert(
+      expandedProposal.length === parameterizedCheck.intents.length,
+      'the R8 chip proposal does not expand every catalog Intent',
+    );
+    assert(
+      expandedProposal.some((entry) =>
+        (entry.intent.filter ?? []).some((filter) => filter.value === value),
+      ),
+      'the R8 chip proposal did not apply the selected parameter',
+    );
+    await noGpuFixture.page.click('[data-testid="farmbot-check-proposal-run"]');
+    await noGpuFixture.page.waitForSelector('[data-testid="farmbot-check-result"]', {
+      timeout: 180000,
+    });
+    const confirmedRouting = JSON.parse(
+      await noGpuFixture.page.locator('[data-testid="farmbot-check-result-routing"]').textContent(),
+    );
+    assert(
+      JSON.stringify(confirmedRouting) === JSON.stringify(expectedRouting),
+      'the confirmed R8 routing differs from its proposal',
+    );
+    const queryResults = await noGpuFixture.page
+      .locator('[data-testid^="check-query-result-"]')
+      .count();
+    assert(
+      queryResults === parameterizedCheck.intents.length,
+      `R8 produced ${queryResults} query result areas, expected ${parameterizedCheck.intents.length}`,
+    );
+    await noGpuFixture.page.click('[data-testid="question-q1"]');
+    await noGpuFixture.page.click('[data-testid="run"]');
+    await noGpuFixture.page.waitForFunction(
+      (rowCount) =>
+        document.querySelector('[data-testid="result"]')?.textContent?.includes(
+          'q1-packing-differences.json',
+        ) && Number(document.querySelector('[data-testid="row-count"]')?.textContent) === rowCount,
+      gold.questions[0].rowCount,
+      { timeout: 60000 },
+    );
+    await noGpuFixture.page.click('[data-testid="run-checks"]');
+    await noGpuFixture.page.waitForSelector('[data-testid="findings-count"]', {
+      timeout: 180000,
+    });
+    assert(
+      Number(await noGpuFixture.page.locator('[data-testid="findings-count"]').textContent()) ===
+        findings.length,
+      'Run checks changed on the WebGPU-disabled path',
+    );
+    const noGpuClean = await assertContextClean(noGpuFixture);
+    summary.checkRouting.noWebgpu = {
+      consentCard: false,
+      confirmedRouting,
+      queryResults,
+      q1Rows: gold.questions[0].rowCount,
+      findingsCount: findings.length,
+      ...assertNoModelRequests(noGpuFixture.requests, 'WebGPU-disabled FarmBot'),
+      ...noGpuClean,
+      pageErrors: [...noGpuFixture.pageErrors],
+    };
+    await noGpuFixture.context.close();
+
+    // Replace only the same tiny package-boundary chunk used by the desk-fan
+    // smoke. Invalid model outputs are rejected without the real model package,
+    // model hosts, compilation or execution.
+    if (!useLive) {
+      const lazyChunk = findLazyWebllmChunk();
+      assert(lazyChunk, 'the lazy WebLLM package chunk was not found');
+      const stubSource = [
+        "export const WEBLLM_PACKAGE_TAG = 'ontographia-webllm-package-v1';",
+        'class StubEngine {',
+        '  constructor(config) { this.config = config || {}; }',
+        '  async reload() {',
+        "    if (this.config.initProgressCallback) this.config.initProgressCallback({ progress: 1, text: 'stub model ready' });",
+        '  }',
+        '  async unload() {}',
+        '}',
+        'StubEngine.prototype.chat = { completions: { create: async () => {',
+        '  const output = globalThis.__FARMBOT_SMOKE_MODEL_OUTPUT__;',
+        "  return { choices: [{ message: { content: String(output == null ? '' : output) } }] };",
+        '} } };',
+        'export async function createIntentEngine(config) { return new StubEngine(config); }',
+      ].join('\n');
+      const invalidFixture = await prepareContext(browser, 'check-routing-invalid-model');
+      await invalidFixture.context.addInitScript(() => {
+        Object.defineProperty(navigator, 'gpu', {
+          configurable: true,
+          value: { requestAdapter: async () => ({}) },
+        });
+      });
+      await invalidFixture.context.route(`**/assets/${lazyChunk}`, (route) =>
+        route.fulfill({ status: 200, contentType: 'text/javascript', body: stubSource }),
+      );
+      await invalidFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+      await invalidFixture.page.click('[data-testid="farmbot-free-text-consent-button"]');
+      await invalidFixture.page.fill(
+        '[data-testid="farmbot-free-text-input"]',
+        'Which parts have no process reference?',
+      );
+      await invalidFixture.page.waitForFunction(
+        () => !document.querySelector('[data-testid="farmbot-free-text-convert"]')?.disabled,
+        undefined,
+        { timeout: 15000 },
+      );
+      const invalidCases = [
+        {
+          label: 'unknown check',
+          output: JSON.stringify({ check: 'R10', parameter: null }),
+          needle: 'unknown check id',
+        },
+        {
+          label: 'extra key',
+          output: JSON.stringify({ check: 'R3', parameter: null, unexpected: true }),
+          needle: 'exactly the required keys',
+        },
+        { label: 'Cypher', output: 'MATCH (part:Part) RETURN part', needle: 'Cypher' },
+      ];
+      const invalidRecords = [];
+      for (const testCase of invalidCases) {
+        await invalidFixture.page.evaluate((output) => {
+          globalThis.__FARMBOT_SMOKE_MODEL_OUTPUT__ = output;
+        }, testCase.output);
+        await invalidFixture.page.click('[data-testid="farmbot-free-text-convert"]');
+        await invalidFixture.page.waitForFunction(
+          (needle) =>
+            document
+              .querySelector('[data-testid="farmbot-free-text-error"]')
+              ?.textContent?.includes(needle),
+          testCase.needle,
+          { timeout: 15000 },
+        );
+        const state = await invalidFixture.page.evaluate(() => ({
+          proposal: Boolean(document.querySelector('[data-testid="farmbot-check-proposal"]')),
+          result: Boolean(document.querySelector('[data-testid="farmbot-check-result"]')),
+          debug: JSON.parse(
+            document.querySelector('[data-testid="farmbot-check-routing-debug"]')?.textContent ??
+              '{}',
+          ),
+        }));
+        assert(!state.proposal && !state.result, `${testCase.label} left output on screen`);
+        assert(
+          state.debug.compileAttempts === 0 && state.debug.runs === 0,
+          `${testCase.label} reached compile or execution: ${JSON.stringify(state.debug)}`,
+        );
+        invalidRecords.push({ case: testCase.label, rejected: true, ...state.debug });
+      }
+      const invalidClean = await assertContextClean(invalidFixture);
+      const invalidModelHosts = invalidFixture.requests.filter(isModelHost);
+      assert(
+        invalidModelHosts.length === 0,
+        `the FarmBot model stub fetched model host(s): ${invalidModelHosts.join(', ')}`,
+      );
+      const realPackageRequests = invalidFixture.requests.filter((url) =>
+        /\/lib-[^/]+\.js$/.test(pathOf(url)),
+      );
+      assert(
+        realPackageRequests.length === 0,
+        `the FarmBot model stub fetched the real package: ${realPackageRequests.join(', ')}`,
+      );
+      summary.checkRouting.invalidModelOutputs = {
+        lazyChunk,
+        boundaryStubRequests: invalidFixture.requests.filter((url) => url.endsWith(lazyChunk)).length,
+        modelHosts: invalidModelHosts.length,
+        realPackageRequests: realPackageRequests.length,
+        cases: invalidRecords,
+        ...invalidClean,
+        pageErrors: [...invalidFixture.pageErrors],
+      };
+      await invalidFixture.context.close();
+    }
 
     // Tampered seed: the digest check must run first and reject the bytes.
     tamper = await prepareContext(browser, 'tampered-seed');
@@ -1588,6 +1906,11 @@ async function main() {
       processLanes: processLaneFixtures.map((entry) => entry.clean.cspViolations),
       unknown: summary.unknownFinding.cspViolations,
       malformed: summary.malformedHashes.map((entry) => entry.cspViolations),
+      checkRouting: {
+        beforeConsent: summary.checkRouting.beforeConsent.cspViolations,
+        noWebgpu: summary.checkRouting.noWebgpu.cspViolations,
+        invalidModelOutputs: summary.checkRouting.invalidModelOutputs?.cspViolations ?? null,
+      },
     };
     summary.pageErrors = [
       ...happy.pageErrors,
@@ -1596,6 +1919,9 @@ async function main() {
       ...processLaneFixtures.flatMap((entry) => entry.fixture.pageErrors),
       ...unknown.pageErrors,
       ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
+      ...summary.checkRouting.beforeConsent.pageErrors,
+      ...summary.checkRouting.noWebgpu.pageErrors,
+      ...(summary.checkRouting.invalidModelOutputs?.pageErrors ?? []),
     ];
     summary.nonSameOriginRequests = [
       ...new Set([
@@ -1605,6 +1931,9 @@ async function main() {
         ...processLaneFixtures.flatMap((entry) => entry.clean.external),
         ...unknownClean.external,
         ...summary.malformedHashes.flatMap((entry) => entry.external),
+        ...summary.checkRouting.beforeConsent.external,
+        ...summary.checkRouting.noWebgpu.external,
+        ...(summary.checkRouting.invalidModelOutputs?.external ?? []),
       ]),
     ];
 

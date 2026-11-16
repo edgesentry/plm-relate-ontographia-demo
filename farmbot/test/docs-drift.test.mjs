@@ -149,36 +149,54 @@ function markdownFiles(directory) {
     .map((name) => join(directory, name));
 }
 
-const NUMBER_WORDS = [
-  'one',
-  'two',
-  'three',
-  'four',
-  'five',
-  'six',
-  'seven',
-  'eight',
-  'nine',
-  'ten',
-  'eleven',
-  'twelve',
-  'thirteen',
-  'fourteen',
-  'fifteen',
-  'sixteen',
-  'seventeen',
-  'eighteen',
-  'nineteen',
-  'twenty',
-  'thirty',
-  'forty',
-  'fifty',
-  'sixty',
-  'seventy',
-  'eighty',
-  'ninety',
-  'hundred',
-].join('|');
+const NUMBER_WORD_BY_VALUE = new Map([
+  [1, 'one'],
+  [2, 'two'],
+  [3, 'three'],
+  [4, 'four'],
+  [5, 'five'],
+  [6, 'six'],
+  [7, 'seven'],
+  [8, 'eight'],
+  [9, 'nine'],
+  [10, 'ten'],
+  [11, 'eleven'],
+  [12, 'twelve'],
+  [13, 'thirteen'],
+  [14, 'fourteen'],
+  [15, 'fifteen'],
+  [16, 'sixteen'],
+  [17, 'seventeen'],
+  [18, 'eighteen'],
+  [19, 'nineteen'],
+  [20, 'twenty'],
+  [30, 'thirty'],
+  [40, 'forty'],
+  [50, 'fifty'],
+  [60, 'sixty'],
+  [70, 'seventy'],
+  [80, 'eighty'],
+  [90, 'ninety'],
+  [100, 'hundred'],
+]);
+for (const tens of [20, 30, 40, 50, 60, 70, 80, 90]) {
+  for (let ones = 1; ones <= 9; ones += 1) {
+    NUMBER_WORD_BY_VALUE.set(
+      tens + ones,
+      `${NUMBER_WORD_BY_VALUE.get(tens)}-${NUMBER_WORD_BY_VALUE.get(ones)}`,
+    );
+  }
+}
+const NUMBER_WORDS = [...NUMBER_WORD_BY_VALUE.values()]
+  .map((word) => word.replace('-', '[- ]'))
+  .join('|');
+const NUMBER_PATTERN = String.raw`(?:\d+|${NUMBER_WORDS})`;
+
+function numberWord(value) {
+  const word = NUMBER_WORD_BY_VALUE.get(value);
+  assert.ok(word, `inventory fixture count ${value} has no single-word form`);
+  return word;
+}
 
 /**
  * Shapes that state an inventory of check Intents, findings or rules. The
@@ -188,28 +206,59 @@ const NUMBER_WORDS = [
  *
  * The number is not compared with the live data. A structural sentence such as
  * "one finding per name", "two findings that share the part node", "the two
- * Intents", "rules R1–R9", "one entry per rule" or a field name such as
- * `findingCount` names no inventory and is left alone.
+ * Intents", "those two rules", "rules R1–R9", "one entry per rule" or a field
+ * name such as `findingCount` names no inventory and is left alone.
  */
 const INVENTORY_SHAPES = [
   {
-    label: 'a count before "check Intent(s)"',
-    pattern: new RegExp(`\\b(?:\\d+|${NUMBER_WORDS})\\s+check\\s+Intents?\\b`, 'i'),
+    label: 'a count before "check/reference Intent(s)"',
+    pattern: new RegExp(`\\b${NUMBER_PATTERN}\\s+(?:check|reference)\\s+Intents?\\b`, 'i'),
   },
-  { label: 'a per-rule finding count', pattern: /\bR\d+\s+\d{1,4}\b/ },
-  { label: 'a finding total', pattern: /\bfor\s+\d+\s+in\s+total\b/i },
+  {
+    label: 'a per-rule finding count',
+    pattern: new RegExp(`\\bR\\d+\\s+${NUMBER_PATTERN}\\b`),
+  },
+  {
+    label: 'a finding total',
+    pattern: new RegExp(`\\bfor\\s+${NUMBER_PATTERN}\\s+in\\s+total\\b`, 'i'),
+  },
   {
     label: 'a count stated on the seed',
-    pattern: /\bon\s+the\s+(?:current|committed)\s+seed\b[^.!?]*[^\w-]\d+(?![\w-])/i,
+    pattern: new RegExp(
+      `\\bon\\s+the\\s+(?:current|committed)\\s+seed\\b[^.!?]*[^\\w-]${NUMBER_PATTERN}(?![\\w-])`,
+      'i',
+    ),
   },
   {
     label: 'a count the seed is said to have',
-    pattern: /\bthe\s+(?:current|committed)\s+seed\s+has\s+\d+/i,
+    pattern: new RegExp(
+      `\\bthe\\s+(?:current|committed)\\s+seed\\s+has\\s+${NUMBER_PATTERN}\\b`,
+      'i',
+    ),
   },
-  { label: 'a fact and inferred count', pattern: /\bhas\s+\d+\s+facts?\b/i },
-  { label: 'a findings count', pattern: /\b\d+\s+findings\b/ },
-  { label: 'a rules count', pattern: /\b\d+\s+rules\b/ },
-  { label: 'a tests count', pattern: /\b\d+\s+tests\b/ },
+  {
+    label: 'a fact and inferred count',
+    pattern: new RegExp(`\\bhas\\s+${NUMBER_PATTERN}\\s+facts?\\b`, 'i'),
+  },
+  {
+    label: 'a findings count',
+    pattern: new RegExp(
+      `\\b${NUMBER_PATTERN}\\s+findings\\b(?!\\s+that\\s+share\\s+the\\s+part\\s+node\\b)`,
+      'i',
+    ),
+  },
+  {
+    label: 'a rules count',
+    pattern: new RegExp(`(?<!those )\\b${NUMBER_PATTERN}\\s+rules\\b`, 'i'),
+  },
+  {
+    label: 'a tests count',
+    pattern: new RegExp(`\\b${NUMBER_PATTERN}\\s+tests\\b`, 'i'),
+  },
+  {
+    label: 'a name count',
+    pattern: new RegExp(`\\bthe\\s+${NUMBER_PATTERN}\\s+names?\\b`, 'i'),
+  },
   {
     label: 'a seed-count table column',
     pattern: /\b(?:findings|rows)\s+on\s+the\s+(?:current|committed)\s+seed\b/i,
@@ -259,22 +308,38 @@ test('the docs state no hardcoded check-Intent, finding or rule count', () => {
 test('a hardcoded inventory count fails even when it matches the committed data', () => {
   const findings = JSON.parse(readFileSync(FINDINGS_DOC, 'utf8'));
   const perRule = new Map(findings.rules.map((rule) => [rule.id, rule.findingCount]));
+  const r6Findings = findings.findings.filter((finding) => finding.rule === 'R6');
+  const r6Facts = r6Findings.filter((finding) => !finding.inferred).length;
+  const r6Inferred = r6Findings.length - r6Facts;
   const live = {
     intents: INTENT_FILES.length,
+    referenceIntents: INTENT_FILES.filter((file) => file.startsWith('refs-')).length,
     rules: CHECKS.length,
     findings: findings.findings.length,
   };
 
   const failing = [
-    '**Run checks** compiles the seventeen check Intents in `farmbot/checks/`.',
+    `**Run checks** compiles the ${numberWord(live.intents)} check Intents in \`farmbot/checks/\`.`,
     `**Run checks** compiles the ${live.intents} check Intents in \`farmbot/checks/\`.`,
+    'The five reference Intents provide evidence.',
+    `The ${live.referenceIntents} reference Intents provide evidence.`,
     `On the committed seed the findings are R1 ${perRule.get('R1')}, R2 ${perRule.get('R2')}, for ${live.findings} in total.`,
+    `The per-rule totals are R1 ${numberWord(perRule.get('R1'))}, R2 ${numberWord(perRule.get('R2'))}.`,
+    `R6 accounts for ${numberWord(r6Findings.length)} in total.`,
     `On the current seed there are ${perRule.get('R5')} pages with no machine-readable table.`,
-    'On the current seed R6 has 6 facts and 3 inferred names.',
+    `On the current seed there are ${numberWord(perRule.get('R5'))} pages with no machine-readable table.`,
+    `R6 has ${r6Facts} facts and ${r6Inferred} inferred names.`,
+    `R6 has ${numberWord(r6Facts)} facts and ${numberWord(r6Inferred)} inferred names.`,
     `The current seed has 19 service-referenced parts and ${perRule.get('R8')} findings: Leadscrew Block and Shunt.`,
-    'The oracle returns 13 rows (9 findings).',
-    'The engine evaluates 9 rules in the browser.',
+    `The current seed has ${numberWord(perRule.get('R8'))} findings.`,
+    `The oracle returns ${perRule.get('R2')} rows (${perRule.get('R6')} findings).`,
+    `The oracle returns ${numberWord(perRule.get('R2'))} rows (${numberWord(perRule.get('R6'))} findings).`,
+    `The engine evaluates ${live.rules} rules in the browser.`,
+    `The engine evaluates ${numberWord(live.rules)} rules in the browser.`,
     'The farmbot suite has 43 tests.',
+    `The farmbot suite has ${numberWord(live.rules)} tests.`,
+    'On the current seed R9 records the one name `tee nuts`.',
+    `R9 records the ${perRule.get('R9')} name in the findings document.`,
     '| ID | Direction | Check | Findings on the current seed |',
     '| Oracle | Returned key | Rows on the current seed |',
   ];
@@ -288,7 +353,10 @@ test('a hardcoded inventory count fails even when it matches the committed data'
 
   const passing = [
     'One finding per distinct `display_name`, grouped in the rule module.',
+    'The rule emits one finding per subject.',
+    'The rule emits 1 finding per subject.',
     'A part compared for both `standard` and `xl` produces two findings that share the part node.',
+    'A part compared for both `standard` and `xl` produces 2 findings that share the part node.',
     'The two Intents keep the usage lines whose `match_method` is `unmatched`.',
     'The rule therefore uses two Intents whose union is the finding set.',
     'The rule joins three Intents on the difference node id.',

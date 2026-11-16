@@ -4,20 +4,28 @@
 //
 //   npm run verify   # produce dist/
 //   npm run eval:intents
+//   npm run eval:intents -- --farmbot  # FarmBot check-routing prompt set
 //
 // It opens the real consent flow, loads the real model, and drives the real UI
-// for every prompt in src/data/intentPromptSet.ts. Output is JSON counts; no
-// numbers are inferred.
+// for every prompt in src/data/intentPromptSet.ts, or the FarmBot prompt set in
+// --farmbot mode. Output is JSON counts; no numbers are inferred.
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import ts from 'typescript';
 import { chromium } from 'playwright';
+import { CHECK_CATALOG } from '../src/farmbot/check-catalog.mjs';
+import { farmbotCheckPromptSet } from '../src/farmbot/check-prompt-set.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const port = Number(process.env.EVAL_PORT ?? 4180);
 const base = `http://127.0.0.1:${port}/`;
 const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+const farmbotMode = process.argv.slice(2).includes('--farmbot');
+const farmbotAllowedValues = farmbotMode
+  ? JSON.parse(readFileSync(join(root, 'farmbot/dist/farmbot.allowed-values.json'), 'utf8'))
+  : null;
+const farmbotPrompts = farmbotMode ? farmbotCheckPromptSet(farmbotAllowedValues) : [];
 
 async function loadTsModule(relativePath) {
   const source = readFileSync(join(root, relativePath), 'utf8');
@@ -119,7 +127,131 @@ async function main() {
     if (!webgpu) {
       console.log(
         JSON.stringify(
-          { ran: false, reason: 'WebGPU unavailable in this browser session', prompts: intentPromptSet.length },
+          {
+            ran: false,
+            reason: 'WebGPU unavailable in this browser session',
+            prompts: farmbotMode ? farmbotPrompts.length : intentPromptSet.length,
+            ...(farmbotMode ? { promptSet: 'farmbot-checks' } : {}),
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    if (farmbotMode) {
+      await page.goto(`${base}farmbot/`, { waitUntil: 'load' });
+      await page.waitForSelector('[data-testid="farmbot-free-text-consent"]', {
+        timeout: 30000,
+      });
+      await page.click('[data-testid="farmbot-free-text-consent-button"]');
+      const progressSeen = [];
+      const progressTimer = setInterval(async () => {
+        try {
+          const text = await page.evaluate(
+            () =>
+              document.querySelector('[data-testid="farmbot-free-text-progress"]')?.textContent ??
+              '',
+          );
+          if (text) progressSeen.push(text.trim());
+        } catch {
+          // The page may be busy or closing.
+        }
+      }, 5000);
+      await page.waitForFunction(
+        () => {
+          const convert = document.querySelector('[data-testid="farmbot-free-text-convert"]');
+          return Boolean(convert) && !convert.disabled;
+        },
+        undefined,
+        { timeout: 900000 },
+      );
+      clearInterval(progressTimer);
+      await page.fill('[data-testid="farmbot-free-text-input"]', 'Which service references are unresolved?');
+
+      const results = [];
+      for (const prompt of farmbotPrompts) {
+        await page.fill('[data-testid="farmbot-free-text-input"]', prompt.text);
+        await page.click('[data-testid="farmbot-free-text-convert"]');
+        await page.waitForFunction(
+          () => !document.querySelector('[data-testid="farmbot-free-text-error"]'),
+          undefined,
+          { timeout: 10000 },
+        );
+        await page.waitForFunction(
+          () =>
+            Boolean(document.querySelector('[data-testid="farmbot-check-proposal"]')) ||
+            Boolean(document.querySelector('[data-testid="farmbot-free-text-error"]')),
+          undefined,
+          { timeout: 120000 },
+        );
+        const proposed = await page
+          .locator('[data-testid="farmbot-check-proposal-routing"]')
+          .textContent()
+          .catch(() => null);
+        if (proposed === null) {
+          const detail = await page
+            .locator('[data-testid="farmbot-free-text-error"]')
+            .textContent();
+          results.push({
+            ...prompt,
+            outcome: 'reject',
+            detail: (detail ?? '').slice(0, 300),
+          });
+          continue;
+        }
+        let actual;
+        try {
+          actual = JSON.parse(proposed);
+        } catch (error) {
+          results.push({ ...prompt, outcome: 'reject', detail: error.message });
+          continue;
+        }
+        const expected = { check: prompt.check, parameter: prompt.parameter ?? null };
+        const matches = JSON.stringify(actual) === JSON.stringify(expected);
+        results.push({
+          ...prompt,
+          outcome: matches ? 'gold-match' : 'misclassification',
+          actual,
+        });
+        await page.click('[data-testid="farmbot-check-proposal-cancel"]');
+      }
+      const count = (outcome) => results.filter((entry) => entry.outcome === outcome).length;
+      const perCheck = Object.fromEntries(
+        CHECK_CATALOG.map((check) => {
+          const entries = results.filter((entry) => entry.check === check.id);
+          return [
+            check.id,
+            {
+              prompts: entries.length,
+              'gold-match': entries.filter((entry) => entry.outcome === 'gold-match').length,
+              misclassification: entries.filter(
+                (entry) => entry.outcome === 'misclassification',
+              ).length,
+              reject: entries.filter((entry) => entry.outcome === 'reject').length,
+            },
+          ];
+        }),
+      );
+      console.log(
+        JSON.stringify(
+          {
+            ran: true,
+            promptSet: 'farmbot-checks',
+            base: `${base}farmbot/`,
+            model: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+            counts: {
+              prompts: results.length,
+              'gold-match': count('gold-match'),
+              misclassification: count('misclassification'),
+              reject: count('reject'),
+            },
+            perCheck,
+            results,
+            progressSamples: progressSeen.slice(-5),
+            pageErrors,
+          },
           null,
           2,
         ),

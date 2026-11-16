@@ -16,6 +16,10 @@ import {
   parseFindingsDigestLine,
   summaryLine,
 } from '../../src/farmbot/findings-view.mjs';
+import {
+  unresolvedServiceCauses,
+  unresolvedServiceCountermeasures,
+} from '../../src/farmbot/agent/templates.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -74,6 +78,31 @@ function summaryInputs(finding) {
     }
     case 'R5':
       return [page.sourceFile];
+    case 'R6': {
+      const files = finding.evidence
+        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [finding.subject.label, ...new Set(files)];
+    }
+    case 'R7':
+      return [part.facts.name];
+    case 'R8': {
+      const pages = finding.evidence
+        .filter((row) => row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [part.facts.name, ...new Set(pages)];
+    }
+    case 'R9': {
+      const reference = finding.evidence.find((row) => row.role === 'reference');
+      const pages = [
+        ...new Set(
+          finding.evidence
+            .filter((row) => row.role === 'service')
+            .map((row) => row.sourceFile),
+        ),
+      ].sort();
+      return [reference.facts.displayName, ...pages];
+    }
     default:
       throw new Error(`no summary inputs for rule ${finding.rule}`);
   }
@@ -117,7 +146,7 @@ test('any other hash yields null', () => {
 
 test('the summary line is filled from evidence values in both languages', () => {
   const rules = [...new Set(findings.map((finding) => finding.rule))].sort();
-  assert.deepEqual(rules, ['R1', 'R2', 'R3', 'R4', 'R5']);
+  assert.deepEqual(rules, ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9']);
 
   for (const finding of findings) {
     const inputs = summaryInputs(finding);
@@ -139,6 +168,107 @@ test('the summary line is filled from evidence values in both languages', () => 
     // The English template reproduces the rule module's stored summary.
     assert.equal(summaryLine(finding, 'en'), finding.summary, `${finding.id} summary drifted`);
   }
+});
+
+test('an unresolved service name on several pages joins every page', () => {
+  const finding = {
+    id: 'R9-multi-page',
+    rule: 'R9',
+    inferred: false,
+    subject: { key: 'tee nuts', kind: 'unresolved-name', label: 'tee nuts', nodeId: null },
+    evidence: [
+      {
+        role: 'service',
+        nodeId: 'service:a.md',
+        sourceFile: 'a.md',
+        line: null,
+        facts: { kind: 'maintenance', title: 'A' },
+      },
+      {
+        role: 'service',
+        nodeId: 'service:b.md',
+        sourceFile: 'b.md',
+        line: null,
+        facts: { kind: 'maintenance', title: 'B' },
+      },
+      {
+        role: 'reference',
+        nodeId: 'usage:service:a.md@0',
+        sourceFile: 'a.md',
+        line: 1,
+        facts: { displayName: 'tee nuts', matchMethod: 'unmatched', resolvedPart: null },
+      },
+      {
+        role: 'reference',
+        nodeId: 'usage:service:b.md@0',
+        sourceFile: 'b.md',
+        line: 2,
+        facts: { displayName: 'tee nuts', matchMethod: 'unmatched', resolvedPart: null },
+      },
+    ],
+    queries: [],
+  };
+
+  const causes = unresolvedServiceCauses({
+    candidates: [],
+    displayName: 'tee nuts',
+    pages: ['a.md', 'b.md'],
+    r2Names: [],
+  });
+  const countermeasures = unresolvedServiceCountermeasures({
+    displayName: 'tee nuts',
+    pages: ['a.md', 'b.md'],
+  });
+  for (const lang of ['ja', 'en']) {
+    const line = summaryLine(finding, lang);
+    assert.ok(line.includes('a.md'), `${lang} summary drops a.md: ${line}`);
+    assert.ok(line.includes('b.md'), `${lang} summary drops b.md: ${line}`);
+  }
+  assert.ok(causes[0].text.includes('a.md') && causes[0].text.includes('b.md'));
+  assert.ok(countermeasures[0].includes('a.md') && countermeasures[0].includes('b.md'));
+});
+
+test('the R6 summary agrees with the number of downstream pages', () => {
+  const base = {
+    id: 'R6-grammar',
+    rule: 'R6',
+    inferred: true,
+    subject: { key: 'tee nuts', kind: 'name', label: 'Tee Nuts', nodeId: null },
+    evidence: [
+      {
+        role: 'design-change',
+        nodeId: 'change:tee',
+        sourceFile: 'change-log.md',
+        line: 1,
+        facts: { section: 'Changed', text: '- Removed the drop-in tee nuts.' },
+      },
+      {
+        role: 'packing-structure',
+        nodeId: 'container:kit.md',
+        sourceFile: 'kit.md',
+        line: null,
+        facts: { title: 'Kit' },
+      },
+    ],
+    queries: [],
+  };
+  assert.match(summaryLine(base, 'en'), /kit\.md still lists it\.$/);
+  assert.doesNotMatch(summaryLine(base, 'en'), /still list it\./);
+
+  const plural = {
+    ...base,
+    evidence: [
+      ...base.evidence,
+      {
+        role: 'packing-structure',
+        nodeId: 'container:carton.md',
+        sourceFile: 'carton.md',
+        line: null,
+        facts: { title: 'Carton' },
+      },
+    ],
+  };
+  assert.match(summaryLine(plural, 'en'), /carton\.md, kit\.md still list it\.$/);
 });
 
 test('an unsupported language is rejected', () => {

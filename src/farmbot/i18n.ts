@@ -116,6 +116,7 @@ const en = {
   countermeasuresHeading: 'Countermeasures',
   factLabel: 'fact',
   inferenceLabel: 'inferred',
+  nameMatchLabel: 'Name match',
   causeDataNote:
     'Cause and countermeasure texts are stored in English. The labels and the summary line follow the selected language.',
   severityAction: 'Action needed',
@@ -249,6 +250,7 @@ const ja: Record<keyof typeof en, string> = {
   countermeasuresHeading: '対策',
   factLabel: '事実',
   inferenceLabel: '推定',
+  nameMatchLabel: '名前の照合',
   causeDataNote:
     '原因と対策の本文は英語で保存されています。ラベルと要約行は選択した言語で表示します。',
   severityAction: '対応が必要',

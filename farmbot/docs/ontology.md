@@ -159,7 +159,7 @@ format; see the modelling rules for where the per-link facts went.
 | COMPARED_IN | QuantityComparison | ManufacturingContainer | `quantity_comparison.packing_page` |
 | FOR_VARIANT | QuantityComparison | ProductVariant | `quantity_comparison.version` |
 | SEEN_IN | UnmatchedName | Structure | `unmatched_name.source_pages`, service `page_path` |
-| CANDIDATE | UnmatchedName | Part | `unmatched_name.candidates` |
+| CANDIDATE | UnmatchedName | Part | `unmatched_name.candidates`, `service_reference.candidates` |
 | AFFECTS_PART | DesignChange | Part | `change_note_link.resolved_part` |
 
 `SEEN_IN` and `CANDIDATE` are many-to-many in practice, because a name can be

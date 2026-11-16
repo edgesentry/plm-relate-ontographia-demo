@@ -93,7 +93,7 @@ export interface RelateSession {
   close(): void;
 }
 
-/** UI severity levels; the stored level of R3/R4 is always `info`. */
+/** UI severity levels; the stored level of R3, R4, R7 and R8 is always `info`. */
 export type FindingSeverity = 'action' | 'review' | 'info';
 
 export interface FindingEvidence {
@@ -136,6 +136,8 @@ export interface Finding {
   };
   subject: FindingSubject;
   summary: string;
+  /** R6: the name match came from prose, not from a resolved Change Log link. */
+  inferred: boolean;
   evidence: FindingEvidence[];
   queries: FindingQuery[];
   causes: FindingCause[];

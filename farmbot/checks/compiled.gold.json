@@ -2,6 +2,11 @@
   "format": "farmbot-check-compiled-v1",
   "intents": [
     {
+      "file": "changed-parts.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100"
+    },
+    {
       "file": "r1-compared-in.json",
       "params": {},
       "query": "CYPHER 25\nMATCH (difference:QuantityDifference)-[:COMPARED_IN]->(container:ManufacturingContainer)\nRETURN difference AS difference, container AS container\nLIMIT 100"
@@ -43,6 +48,18 @@
       "query": "CYPHER 25\nMATCH (page:PreAssembly)\nFILTER page.machine_readable = $param_0\nRETURN page AS page\nLIMIT 100"
     },
     {
+      "file": "r6-changes.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100"
+    },
+    {
+      "file": "r9-service-unmatched.json",
+      "params": {
+        "param_0": "unmatched"
+      },
+      "query": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100"
+    },
+    {
       "file": "refs-assembly.json",
       "params": {},
       "query": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000"
@@ -66,6 +83,16 @@
       "file": "refs-preassembly.json",
       "params": {},
       "query": "CYPHER 25\nMATCH (structure:PreAssembly)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000"
+    },
+    {
+      "file": "refs-service.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000"
+    },
+    {
+      "file": "unmatched-candidates.json",
+      "params": {},
+      "query": "CYPHER 25\nMATCH (unmatched:UnmatchedName)-[:CANDIDATE]->(part:Part)\nRETURN unmatched AS unmatched, part AS part\nLIMIT 1000"
     }
   ]
 }

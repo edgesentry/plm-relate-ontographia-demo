@@ -195,3 +195,173 @@ export function unreadablePageCountermeasures(facts) {
     `Add a Markdown parts table to ${facts.path}, or record the component list from the PDF extract.`,
   ];
 }
+
+/**
+ * @param {{ name: string, inferred: boolean, sections: readonly string[], files: readonly string[] }} facts
+ * @returns {Cause[]}
+ */
+export function changedNameCauses(facts) {
+  const where = facts.files.join(', ');
+  const sections = facts.sections.join(', ');
+  return [
+    cause(
+      'fact',
+      facts.inferred
+        ? `The Change Log removal statement in ${sections} names "${facts.name}", and ${where} still list it.`
+        : `The Change Log links ${facts.name} to its part page in ${sections}, and ${where} still reference that part.`,
+    ),
+    cause(
+      'inference',
+      'The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current.',
+    ),
+  ];
+}
+
+/**
+ * @param {{ name: string, files: readonly string[] }} facts
+ * @returns {string[]}
+ */
+export function changedNameCountermeasures(facts) {
+  return [
+    `Confirm whether ${facts.name} should still appear on ${facts.files.join(', ')}.`,
+    'Correct the Change Log or the downstream page, then rebuild the extract.',
+  ];
+}
+
+/**
+ * @param {{ partName: string, unresolvedNames: readonly string[], r5Paths: readonly string[] }} facts
+ * @returns {Cause[]}
+ */
+export function changedPartUnreachedCauses(facts) {
+  const causes = [
+    cause(
+      'fact',
+      `The Change Log changes ${facts.partName}, but no assembly chapter, pre-assembly, packing list or service page references it in the extract.`,
+    ),
+    cause(
+      'inference',
+      'The part may be new and not yet documented, unused, or named only by a reference that did not resolve to a part page.',
+    ),
+  ];
+  if (facts.unresolvedNames.length > 0) {
+    causes.push(
+      cause(
+        'inference',
+        `The unresolved name(s) ${facts.unresolvedNames.join(', ')} may be this part under another spelling.`,
+        'R2',
+      ),
+    );
+  }
+  causes.push(r5CauseCandidate(facts.r5Paths));
+  return causes;
+}
+
+/**
+ * @param {{ partName: string }} facts
+ * @returns {string[]}
+ */
+export function changedPartUnreachedCountermeasures(facts) {
+  return [
+    `Add the missing reference for ${facts.partName}, or confirm that the part is not used in this build.`,
+    'If the reference exists on a pre-assembly page, add a machine-readable parts table so the extract can see it.',
+  ];
+}
+
+/**
+ * @param {{ partName: string, servicePages: readonly string[], packedFiles: readonly string[], unreferenced: boolean, r5Paths: readonly string[] }} facts
+ * @returns {Cause[]}
+ */
+export function serviceOnlyPartCauses(facts) {
+  const causes = [
+    cause(
+      'fact',
+      `${facts.partName} is named on ${facts.servicePages.join(', ')}, but no assembly chapter or pre-assembly references it.`,
+    ),
+  ];
+  if (facts.packedFiles.length > 0) {
+    causes.push(
+      cause(
+        'fact',
+        `${facts.partName} is packed on ${facts.packedFiles.join(', ')}.`,
+        'R4',
+      ),
+    );
+  }
+  if (facts.unreferenced) {
+    causes.push(
+      cause('fact', `${facts.partName} is referenced by nothing else in the extract.`, 'R3'),
+    );
+  }
+  causes.push(
+    cause(
+      'inference',
+      'The part may be a service-only spare, or an assembly step that installs it may be missing from the extract.',
+    ),
+  );
+  causes.push(r5CauseCandidate(facts.r5Paths));
+  return causes;
+}
+
+/**
+ * @param {{ partName: string }} facts
+ * @returns {string[]}
+ */
+export function serviceOnlyPartCountermeasures(facts) {
+  return [
+    `Confirm whether ${facts.partName} is installed during assembly and belongs on an assembly chapter or pre-assembly.`,
+    'If it is a service-only spare, record that in the packing or service page so the difference is intentional.',
+  ];
+}
+
+/**
+ * @param {{ displayName: string, pages: readonly string[], candidates: readonly string[], r2Names: readonly string[] }} facts
+ * @returns {Cause[]}
+ */
+export function unresolvedServiceCauses(facts) {
+  const where = facts.pages.join(', ');
+  const causes = [
+    cause(
+      'fact',
+      `The unresolved name "${facts.displayName}" appears on ${where}, and it resolves to no part page.`,
+    ),
+  ];
+  if (facts.candidates.length > 0) {
+    causes.push(
+      cause(
+        'fact',
+        `The extract recorded these candidate parts: ${facts.candidates.join(', ')}.`,
+      ),
+    );
+  } else {
+    causes.push(
+      cause('inference', 'The extract recorded no candidate part for this name.'),
+    );
+  }
+  if (facts.r2Names.length > 0) {
+    causes.push(
+      cause(
+        'inference',
+        `The same name is also unresolved on ${facts.r2Names.join(', ')}.`,
+        'R2',
+      ),
+    );
+  }
+  causes.push(
+    cause(
+      'inference',
+      'The name may be misspelled, may use a synonym for a part listed under another name, or may refer to an item that has no part page.',
+    ),
+  );
+  return causes;
+}
+
+/**
+ * @param {{ displayName: string, pages: readonly string[] }} facts
+ * @returns {string[]}
+ */
+export function unresolvedServiceCountermeasures(facts) {
+  return [
+    `Add a part page for "${facts.displayName}" or correct it on ${facts.pages.join(', ')}.`,
+    'If the name is a synonym, record the mapping so the service reference resolves on the next extract.',
+  ];
+}

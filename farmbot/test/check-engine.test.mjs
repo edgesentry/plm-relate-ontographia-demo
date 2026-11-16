@@ -150,17 +150,20 @@ async function oracleRows(file) {
   return toJs(reader.getRowObjectsJS());
 }
 
-test('the check engine reproduces the measured rule counts', () => {
+test('the check engine reports one rule entry per rule with an oracle-derived count', () => {
   assert.deepEqual(
-    findings.rules.map((rule) => [rule.id, rule.findingCount]),
-    [
-      ['R1', 12],
-      ['R2', 13],
-      ['R3', 44],
-      ['R4', 11],
-      ['R5', 6],
-    ],
+    findings.rules.map((rule) => rule.id),
+    CHECKS.map((rule) => rule.id),
   );
+  for (const rule of findings.rules) {
+    assert.equal(rule.findingCount, findingsByRule(rule.id).length, `${rule.id} count`);
+  }
+
+  for (const rule of ['R3', 'R4', 'R7', 'R8']) {
+    for (const finding of findingsByRule(rule)) {
+      assert.equal(finding.severity, 'info', `${finding.id} must be info`);
+    }
+  }
   const referenceLines = findingsByRule('R2').flatMap((finding) =>
     evidenceOf(finding, 'reference'),
   );
@@ -169,7 +172,6 @@ test('the check engine reproduces the measured rule counts', () => {
 
   for (const rule of ['R3', 'R4']) {
     for (const finding of findingsByRule(rule)) {
-      assert.equal(finding.severity, 'info', `${finding.id} must be info`);
       assert.ok(
         finding.causes.some((cause) => cause.rule === 'R5'),
         `${finding.id} must list R5 as a cause candidate`,
@@ -304,6 +306,201 @@ test('R5 findings equal the SQL oracle', async () => {
     oracle.map((row) => row.path).sort(),
     'R5 findings differ from r5-unreadable-preassemblies.sql',
   );
+});
+
+test('R6 findings equal the SQL oracle, fact and inferred rows apart', async () => {
+  const oracle = (await oracleRows('r6-changed-names.sql')).map((row) => ({
+    inferred: row.inferred,
+    name: row.name,
+    source_file: row.source_file,
+  }));
+  const actual = findingsByRule('R6').flatMap((finding) => {
+    const files = [
+      ...new Set(
+        finding.evidence
+          .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+          .map((row) => row.sourceFile),
+      ),
+    ];
+    return files.map((sourceFile) => ({
+      inferred: finding.inferred,
+      name: finding.subject.key,
+      source_file: sourceFile,
+    }));
+  });
+  assert.deepEqual(
+    sortedText(actual),
+    sortedText(oracle),
+    'R6 findings differ from r6-changed-names.sql',
+  );
+  assert.equal(
+    findingsByRule('R6').filter((finding) => finding.inferred).length,
+    new Set(oracle.filter((row) => row.inferred).map((row) => row.name)).size,
+    'R6 inferred count differs from the oracle',
+  );
+  assert.equal(
+    findings.rules.find((rule) => rule.id === 'R6').findingCount,
+    new Set(oracle.map((row) => `${row.inferred}\u0000${row.name}`)).size,
+    'R6 finding count differs from the oracle',
+  );
+});
+
+test('R6 evidence comes only from the packing and service channels', () => {
+  const r6 = findingsByRule('R6');
+  assert.ok(r6.length > 0, 'the committed file has no R6 finding');
+  for (const finding of r6) {
+    for (const row of finding.evidence) {
+      const nodeId = String(row.nodeId);
+      assert.equal(
+        nodeId.startsWith('preassembly:'),
+        false,
+        `${finding.id}: ${nodeId} is a pre-assembly page, not a packing item`,
+      );
+      assert.equal(
+        nodeId.startsWith('bag:accessory:'),
+        false,
+        `${finding.id}: ${nodeId} is an Accessory bag BOM owner`,
+      );
+      assert.equal(
+        nodeId.startsWith('usage:preassembly:'),
+        false,
+        `${finding.id}: ${nodeId} is a pre-assembly usage line`,
+      );
+      if (row.role === 'packing-structure') {
+        assert.ok(
+          nodeId.startsWith('container:') || nodeId.startsWith('bag:pack:'),
+          `${finding.id}: ${nodeId} is not a packing container`,
+        );
+      }
+      if (row.role === 'packing-line') {
+        assert.ok(
+          nodeId.startsWith('usage:packing:'),
+          `${finding.id}: ${nodeId} is not a packing item usage`,
+        );
+      }
+      if (row.role === 'service') {
+        assert.ok(
+          nodeId.startsWith('service:'),
+          `${finding.id}: ${nodeId} is not a service page`,
+        );
+      }
+      if (row.role === 'reference') {
+        assert.ok(
+          nodeId.startsWith('usage:service:'),
+          `${finding.id}: ${nodeId} is not a service usage`,
+        );
+      }
+    }
+  }
+});
+
+test('R7 findings equal the SQL oracle', async () => {
+  const oracle = await oracleRows('r7-unreached-changed-parts.sql');
+  assert.deepEqual(
+    findingsByRule('R7').map((finding) => finding.subject.key).sort(),
+    oracle.map((row) => row.part).sort(),
+    'R7 findings differ from r7-unreached-changed-parts.sql',
+  );
+  assert.equal(
+    findings.rules.find((rule) => rule.id === 'R7').findingCount,
+    oracle.length,
+    'R7 finding count differs from the oracle',
+  );
+});
+
+test('R8 findings equal the SQL oracle, including the packed flag', async () => {
+  const oracle = await oracleRows('r8-service-only-parts.sql');
+  const actual = findingsByRule('R8')
+    .map((finding) => ({
+      part: finding.subject.key,
+      packed: finding.evidence.some((row) => row.role === 'packing-structure'),
+    }))
+    .sort((left, right) => (left.part < right.part ? -1 : 1));
+  assert.deepEqual(
+    actual,
+    oracle
+      .map((row) => ({ part: row.part, packed: row.packed }))
+      .sort((left, right) => (left.part < right.part ? -1 : 1)),
+    'R8 findings differ from r8-service-only-parts.sql',
+  );
+  assert.equal(
+    findings.rules.find((rule) => rule.id === 'R8').findingCount,
+    oracle.length,
+    'R8 finding count differs from the oracle',
+  );
+});
+
+test('R9 findings equal the SQL oracle line for line', async () => {
+  const oracle = (await oracleRows('r9-unresolved-service.sql')).map((row) => ({
+    line: row.line,
+    name: row.name,
+    source_file: row.source_file,
+  }));
+  const actual = findingsByRule('R9').flatMap((finding) =>
+    finding.evidence
+      .filter((row) => row.role === 'reference')
+      .map((row) => ({
+        line: row.line,
+        name: row.facts.displayName,
+        source_file: row.sourceFile,
+      })),
+  );
+  assert.deepEqual(
+    sortedText(actual),
+    sortedText(oracle),
+    'R9 findings differ from r9-unresolved-service.sql',
+  );
+  assert.equal(
+    findings.rules.find((rule) => rule.id === 'R9').findingCount,
+    new Set(oracle.map((row) => row.name)).size,
+    'R9 finding count differs from the distinct names in the oracle',
+  );
+});
+
+test('reversing or shuffling the rows of every check Intent keeps the findings bytes', () => {
+  const fileByQuery = new Map();
+  for (const file of INTENT_FILES) {
+    const compiled = compileCheck(engine, ontologyText, checks[file]);
+    fileByQuery.set(JSON.stringify([compiled.query, compiled.params]), file);
+  }
+
+  const seededOrder = (length, seed) => {
+    const order = [...Array(length).keys()];
+    let state = seed >>> 0;
+    for (let index = order.length - 1; index > 0; index -= 1) {
+      state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+      const swap = state % (index + 1);
+      [order[index], order[swap]] = [order[swap], order[index]];
+    }
+    return order;
+  };
+
+  const run = (transform) =>
+    collectFindings({
+      engine,
+      ontology: ontologyText,
+      checks,
+      seed: { bytes: seedBytes.length, digest: seedDigest },
+      sources,
+      execute(query, params) {
+        const file = fileByQuery.get(JSON.stringify([query, params]));
+        assert.ok(file, 'every executed query must come from a check Intent');
+        const envelope = runWire(db, query, params);
+        if (envelope.error) throw new Error(envelope.error);
+        return transform(envelope.rows ?? [], file);
+      },
+    });
+
+  const reference = canonicalJson(findings);
+  const reversed = canonicalJson(run((rows) => [...rows].reverse()));
+  const shuffled = canonicalJson(
+    run((rows, file) => {
+      const seed = [...file].reduce((sum, character) => sum + character.codePointAt(0), 0);
+      return seededOrder(rows.length, seed).map((index) => rows[index]);
+    }),
+  );
+  assert.equal(reversed, reference, 'reversed Intent rows changed the findings');
+  assert.equal(shuffled, reference, 'shuffled Intent rows changed the findings');
 });
 
 test('every check Intent compiles to the pinned Cypher and params', () => {

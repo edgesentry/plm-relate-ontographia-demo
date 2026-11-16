@@ -1097,7 +1097,7 @@ async function main() {
             .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0],
       );
     const processLaneFixtures = [];
-    summary.processLanes = { rules: [], r2ManyStructures: null, phone: null };
+    summary.processLanes = { rules: [], r2ManyStructures: null, r6Inferred: null, phone: null };
 
     for (const finding of ruleFindings) {
       const expected = expectedDiagram(finding);
@@ -1401,6 +1401,84 @@ async function main() {
       edges: r2Diagram.edges.length,
       missingEdges: r2Expected.missing,
       ...r2Clean,
+    };
+
+    // R6: open one inferred finding by deep link. Its diagram must start at the
+    // Design change lane and reach both Packing and Service, the drawn nodes and
+    // edges must equal layoutFinding, the view must show the inferred label, and
+    // the context must stay free of CSP and cross-origin noise.
+    const r6Inferred = findings
+      .filter(
+        (finding) =>
+          finding.rule === 'R6' &&
+          finding.inferred === true &&
+          finding.evidence.some((row) => row.role === 'packing-structure') &&
+          finding.evidence.some((row) => row.role === 'service'),
+      )
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(r6Inferred, 'the committed file has no inferred R6 finding with packing and service rows');
+    const r6Expected = expectedDiagram(r6Inferred);
+    const r6Layout = layoutFinding(r6Inferred);
+    const r6Change = r6Layout.nodes.find((node) => node.lane === 'design-change');
+    assert(r6Change, `${r6Inferred.id}: the R6 diagram has no design-change node`);
+    const r6Reachable = new Set([r6Change.id]);
+    const r6Links = r6Layout.edges.filter((edge) => edge.kind === 'link');
+    let r6Grew = true;
+    while (r6Grew) {
+      r6Grew = false;
+      for (const edge of r6Links) {
+        if (!r6Reachable.has(edge.from) || r6Reachable.has(edge.to)) continue;
+        r6Reachable.add(edge.to);
+        r6Grew = true;
+      }
+    }
+    const r6Lanes = new Set(
+      r6Layout.nodes.filter((node) => r6Reachable.has(node.id)).map((node) => node.lane),
+    );
+    assert(r6Lanes.has('packing'), `${r6Inferred.id}: no packing node downstream of the change`);
+    assert(r6Lanes.has('service'), `${r6Inferred.id}: no service node downstream of the change`);
+
+    const r6Fixture = await prepareContext(browser, 'process-lanes-r6-inferred');
+    await r6Fixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(r6Inferred.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await r6Fixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const r6Diagram = await readDiagram(r6Fixture.page);
+    assert(
+      JSON.stringify(r6Diagram.nodes.map((node) => node.id).sort()) ===
+        JSON.stringify(r6Expected.nodeIds),
+      `the R6 diagram shows different nodes from the layout: ` +
+        `${JSON.stringify(r6Diagram.nodes.map((node) => node.id).sort())}`,
+    );
+    assert(
+      JSON.stringify(
+        r6Diagram.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+      ) === JSON.stringify(r6Expected.edges),
+      'the R6 diagram draws different edges from the layout',
+    );
+    assert(
+      r6Diagram.nodes.some((node) => node.lane === 'design-change'),
+      'the R6 diagram has no node in the Design change lane',
+    );
+    const r6InferredFlag = await r6Fixture.page
+      .locator('[data-testid="finding-inferred"]')
+      .getAttribute('data-inferred');
+    assert(
+      r6InferredFlag === 'true',
+      `the R6 finding view shows data-inferred=${JSON.stringify(r6InferredFlag)}`,
+    );
+    const r6Clean = await assertContextClean(r6Fixture);
+    processLaneFixtures.push({ fixture: r6Fixture, clean: r6Clean });
+    summary.processLanes.r6Inferred = {
+      id: r6Inferred.id,
+      inferred: true,
+      nodes: r6Diagram.nodes.length,
+      edges: r6Diagram.edges.length,
+      lanes: [...r6Lanes].sort(),
+      ...r6Clean,
     };
 
     // Phone viewport: the diagram must not exceed a 375px-wide screen.

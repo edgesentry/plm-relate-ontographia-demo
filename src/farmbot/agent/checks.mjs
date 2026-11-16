@@ -9,7 +9,7 @@
 // in the browser.
 
 /**
- * @typedef {'R1' | 'R2' | 'R3' | 'R4' | 'R5'} RuleId
+ * @typedef {'R1' | 'R2' | 'R3' | 'R4' | 'R5' | 'R6' | 'R7' | 'R8' | 'R9'} RuleId
  * @typedef {{
  *   id: RuleId,
  *   direction: string,
@@ -69,6 +69,62 @@ export const CHECKS = Object.freeze([
     direction: 'all-to-document',
     title: 'A pre-assembly page has no machine-readable parts table',
     intents: Object.freeze(['r5-unreadable-preassemblies.json']),
+  }),
+  Object.freeze({
+    id: 'R6',
+    direction: 'design-to-packing-service',
+    title: 'A name changed or removed in the Change Log still appears in packing or service pages',
+    intents: Object.freeze([
+      'r6-changes.json',
+      'changed-parts.json',
+      'refs-kit.json',
+      'refs-carton.json',
+      'refs-bag.json',
+      'refs-service.json',
+      'r2-manufacturing-unmatched.json',
+      'r9-service-unmatched.json',
+    ]),
+  }),
+  Object.freeze({
+    id: 'R7',
+    direction: 'design-to-downstream',
+    title: 'A changed part reaches no assembly chapter, pre-assembly, packing list or service page',
+    intents: Object.freeze([
+      'changed-parts.json',
+      'refs-assembly.json',
+      'refs-preassembly.json',
+      'refs-bag.json',
+      'refs-kit.json',
+      'refs-carton.json',
+      'refs-service.json',
+      'r5-unreadable-preassemblies.json',
+      'unmatched-candidates.json',
+    ]),
+  }),
+  Object.freeze({
+    id: 'R8',
+    direction: 'service-to-design',
+    title: 'A part named by a service page is absent from assembly chapters and pre-assemblies',
+    intents: Object.freeze([
+      'refs-service.json',
+      'refs-assembly.json',
+      'refs-preassembly.json',
+      'refs-bag.json',
+      'refs-kit.json',
+      'refs-carton.json',
+      'r5-unreadable-preassemblies.json',
+    ]),
+  }),
+  Object.freeze({
+    id: 'R9',
+    direction: 'service-to-design',
+    title: 'A service-page reference does not resolve to a part',
+    intents: Object.freeze([
+      'r9-service-unmatched.json',
+      'unmatched-candidates.json',
+      'r2-assembly-unmatched.json',
+      'r2-manufacturing-unmatched.json',
+    ]),
   }),
 ]);
 

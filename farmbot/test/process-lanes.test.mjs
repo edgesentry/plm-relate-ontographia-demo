@@ -256,6 +256,40 @@ test('the edge pattern of each rule comes from its evidence roles', () => {
     if (finding.rule === 'R1') {
       assert.equal(missing.length, 0, `${finding.id}: R1 has no missing edge`);
     }
+    if (finding.rule === 'R6') {
+      assert.ok(roles.has('design-change'), `${finding.id}: R6 has no design-change row`);
+      assert.ok(
+        roles.has('packing-structure') || roles.has('service'),
+        `${finding.id}: R6 has no downstream row`,
+      );
+    }
+    if (finding.rule === 'R8') {
+      assert.ok(roles.has('service'), `${finding.id}: R8 has no service row`);
+    }
+    if (finding.rule === 'R7') {
+      assert.equal(
+        missing.length,
+        finding.evidence.filter((row) => row.role === 'part').length * 3,
+        `${finding.id}: one missing edge per part and downstream lane`,
+      );
+    }
+    if (finding.rule === 'R8') {
+      assert.equal(
+        missing.length,
+        finding.evidence.filter((row) => row.role === 'part').length,
+        `${finding.id}: one missing edge per part`,
+      );
+    }
+    if (finding.rule === 'R9') {
+      assert.equal(
+        missing.length,
+        finding.evidence.filter((row) => row.role === 'reference').length,
+        `${finding.id}: one missing edge per unresolved service reference`,
+      );
+    }
+    if (finding.rule === 'R6') {
+      assert.equal(missing.length, 0, `${finding.id}: R6 has no missing edge`);
+    }
     for (const edge of edges) {
       assert.ok(edge.from !== edge.to, `${finding.id} has a self edge`);
       assert.ok(edge.kind === 'link' || edge.kind === 'missing', `${finding.id} edge kind`);
@@ -293,6 +327,254 @@ test('R2 links join a structure and a reference from the same source file', () =
   );
 });
 
+test('R6 diagrams put the design change upstream of packing and service', () => {
+  const r6 = findings.filter((finding) => finding.rule === 'R6');
+  assert.ok(r6.length > 0, 'the committed file has no R6 finding');
+
+  for (const finding of r6) {
+    const layout = layoutFinding(finding);
+    const changes = layout.nodes.filter((node) => node.lane === 'design-change');
+    assert.equal(changes.length, 1, `${finding.id}: expected one design-change node`);
+    const downstream = layout.edges.filter((edge) => edge.kind === 'link');
+    const reached = new Set([changes[0].id]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const edge of downstream) {
+        if (!reached.has(edge.from) || reached.has(edge.to)) continue;
+        reached.add(edge.to);
+        grew = true;
+      }
+    }
+    for (const node of layout.nodes) {
+      if (node.lane !== 'packing' && node.lane !== 'service') continue;
+      assert.ok(
+        reached.has(node.id),
+        `${finding.id}: ${node.id} is not downstream of the design change`,
+      );
+    }
+  }
+
+  const inferred = r6.find(
+    (finding) =>
+      finding.inferred === true &&
+      finding.evidence.some((row) => row.role === 'packing-structure') &&
+      finding.evidence.some((row) => row.role === 'service'),
+  );
+  assert.ok(inferred, 'the committed file has no inferred R6 finding with both paths');
+  assert.ok(
+    inferred.evidence.some((row) => row.role === 'packing-structure'),
+    `${inferred.id}: inferred finding has no packing path`,
+  );
+  assert.ok(
+    inferred.evidence.some((row) => row.role === 'service'),
+    `${inferred.id}: inferred finding has no service path`,
+  );
+});
+
+test('an unmatched downstream row stays downstream of the design change', () => {
+  const finding = {
+    id: 'R6-collision',
+    rule: 'R6',
+    inferred: false,
+    subject: { key: 'Tee Nuts', kind: 'part', label: 'Tee Nuts', nodeId: 'part:Tee Nuts' },
+    evidence: [
+      {
+        role: 'design-change',
+        nodeId: 'change:tee',
+        sourceFile: 'change-log.md',
+        line: 1,
+        facts: { section: 'Changed', text: '- Removed the drop-in tee nuts.' },
+      },
+      {
+        role: 'part',
+        nodeId: 'part:Tee Nuts',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: { name: 'Tee Nuts' },
+      },
+      {
+        role: 'packing-line',
+        nodeId: 'usage:packing:kit-b.md@0/0/0',
+        sourceFile: 'kit-b.md',
+        line: null,
+        facts: {
+          displayName: 'tee nuts',
+          matchMethod: 'unmatched',
+          resolvedPart: null,
+        },
+      },
+      {
+        role: 'packing-structure',
+        nodeId: 'container:kit-b.md',
+        sourceFile: 'kit-b.md',
+        line: null,
+        facts: { title: 'Kit B' },
+      },
+    ],
+    queries: [],
+  };
+
+  const layout = layoutFinding(finding);
+  const change = layout.nodes.find((node) => node.lane === 'design-change');
+  assert.ok(change, 'the fixture has no design-change node');
+  const reached = new Set([change.id]);
+  const downstream = layout.edges.filter((edge) => edge.kind === 'link');
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const edge of downstream) {
+      if (!reached.has(edge.from) || reached.has(edge.to)) continue;
+      reached.add(edge.to);
+      grew = true;
+    }
+  }
+  for (const node of layout.nodes) {
+    if (node.lane !== 'packing') continue;
+    assert.ok(reached.has(node.id), `${node.id} is not downstream of the design change`);
+  }
+
+  const edges = edgesForFinding(finding);
+  assert.ok(
+    edges.some(
+      (edge) => edge.from === 'part:Tee Nuts' && edge.to === 'usage:packing:kit-b.md@0/0/0',
+    ),
+    'the single part must own the unmatched packing line',
+  );
+
+  const twoParts = {
+    ...finding,
+    id: 'R6-collision-two-parts',
+    evidence: [
+      ...finding.evidence,
+      {
+        role: 'part',
+        nodeId: 'part:Other Part',
+        sourceFile: 'parts/other-part.md',
+        line: null,
+        facts: { name: 'Other Part' },
+      },
+    ],
+  };
+  const twoPartEdges = edgesForFinding(twoParts);
+  assert.ok(
+    twoPartEdges.some(
+      (edge) => edge.from === 'change:tee' && edge.to === 'usage:packing:kit-b.md@0/0/0',
+    ),
+    'without a resolved part, an unmatched line attaches to the change',
+  );
+});
+
+test('packing lines join only a packing structure from the same source file', () => {
+  const finding = {
+    id: 'R6-two-packing-pages',
+    rule: 'R6',
+    inferred: true,
+    subject: { key: 'tee nuts', kind: 'name', label: 'Tee Nuts', nodeId: null },
+    evidence: [
+      {
+        role: 'design-change',
+        nodeId: 'change:tee',
+        sourceFile: 'change-log.md',
+        line: 1,
+        facts: { section: 'Changed', text: '- Removed the drop-in tee nuts.' },
+      },
+      ...[
+        ['hardware-kit.md', 'usage:packing:hardware-kit.md@0/0/0'],
+        ['main-carton.md', 'usage:packing:main-carton.md@0/0/0'],
+      ].flatMap(([file, line]) => [
+        {
+          role: 'packing-line',
+          nodeId: line,
+          sourceFile: file,
+          line: null,
+          facts: { displayName: 'Tee Nuts', matchMethod: 'unmatched', resolvedPart: null },
+        },
+        {
+          role: 'packing-structure',
+          nodeId: `container:${file}`,
+          sourceFile: file,
+          line: null,
+          facts: { title: file },
+        },
+      ]),
+    ],
+    queries: [],
+  };
+
+  const edges = edgesForFinding(finding).filter((edge) => edge.kind === 'link');
+  const lineToStructure = edges.filter(
+    (edge) => edge.from.startsWith('usage:packing:') && edge.to.startsWith('container:'),
+  );
+  const expected = finding.evidence
+    .filter((row) => row.role === 'packing-line')
+    .map((row) => [row.nodeId, `container:${row.sourceFile}`])
+    .sort();
+  assert.deepEqual(
+    lineToStructure
+      .map((edge) => [edge.from, edge.to])
+      .sort((left, right) => (left[0] < right[0] ? -1 : 1)),
+    expected,
+    'a packing line must not link to a structure from another page',
+  );
+  assert.ok(
+    lineToStructure.length <
+      finding.evidence.filter((row) => row.role === 'packing-line').length *
+        finding.evidence.filter((row) => row.role === 'packing-structure').length,
+    'the fixture must have fewer edges than the Cartesian product',
+  );
+});
+
+test('R9 candidate parts hang off the unresolved reference', () => {
+  const finding = {
+    id: 'R9-candidate',
+    rule: 'R9',
+    inferred: false,
+    subject: { key: 'tee nuts', kind: 'unresolved-name', label: 'tee nuts', nodeId: null },
+    evidence: [
+      {
+        role: 'service',
+        nodeId: 'service:storage.md',
+        sourceFile: 'storage.md',
+        line: null,
+        facts: { kind: 'maintenance', title: 'Storage' },
+      },
+      {
+        role: 'reference',
+        nodeId: 'usage:service:storage.md@0',
+        sourceFile: 'storage.md',
+        line: 4,
+        facts: { displayName: 'tee nuts', matchMethod: 'unmatched', resolvedPart: null },
+      },
+      {
+        role: 'part',
+        nodeId: 'part:Tee Nuts',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: { candidate: true, name: 'Tee Nuts' },
+      },
+    ],
+    queries: [],
+  };
+
+  const edges = edgesForFinding(finding);
+  assert.ok(
+    edges.some(
+      (edge) =>
+        edge.from === 'usage:service:storage.md@0' &&
+        edge.to === 'part:Tee Nuts' &&
+        edge.kind === 'link',
+    ),
+    'the candidate part is not linked to the unresolved reference',
+  );
+
+  const layout = layoutFinding(finding);
+  const part = layout.nodes.find((node) => node.id === 'part:Tee Nuts');
+  assert.ok(part, 'the candidate part is not drawn');
+  const incoming = layout.edges.filter((edge) => edge.to === part.id && edge.kind === 'link');
+  assert.equal(incoming.length, 1, 'the candidate part is not connected to the reference');
+});
+
 test('quantity labels carry the sign and class of their facts', () => {
   const r1 = findings.filter((finding) => finding.rule === 'R1');
   assert.ok(r1.length > 0, 'the committed file has no R1 finding');
@@ -326,7 +608,9 @@ test('problem nodes and the impacted path follow the highlight rules', () => {
       const expected = node.evidenceIndexes.some((index) => {
         const row = rows[index];
         if (row.role === 'quantity-difference') return true;
+        if (row.role === 'design-change') return true;
         if (row.role === 'reference') return row.facts.matchMethod === 'unmatched';
+        if (row.role === 'packing-line') return row.facts.matchMethod === 'unmatched';
         return subjectNodeId !== null && row.nodeId === subjectNodeId;
       });
       assert.equal(node.problem, expected, `${finding.id}/${node.id}: problem flag`);

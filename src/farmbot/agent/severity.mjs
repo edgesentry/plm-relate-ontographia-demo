@@ -10,7 +10,7 @@
 // score = 2P + V + min(Q, 10) + 2O
 //
 // levels: score >= 10 "action", score >= 6 "review", otherwise "info".
-// R3 and R4 are always "info": they report a gap in the extract, not a
+// R3, R4, R7 and R8 are always "info": they report a gap in the extract, not a
 // disagreement between two documents, and the missing pre-assembly data can
 // explain them without any action on the part.
 //
@@ -30,7 +30,7 @@ export const SEVERITY_THRESHOLDS = Object.freeze({
   review: 6,
 });
 
-export const INFO_ONLY_RULES = Object.freeze(['R3', 'R4']);
+export const INFO_ONLY_RULES = Object.freeze(['R3', 'R4', 'R7', 'R8']);
 
 /**
  * @typedef {{

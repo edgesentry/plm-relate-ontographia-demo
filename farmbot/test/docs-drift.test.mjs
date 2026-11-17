@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { parse } from 'yaml';
@@ -18,6 +18,11 @@ const README = resolve(ROOT, 'README.md');
 const CHECKS_DOC = join(DOCS_DIR, 'checks.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
 const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
+const DEVPOST_DOC = join(DOCS_DIR, 'devpost-submission.md');
+const I18N_SOURCE = resolve(ROOT, 'src/farmbot/i18n.ts');
+const DEVPOST_SKIP = existsSync(DEVPOST_DOC)
+  ? false
+  : 'farmbot/docs/devpost-submission.md is not in the repository yet; this check waits for the #73 submission text.';
 
 const ARTIFACT_CONTEXT = /artifact|gh run download/i;
 const JOB_CONTEXT = /\b(?:job|workflow)\b/i;
@@ -519,4 +524,349 @@ test('every rule id is documented and has an oracle file', () => {
       `${rule.id} has no farmbot/oracle/${prefix}*.sql oracle`,
     );
   }
+});
+
+const DEVPOST_EDITOR_HEADING = /^(#{1,6})\s+.*editor notes/i;
+const I18N_HEADING = /^(#{1,6})\s+.*i18n/i;
+const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const PATH_EXTENSIONS = new Set([
+  'md',
+  'mjs',
+  'cjs',
+  'ts',
+  'tsx',
+  'js',
+  'jsx',
+  'json',
+  'jsonc',
+  'yml',
+  'yaml',
+  'css',
+  'sql',
+]);
+
+/**
+ * Split the submission text at the editor-notes heading. Everything before the
+ * heading is the paste-ready section; the heading and what follows are the
+ * editor notes. Returns null when the heading is absent, since neither section
+ * can then be told apart from the other.
+ *
+ * @param {string} text
+ * @returns {{ pasteReady: string, editorNotes: string } | null}
+ */
+function devpostSections(text) {
+  const lines = text.split(/\r?\n/);
+  const index = lines.findIndex((line) => DEVPOST_EDITOR_HEADING.test(line));
+  if (index === -1) return null;
+  return {
+    pasteReady: lines.slice(0, index).join('\n'),
+    editorNotes: lines.slice(index).join('\n'),
+  };
+}
+
+/**
+ * @param {string} text
+ * @returns {string[]}
+ */
+function quotedTokens(text) {
+  return [...text.matchAll(/`([^`\n]+)`/g)].map((match) => match[1]);
+}
+
+/**
+ * A backtick token looks like a repository path when it has a slash (a
+ * directory or a nested path) or a known filename extension. URLs, npm
+ * scoped packages (`@scope/name`), relative import specifiers (`./`, `../`),
+ * commands, and bare identifiers such as an i18n key or a format name do not.
+ * Editor notes cite paths from the repository root, not package names or
+ * import specifiers.
+ *
+ * @param {string} token
+ * @returns {boolean}
+ */
+function looksLikeRepoPath(token) {
+  if (/\s/.test(token)) return false;
+  if (/^https?:\/\//i.test(token)) return false;
+  if (token.startsWith('@')) return false;
+  if (token.startsWith('./') || token.startsWith('../')) return false;
+  if (token.includes('/')) return true;
+  const extension = /\.([A-Za-z0-9]+)$/.exec(token);
+  return Boolean(extension && PATH_EXTENSIONS.has(extension[1].toLowerCase()));
+}
+
+/**
+ * @param {string} candidate
+ * @returns {boolean}
+ */
+function insideRoot(candidate) {
+  return candidate === ROOT || candidate.startsWith(`${ROOT}${sep}`);
+}
+
+/**
+ * Cited repository paths in the editor notes must resolve to a file or a
+ * directory inside the repository. The set is derived from the document; no
+ * expected path is kept. A path with a `..` segment or an absolute path outside
+ * the repository escapes it and fails.
+ *
+ * @param {string} editorNotes
+ * @returns {string[]}
+ */
+function devpostPathProblems(editorNotes) {
+  const problems = [];
+  const seen = new Set();
+  for (const token of quotedTokens(editorNotes)) {
+    if (seen.has(token) || !looksLikeRepoPath(token)) continue;
+    seen.add(token);
+    if (token.split('/').includes('..')) {
+      problems.push(`cited repository path ${token} escapes the repository`);
+      continue;
+    }
+    const resolved = resolve(ROOT, token);
+    if (!insideRoot(resolved)) {
+      problems.push(`cited repository path ${token} escapes the repository`);
+      continue;
+    }
+    if (!existsSync(resolved)) {
+      problems.push(`cited repository path ${token} does not exist in the repository`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * The lines under the first heading in the editor notes that matches /i18n/,
+ * up to the next heading of the same or a higher level. Returns an empty string
+ * when there is no such heading, so the cited-key set is then empty.
+ *
+ * @param {string} editorNotes
+ * @returns {string}
+ */
+function i18nSubsection(editorNotes) {
+  const lines = editorNotes.split(/\r?\n/);
+  const start = lines.findIndex((line) => I18N_HEADING.test(line));
+  if (start === -1) return '';
+  const level = /^(#{1,6})/.exec(lines[start])[1].length;
+  const body = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const heading = /^(#{1,6})\s+/.exec(lines[index]);
+    if (heading && heading[1].length <= level) break;
+    body.push(lines[index]);
+  }
+  return body.join('\n');
+}
+
+/**
+ * Top-level keys of one i18n object. Both objects are flat, so a key is a line
+ * indented two spaces with a name and a colon; the object closes on the first
+ * line that starts with a brace.
+ *
+ * @param {string} source
+ * @param {RegExp} opening
+ * @returns {Set<string>}
+ */
+function i18nObjectKeys(source, opening) {
+  const match = opening.exec(source);
+  assert.ok(match, `src/farmbot/i18n.ts does not declare ${opening}`);
+  const keys = new Set();
+  for (const line of source.slice(match.index + match[0].length).split(/\r?\n/)) {
+    if (/^\}/.test(line)) break;
+    const key = /^  ([A-Za-z_][A-Za-z0-9_]*)\s*:/.exec(line);
+    if (key) keys.add(key[1]);
+  }
+  return keys;
+}
+
+/**
+ * @returns {{ en: Set<string>, ja: Set<string> }}
+ */
+function i18nSourceKeys() {
+  const source = readFileSync(I18N_SOURCE, 'utf8');
+  return {
+    en: i18nObjectKeys(source, /const en\s*=\s*\{/),
+    ja: i18nObjectKeys(source, /const ja[^=\n]*=\s*\{/),
+  };
+}
+
+/**
+ * Cited i18n keys in the i18n subsection are backtick tokens that are plain
+ * identifiers, excluding the language ids. Each cited key must exist in both
+ * objects, since the source text is parsed rather than imported.
+ *
+ * @param {string} editorNotes
+ * @returns {string[]}
+ */
+function devpostKeyProblems(editorNotes) {
+  const keys = i18nSourceKeys();
+  const problems = [];
+  for (const token of new Set(quotedTokens(i18nSubsection(editorNotes)))) {
+    if (!IDENTIFIER.test(token) || token === 'en' || token === 'ja') continue;
+    const missing = ['en', 'ja'].filter((lang) => !keys[lang].has(token));
+    if (missing.length > 0) {
+      problems.push(`cited i18n key ${token} is missing from ${missing.join(' and ')}`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * The paste-ready section is reader-facing text, so it must point at the
+ * artifact or command instead of stating an inventory count.
+ *
+ * @param {string} pasteReady
+ * @returns {string[]}
+ */
+function pasteReadyInventoryProblems(pasteReady) {
+  const problems = [];
+  for (const block of markdownBlocks(pasteReady)) {
+    for (const shape of inventoryProblems(block)) {
+      problems.push(`${shape}: ${block}`);
+    }
+  }
+  return problems;
+}
+
+test('the Devpost editor notes cite repository paths that exist', { skip: DEVPOST_SKIP }, () => {
+  const sections = devpostSections(readFileSync(DEVPOST_DOC, 'utf8'));
+  assert.ok(
+    sections,
+    'farmbot/docs/devpost-submission.md has no editor-notes heading, so its path citations cannot be derived',
+  );
+  assert.deepEqual(devpostPathProblems(sections.editorNotes), []);
+});
+
+test('the Devpost editor notes cite i18n keys that exist in both languages', { skip: DEVPOST_SKIP }, () => {
+  const sections = devpostSections(readFileSync(DEVPOST_DOC, 'utf8'));
+  assert.ok(
+    sections,
+    'farmbot/docs/devpost-submission.md has no editor-notes heading, so its i18n citations cannot be derived',
+  );
+  assert.deepEqual(devpostKeyProblems(sections.editorNotes), []);
+});
+
+test('the Devpost paste-ready text states no hardcoded inventory count', { skip: DEVPOST_SKIP }, () => {
+  const sections = devpostSections(readFileSync(DEVPOST_DOC, 'utf8'));
+  assert.ok(
+    sections,
+    'farmbot/docs/devpost-submission.md has no editor-notes heading, so its paste-ready section cannot be derived',
+  );
+  const problems = pasteReadyInventoryProblems(sections.pasteReady);
+  assert.deepEqual(
+    problems,
+    [],
+    `farmbot/docs/devpost-submission.md: states a hardcoded inventory instead of ` +
+      `pointing at farmbot/dist/farmbot.findings.json, INTENT_FILES or the reporting ` +
+      `command: ${problems.join('; ')}`,
+  );
+});
+
+function devpostFixture(pasteReady, editorNotes) {
+  return `${pasteReady}\n\n## Editor notes\n\n${editorNotes}\n`;
+}
+
+test('a Devpost file without an editor-notes heading cannot be read', () => {
+  assert.equal(devpostSections('# Submission\n\nNo notes here.\n'), null);
+  assert.equal(devpostSections('# Editor notes\n\nOnly notes.\n').pasteReady.trim(), '');
+});
+
+test('a Devpost editor note that cites a missing repository path fails and names it', () => {
+  const missing = 'farmbot/docs/does-not-exist-here.md';
+  const text = devpostFixture('Paste-ready text.', `- Claim source: \`${missing}\``);
+  const problems = devpostPathProblems(devpostSections(text).editorNotes);
+  assert.ok(
+    problems.some((problem) => problem.includes(missing)),
+    `a missing cited path must fail and name ${missing}: ${problems.join('; ')}`,
+  );
+
+  const escaped = devpostFixture('Paste-ready text.', '- Claim source: `farmbot/docs/../../outside.md`');
+  assert.ok(
+    devpostPathProblems(devpostSections(escaped).editorNotes).some((problem) =>
+      problem.includes('farmbot/docs/../../outside.md'),
+    ),
+    'a cited path that escapes the repository must fail and name it',
+  );
+
+  const notPaths = devpostFixture(
+    'Paste-ready text.',
+    [
+      '- Package pin: `@edgesentry/ontographia-wasm`',
+      "- Relative import: `../lib/webllm-package`",
+    ].join('\n'),
+  );
+  assert.deepEqual(
+    devpostPathProblems(devpostSections(notPaths).editorNotes),
+    [],
+    'an npm scoped package or a relative import specifier is not a repository path',
+  );
+});
+
+test('a Devpost editor note that cites an unknown i18n key fails and names it', () => {
+  const missing = 'totallyMissingKey';
+  const text = devpostFixture(
+    'Paste-ready text.',
+    `### i18n key mapping\n\n- \`${missing}\` maps to the heading.`,
+  );
+  const problems = devpostKeyProblems(devpostSections(text).editorNotes);
+  assert.ok(
+    problems.some(
+      (problem) =>
+        problem.includes(missing) && problem.includes('en') && problem.includes('ja'),
+    ),
+    `an unknown cited key must fail and name ${missing} and both languages: ${problems.join('; ')}`,
+  );
+});
+
+test('a Devpost paste-ready block with a hardcoded inventory fails via the inventory rule', () => {
+  const fixtures = [
+    'The demo compiles 5 check Intents.',
+    'The demo compiles five check Intents.',
+    'The findings document contains zero findings.',
+  ];
+  for (const pasteReady of fixtures) {
+    assert.ok(
+      pasteReadyInventoryProblems(pasteReady).length > 0,
+      `this hardcoded inventory must fail: ${pasteReady}`,
+    );
+  }
+
+  const scoped = devpostFixture('Paste-ready text.', '- The demo compiles 5 check Intents.');
+  assert.deepEqual(
+    pasteReadyInventoryProblems(devpostSections(scoped).pasteReady),
+    [],
+    'an inventory count in the editor notes is outside the paste-ready section',
+  );
+});
+
+test('Devpost structural sentences pass the paste-ready inventory rule', () => {
+  const fixtures = [
+    'One finding per distinct `display_name`, grouped in the rule module.',
+    'The two Intents keep the usage lines whose `match_method` is `unmatched`.',
+  ];
+  for (const pasteReady of fixtures) {
+    assert.deepEqual(
+      pasteReadyInventoryProblems(pasteReady),
+      [],
+      `this structural sentence must pass: ${pasteReady}`,
+    );
+  }
+});
+
+test('a well-formed Devpost sample passes the path, key and paste-ready checks', () => {
+  const text = devpostFixture(
+    'The demo ships a compiled seed and runs the checks in the browser.',
+    [
+      '- Submission source: `farmbot/docs/checks.md`',
+      '- Docs directory: `farmbot/docs/`',
+      '- i18n source: `src/farmbot/i18n.ts`',
+      '- Package pin: `@edgesentry/ontographia-wasm`',
+      '- Relative import from the WebLLM module: `../lib/webllm-package`',
+      '',
+      '### i18n key mapping',
+      '',
+      '- `title` is the page heading.',
+      '- `run` is the run button.',
+    ].join('\n'),
+  );
+  const sections = devpostSections(text);
+  assert.deepEqual(devpostPathProblems(sections.editorNotes), []);
+  assert.deepEqual(devpostKeyProblems(sections.editorNotes), []);
+  assert.deepEqual(pasteReadyInventoryProblems(sections.pasteReady), []);
 });

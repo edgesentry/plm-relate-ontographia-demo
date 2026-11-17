@@ -576,9 +576,11 @@ function quotedTokens(text) {
  * A backtick token looks like a repository path when it has a slash (a
  * directory or a nested path) or a known filename extension. URLs, npm
  * scoped packages (`@scope/name`), relative import specifiers (`./`, `../`),
- * commands, and bare identifiers such as an i18n key or a format name do not.
- * Editor notes cite paths from the repository root, not package names or
- * import specifiers.
+ * browser routes and other absolute URL paths (a leading `/`, such as
+ * `/farmbot/` or `/api/notify/test`), commands, and bare identifiers such as
+ * an i18n key or a format name do not. Editor notes cite paths from the
+ * repository root without a leading slash, not package names, import
+ * specifiers or browser routes.
  *
  * @param {string} token
  * @returns {boolean}
@@ -588,6 +590,7 @@ function looksLikeRepoPath(token) {
   if (/^https?:\/\//i.test(token)) return false;
   if (token.startsWith('@')) return false;
   if (token.startsWith('./') || token.startsWith('../')) return false;
+  if (token.startsWith('/')) return false;
   if (token.includes('/')) return true;
   const extension = /\.([A-Za-z0-9]+)$/.exec(token);
   return Boolean(extension && PATH_EXTENSIONS.has(extension[1].toLowerCase()));
@@ -789,12 +792,15 @@ test('a Devpost editor note that cites a missing repository path fails and names
     [
       '- Package pin: `@edgesentry/ontographia-wasm`',
       "- Relative import: `../lib/webllm-package`",
+      '- Demo route: `/farmbot/`',
+      '- Finding deep link: `/farmbot/#finding=R6-power-supply`',
+      '- Notify endpoint: `/api/notify/test`',
     ].join('\n'),
   );
   assert.deepEqual(
     devpostPathProblems(devpostSections(notPaths).editorNotes),
     [],
-    'an npm scoped package or a relative import specifier is not a repository path',
+    'an npm scoped package, a relative import specifier or a browser route is not a repository path',
   );
 });
 
@@ -858,6 +864,9 @@ test('a well-formed Devpost sample passes the path, key and paste-ready checks',
       '- i18n source: `src/farmbot/i18n.ts`',
       '- Package pin: `@edgesentry/ontographia-wasm`',
       '- Relative import from the WebLLM module: `../lib/webllm-package`',
+      '- Demo route: `/farmbot/`',
+      '- Finding deep link: `/farmbot/#finding=R6-power-supply`',
+      '- Notify endpoint: `/api/notify/test`',
       '',
       '### i18n key mapping',
       '',

@@ -115,12 +115,11 @@ The diagram is hand-built SVG (`src/farmbot/ProcessLanes.tsx`) laid out by the p
 **Where to look.**
 
 - Rule table and the executed Intent set: `src/farmbot/agent/checks.mjs` (`CHECKS`, `INTENT_FILES`, `SHARED_INTENTS`). Engine entry: `src/farmbot/agent/index.mjs` (`collectFindings`). Browser wiring: `src/farmbot/data.ts`.
-- Check Intents in `farmbot/checks/`: `r1-quantity-difference.json`, `r1-compared-in.json`, `r1-for-variant.json`, `r2-assembly-unmatched.json`, `r2-manufacturing-unmatched.json`, `r3-parts-without-reference.json`, `r4-kit-parts-without-process.json`, `r4-carton-parts-without-process.json`, `r5-unreadable-preassemblies.json`, `r6-changes.json`, `r7-changed-parts-unreached.json`, `r8-service-parts-without-process.json`, `r9-service-unmatched.json`, `changed-parts.json`, `unmatched-candidates.json`, `refs-assembly.json`, `refs-preassembly.json`, `refs-bag.json`, `refs-kit.json`, `refs-carton.json`, `refs-service.json`. Compiled-Intent gold: `farmbot/checks/compiled.gold.json`. SQL oracles: `farmbot/oracle/`.
+- Check Intents and compiled-Intent gold: `farmbot/checks/`. SQL oracles: `farmbot/oracle/`.
 - Ontology: `farmbot/ontology/farmbot.native.yaml`. Extract: `farmbot/scripts/extract.mjs`. Graph seed: `farmbot/scripts/graph.mjs` and `farmbot/recipes/`.
 - Findings output: `farmbot/dist/farmbot.findings.json` and `farmbot/dist/farmbot.findings.json.sha256`, written by `npm run agent:farmbot` (`farmbot/scripts/agent-farmbot.mjs` in `package.json`). On a fresh clone, build the gitignored extract first: `node farmbot/scripts/extract.mjs`.
 - Browser smoke: `npm run smoke:farmbot` (`scripts/smoke-farmbot.mjs`).
 - Email / cron: `wrangler.jsonc` (`triggers.crons`, `send_email`, `kv_namespaces`, `ratelimits`, `vars.NOTIFY_DAILY_CAP`, `PUBLIC_BASE_URL`); Worker: `worker/index.ts`, `worker/notify.ts`; bundle: `npm run build:notify` (`scripts/build-notify-bundle.mjs`) writes `worker/generated/notify-bundle.json`.
-- Draft demo narration (no code equivalent): `farmbot/docs/demo-script.md`.
 
 ## Where the data lives
 

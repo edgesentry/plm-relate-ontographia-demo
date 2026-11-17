@@ -127,6 +127,71 @@ const en = {
     'The seed, the five Intents, the ontology, the allowed-values file and their digests are committed files. The page fetches the seed bytes, checks the digest with Web Crypto, then loads them into an in-memory Relate database.',
   limitLabel: 'Intent limit',
   parentEntry: 'Desk-fan demo',
+  checkRoutingHeading: 'Check by rule or free text',
+  checkRoutingIntro:
+    'Choose a rule chip, or convert one sentence after local model consent. Review the expanded Intents, then confirm before anything runs.',
+  checkChipListLabel: 'Checks R1–R9',
+  checkR1Label: 'R1 · Packing quantity differs from the part page quantity',
+  checkR2Label: 'R2 · A reference in process documentation does not resolve to a part',
+  checkR3Label: 'R3 · A part is referenced by no process',
+  checkR4Label:
+    'R4 · A part is packed but not referenced by an assembly chapter or pre-assembly',
+  checkR5Label: 'R5 · A pre-assembly page has no machine-readable parts table',
+  checkR6Label:
+    'R6 · A name changed or removed in the Change Log still appears in packing or service pages',
+  checkR7Label:
+    'R7 · A changed part reaches no assembly chapter, pre-assembly, packing list or service page',
+  checkR8Label:
+    'R8 · A part named by a service page is absent from assembly chapters and pre-assemblies',
+  checkR9Label: 'R9 · A service-page reference does not resolve to a part',
+  checkParameterLabel: 'Part filter',
+  checkFreeTextHeading: 'Free-text check routing',
+  checkFreeTextIntro:
+    'The local model selects only one routing object. The check engine, not the model, remains responsible for findings.',
+  checkWebgpuChecking: 'Checking local WebGPU support…',
+  checkWebgpuNotice:
+    'WebGPU is not available. The rule chips and parameter selectors still provide the same Intents; no model card or download is offered.',
+  checkConsentTitle: 'Allow a local model download?',
+  checkModelLabel: 'Model',
+  checkVramLabel: 'Documented WebGPU memory',
+  checkDownloadLabel: 'Documented download size',
+  checkConsentBody:
+    'After you allow it, this browser downloads and caches the model. Text is processed locally; this demo sends no inference request to an API.',
+  checkDownloadSource:
+    'Source: the size recorded for the Hugging Face model repository and the VRAM value in WebLLM prebuiltAppConfig.',
+  checkConsentAllow: 'Allow and load model',
+  checkConsentDecline: 'Decline',
+  checkConsentDeclined:
+    'Model access was declined. Nothing was downloaded; the rule chips and the rest of this screen remain available.',
+  checkReviewConsent: 'Review consent',
+  checkModelLoading: 'Loading the local model…',
+  checkCancelModelLoad: 'Cancel model load',
+  checkModelLoadCancelled: 'Model loading was cancelled. No routing was generated.',
+  checkModelLoadFailed: 'The local model could not be loaded.',
+  checkModelGenerateFailed: 'The local model could not route this text.',
+  checkRoutingRejected: 'The routing output was rejected.',
+  checkRoutingRejectedBody:
+    'Nothing new was compiled or executed. Use plain text or choose a rule chip instead.',
+  checkRoutingCompileFailed: 'Ontographia could not compile the expanded Intents.',
+  checkRoutingExecuteFailed: 'Relate could not execute the confirmed Intents.',
+  checkInputLabel: 'One FarmBot check question',
+  checkInputPlaceholder: 'For example: Which service-page references do not resolve to parts?',
+  checkConvert: 'Convert',
+  checkGenerating: 'Selecting a routing object locally…',
+  checkFreeTextPrivacy:
+    'Consent is required before the lazy WebLLM package or model files are requested. Declining never disables the rule chips.',
+  checkModelNoCypher:
+    'The model never writes Cypher and never detects, explains, or scores a finding. Strict validation precedes Ontographia compilation.',
+  checkProposalHeading: 'Confirm the proposed Intents',
+  checkProposalCheck: 'Selected check',
+  checkProposalParameter: 'Parameter',
+  checkNoParameter: 'none',
+  checkProposalIntents: 'Expanded Intents and compiled path',
+  checkRunProposal: 'Confirm and run',
+  checkCancelProposal: 'Cancel proposal',
+  checkResultHeading: 'Confirmed check Intent results',
+  checkResultNote:
+    'These rows come only from the confirmed Intents. This path does not collect findings or calculate causes and severity.',
 } as const;
 
 const ja: Record<keyof typeof en, string> = {
@@ -261,6 +326,67 @@ const ja: Record<keyof typeof en, string> = {
     'シード、5 つの Intent、オントロジー、許可値ファイルとそのダイジェストはコミット済みのファイルです。ページはシードのバイト列を取得し、Web Crypto でダイジェストを検証してから、メモリ上の Relate データベースに読み込みます。',
   limitLabel: 'Intent の上限',
   parentEntry: 'デスクファンのデモ',
+  checkRoutingHeading: 'ルールまたは自由な文章でチェック',
+  checkRoutingIntro:
+    'ルールのチップを選ぶか、ローカルモデルの利用を許可して文章を変換してください。展開された Intent を確認してから実行します。',
+  checkChipListLabel: 'チェック R1–R9',
+  checkR1Label: 'R1 · 梱包数量が部品ページの数量と異なる',
+  checkR2Label: 'R2 · 工程文書の参照が部品に解決できない',
+  checkR3Label: 'R3 · どの工程からも参照されない部品',
+  checkR4Label: 'R4 · 梱包されているが組立チャプタにもプリ組立にも参照されない部品',
+  checkR5Label: 'R5 · 機械可読の部品表がないプリ組立ページ',
+  checkR6Label: 'R6 · 変更ログで変更・削除された名前が梱包やサービスページに残っている',
+  checkR7Label: 'R7 · 組立チャプタ・プリ組立・梱包リスト・サービスページのどれにも到達しない変更部品',
+  checkR8Label: 'R8 · サービスページが挙げる部品が組立チャプタとプリ組立にない',
+  checkR9Label: 'R9 · サービスページの参照が部品に解決できない',
+  checkParameterLabel: '部品フィルタ',
+  checkFreeTextHeading: '自由な文章からチェックを選択',
+  checkFreeTextIntro:
+    'ローカルモデルはルーティングオブジェクトを一つ選ぶだけです。検出結果の生成はモデルではなく従来のチェックエンジンが担当します。',
+  checkWebgpuChecking: 'ローカルの WebGPU 対応を確認中…',
+  checkWebgpuNotice:
+    'WebGPU を利用できません。ルールのチップとパラメータセレクタで同じ Intent を使えます。モデルの許可カードとダウンロードは表示しません。',
+  checkConsentTitle: 'ローカルモデルのダウンロードを許可しますか？',
+  checkModelLabel: 'モデル',
+  checkVramLabel: '記載されている WebGPU メモリ',
+  checkDownloadLabel: '記載されているダウンロードサイズ',
+  checkConsentBody:
+    '許可すると、ブラウザがモデルをダウンロードしてキャッシュします。文章はローカルで処理され、このデモが推論リクエストを API に送信することはありません。',
+  checkDownloadSource:
+    '出典: Hugging Face のモデルリポジトリに記録されたサイズと、WebLLM prebuiltAppConfig の VRAM 値です。',
+  checkConsentAllow: '許可してモデルを読み込む',
+  checkConsentDecline: '許可しない',
+  checkConsentDeclined:
+    'モデルの利用を許可しませんでした。ダウンロードは行われず、ルールのチップと画面の他の機能を引き続き使えます。',
+  checkReviewConsent: '同意内容を再確認',
+  checkModelLoading: 'ローカルモデルを読み込み中…',
+  checkCancelModelLoad: 'モデルの読み込みをキャンセル',
+  checkModelLoadCancelled: 'モデルの読み込みをキャンセルしました。ルーティングは生成されていません。',
+  checkModelLoadFailed: 'ローカルモデルを読み込めませんでした。',
+  checkModelGenerateFailed: 'ローカルモデルが文章をルーティングできませんでした。',
+  checkRoutingRejected: 'ルーティング出力を拒否しました。',
+  checkRoutingRejectedBody:
+    '新たなコンパイルと実行は行われていません。文章を修正するか、ルールのチップを選んでください。',
+  checkRoutingCompileFailed: 'Ontographia が展開した Intent をコンパイルできませんでした。',
+  checkRoutingExecuteFailed: 'Relate が確認済みの Intent を実行できませんでした。',
+  checkInputLabel: 'FarmBot チェックについての質問を一文で入力',
+  checkInputPlaceholder: '例: サービスページの参照で部品に解決できないものはどれですか？',
+  checkConvert: '変換',
+  checkGenerating: 'ローカルでルーティングオブジェクトを選択中…',
+  checkFreeTextPrivacy:
+    'WebLLM の遅延読み込みパッケージとモデルファイルの要求には同意が必要です。拒否してもルールのチップは使えます。',
+  checkModelNoCypher:
+    'モデルは Cypher を記述せず、検出・説明・スコア計算も行いません。Ontographia のコンパイル前に厳密に検証します。',
+  checkProposalHeading: '提案された Intent を確認',
+  checkProposalCheck: '選択されたチェック',
+  checkProposalParameter: 'パラメータ',
+  checkNoParameter: 'なし',
+  checkProposalIntents: '展開された Intent とコンパイル経路',
+  checkRunProposal: '確認して実行',
+  checkCancelProposal: '提案をキャンセル',
+  checkResultHeading: '確認済みチェック Intent の結果',
+  checkResultNote:
+    '確認された Intent の行だけを表示しています。この経路では検出結果の収集、原因候補の生成、重大度の計算を行いません。',
 };
 
 export const messages = { en, ja };

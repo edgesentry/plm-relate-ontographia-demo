@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { CheckRoutingPanel } from './CheckRoutingPanel';
+import type {
+  CheckProposal,
+  CheckRunResult,
+  ExecutedCheckIntent,
+} from './check-routing-types';
 import { messages, type Lang, type MessageKey } from './i18n';
 import {
   allowedValues,
@@ -441,6 +447,42 @@ export function App() {
     }
   };
 
+  // Free-text and rule-chip proposals share this confirmed execution boundary.
+  // They execute their own compiled Intents, never the findings collector.
+  const runConfirmedCheck = async (proposal: CheckProposal): Promise<CheckRunResult> => {
+    let session: RelateSession;
+    try {
+      session = await ensureSession();
+    } catch (openError) {
+      sessionFailure(openError);
+      throw openError;
+    }
+
+    const executed: ExecutedCheckIntent[] = [];
+    for (const entry of proposal.intents) {
+      let envelope: RelateEnvelope;
+      try {
+        envelope = session.execute(entry.cypher, entry.params);
+      } catch (executeError) {
+        if (session.isTrap(executeError)) trapSession(session, executeError, () => {});
+        throw executeError;
+      }
+      if (envelope.error) throw new Error(envelope.error);
+      const rows = envelope.rows ?? [];
+      if (rows.length >= entry.intent.limit) {
+        throw new Error(
+          `${entry.file} reached its Intent limit ${entry.intent.limit}; rows are not shown`,
+        );
+      }
+      executed.push({
+        ...entry,
+        columns: envelope.columns ?? entry.intent.return.map((item) => item.as_name),
+        rows,
+      });
+    }
+    return { proposal, intents: executed, digest: session.digest };
+  };
+
   /**
    * Run every check Intent in this tab. The caller supplies the compiled
    * ontology, the committed check Intents, the committed part page paths, the
@@ -718,6 +760,13 @@ export function App() {
           </span>
         </div>
       </section>
+
+      <CheckRoutingPanel
+        engine={engine.status === 'ready' ? engine.engine : null}
+        disabled={relate.status === 'trapped'}
+        onRun={runConfirmedCheck}
+        t={t}
+      />
 
       <section className="panel farmbot-findings" aria-labelledby="findings-heading">
         <h2 id="findings-heading">{t('findingsHeading')}</h2>

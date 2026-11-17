@@ -106,6 +106,21 @@ The diagram is hand-built SVG (`src/farmbot/ProcessLanes.tsx`) laid out by the p
 
 `/farmbot/#finding=<id>` opens one finding after the checks finish. Ids come from `farmbot/dist/farmbot.findings.json` and match `^[A-Za-z0-9-]+$`. A malformed hash, or a hash with another key, is ignored: no Relate session, no request and no error. A well-formed id that does not exist runs the checks but opens nothing.
 
+## Cross-process BOM checks
+
+**Background.** The same FarmBot Genesis v1.7 hardware is documented in several places — part pages, packing lists, assembly and pre-assembly pages, the Change Log, and service pages. Those documents can disagree. The `/farmbot/` screen exists so a reviewer can see the disagreement and the evidence path.
+
+**Purpose.** Run deterministic, committed checks across those documents. The tool shows that two documents disagree; it does not decide which one is right. A local model, when used, may only select a closed check Intent. It does not detect, score, explain a cause, or propose a countermeasure.
+
+**Where to look.**
+
+- Rule table and the executed Intent set: `src/farmbot/agent/checks.mjs` (`CHECKS`, `INTENT_FILES`, `SHARED_INTENTS`). Engine entry: `src/farmbot/agent/index.mjs` (`collectFindings`). Browser wiring: `src/farmbot/data.ts`.
+- Check Intents and compiled-Intent gold: `farmbot/checks/`. SQL oracles: `farmbot/oracle/`.
+- Ontology: `farmbot/ontology/farmbot.native.yaml`. Extract: `farmbot/scripts/extract.mjs`. Graph seed: `farmbot/scripts/graph.mjs` and `farmbot/recipes/`.
+- Findings output: `farmbot/dist/farmbot.findings.json` and `farmbot/dist/farmbot.findings.json.sha256`, written by `npm run agent:farmbot` (`farmbot/scripts/agent-farmbot.mjs` in `package.json`). On a fresh clone, build the gitignored extract first: `node farmbot/scripts/extract.mjs`.
+- Browser smoke: `npm run smoke:farmbot` (`scripts/smoke-farmbot.mjs`).
+- Email / cron: `wrangler.jsonc` (`triggers.crons`, `send_email`, `kv_namespaces`, `ratelimits`, `vars.NOTIFY_DAILY_CAP`, `PUBLIC_BASE_URL`); Worker: `worker/index.ts`, `worker/notify.ts`; bundle: `npm run build:notify` (`scripts/build-notify-bundle.mjs`) writes `worker/generated/notify-bundle.json`.
+
 ## Where the data lives
 
 The committed seed and sidecar digests live in `farmbot/dist/`:

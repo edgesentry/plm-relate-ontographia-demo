@@ -150,6 +150,7 @@ function markdownFiles(directory) {
 }
 
 const NUMBER_WORD_BY_VALUE = new Map([
+  [0, 'zero'],
   [1, 'one'],
   [2, 'two'],
   [3, 'three'],
@@ -332,6 +333,8 @@ test('a hardcoded inventory count fails even when it matches the committed data'
     `R6 has ${numberWord(r6Facts)} facts and ${numberWord(r6Inferred)} inferred names.`,
     `The current seed has 19 service-referenced parts and ${perRule.get('R8')} findings: Leadscrew Block and Shunt.`,
     `The current seed has ${numberWord(perRule.get('R8'))} findings.`,
+    'The findings document contains zero findings.',
+    'The current seed has zero rules.',
     `The oracle returns ${perRule.get('R2')} rows (${perRule.get('R6')} findings).`,
     `The oracle returns ${numberWord(perRule.get('R2'))} rows (${numberWord(perRule.get('R6'))} findings).`,
     `The engine evaluates ${live.rules} rules in the browser.`,

@@ -21,6 +21,8 @@ export {
 export interface CheckModelLoadOptions {
   signal?: AbortSignal;
   onProgress?: (report: { progress: number; text: string }) => void;
+  /** Test-only factory; production keeps the consent-gated lazy package import. */
+  createEngine?: typeof import('../lib/webllm-package').createIntentEngine;
 }
 
 export interface LoadedCheckModel {
@@ -39,7 +41,9 @@ export async function loadCheckRoutingModel(
   const { signal } = options;
   if (signal?.aborted) throw abortError();
 
-  const pkg = await import('../lib/webllm-package');
+  const pkg = options.createEngine
+    ? { createIntentEngine: options.createEngine }
+    : await import('../lib/webllm-package');
   if (signal?.aborted) throw abortError();
 
   const engine = await pkg.createIntentEngine({
@@ -51,6 +55,10 @@ export async function loadCheckRoutingModel(
       options.onProgress?.({ progress, text: report.text });
     },
   });
+  if (signal?.aborted) {
+    await engine.unload();
+    throw abortError();
+  }
 
   const abort = () => {
     void engine.unload();

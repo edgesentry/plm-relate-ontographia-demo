@@ -276,6 +276,17 @@ test('the evaluation set covers both languages and uses declared domain members'
     const entries = prompts.filter((prompt) => prompt.check === check.id);
     assert.ok(entries.some((prompt) => prompt.lang === 'en'), `${check.id} English`);
     assert.ok(entries.some((prompt) => prompt.lang === 'ja'), `${check.id} Japanese`);
+    if (!check.parameter) continue;
+    const domain = allowedValues[check.parameter.domain];
+    assert.ok(Array.isArray(domain) && domain.length > 0, check.parameter.domain);
+    for (const lang of ['en', 'ja']) {
+      const named = entries.find((prompt) => prompt.lang === lang && prompt.parameter);
+      assert.ok(named, `${check.id} ${lang} named parameter`);
+      assert.deepEqual(named.parameter, {
+        domain: check.parameter.domain,
+        value: domain[0],
+      });
+    }
   }
   for (const prompt of prompts) {
     if (!prompt.parameter) continue;

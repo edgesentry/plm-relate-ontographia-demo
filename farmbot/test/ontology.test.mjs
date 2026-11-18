@@ -64,7 +64,7 @@ const SOURCE_TABLES = {
   DesignChange: ['change_note'],
 };
 
-// Ontology-level names documented in farmbot/docs/ontology.md as derived
+// Ontology-level names the FarmBot ontology document describes as derived
 // rather than read from one column.
 const DERIVED_PROPERTIES = new Set([
   'ProductVariant.code',

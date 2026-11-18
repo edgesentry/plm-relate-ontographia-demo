@@ -2,7 +2,9 @@
 
 This document describes the standalone ontology in
 `farmbot/ontology/farmbot.native.yaml` and how it maps onto the DuckDB extract
-built by `farmbot/scripts/extract.mjs`.
+built by `farmbot/scripts/extract.mjs`. The YAML is the source of truth for the
+classes, relationships and properties; this document records the purpose and the
+design constraints behind them.
 
 ## Purpose
 
@@ -14,12 +16,11 @@ into Cypher against a named, typed schema instead of against column names
 guessed at query time.
 
 The extract also carries the Change Log notes and the troubleshooting and
-maintenance service pages (`change_note`, `change_note_link`,
-`service_page`, `service_reference`). They are mapped to graph classes:
-`DesignChange` reads `change_note` and links to parts through `AFFECTS_PART`;
+maintenance service pages. They are mapped to graph classes too: `DesignChange`
+reads `change_note` and links to parts through `AFFECTS_PART`;
 `ServiceProcedure` is a subclass of `Structure`, so its references are ordinary
-`Usage` lines with `source_kind = service` and unresolved service names become
-`UnmatchedName` nodes seen in the service page.
+`Usage` lines and unresolved service names become `UnmatchedName` nodes seen in
+the service page.
 
 The file is self-contained. It does not import, extend, wrap or copy any
 other ontology in this repository or elsewhere, and it is not tied to the
@@ -45,59 +46,22 @@ seed from a private copy of the extract and fail on any byte difference.
 ## Graph generation
 
 `farmbot/scripts/graph.mjs` opens the DuckDB extract read-only, reads the
-ontology, and writes a JSON seed plus a digest sidecar:
+ontology, and writes a JSON seed plus a digest sidecar. Its options, their
+defaults and the sidecar format are defined by that script.
 
-    npx node farmbot/scripts/graph.mjs --recipe full
+The recipes under `farmbot/recipes/` select what the run writes: the `full`
+recipe writes the whole graph, and the `part` recipe writes a strict subgraph
+for one named part. How a recipe expands is a property of the recipe file, not
+of this document.
 
-The options are `--extract` (default `farmbot/dist/farmbot.duckdb`),
-`--ontology` (default `farmbot/ontology/farmbot.native.yaml`), `--recipe`
-(a name under `farmbot/recipes/` or a path, default `full`) and `--out`
-(default `farmbot/dist/`).
+Node ids are stable and derived only from extract keys. The generator defines
+the id scheme, and it validates each label, property and relationship type,
+including the declared source and target classes, before it writes anything, so
+an undeclared name fails the run.
 
-Two recipes ship with the repository:
-
-- `full` writes the whole graph to `farmbot.seed.json`.
-- `part` writes `farmbot.part.seed.json` for the one part named in the recipe
-  (`Belt`). It keeps that part, its category, its variant options, every
-  usage line that references it, every structure that owns one of those usage
-  lines, every usage line owned by those structures, every comparison of the
-  part, and the product variants those usages and comparisons apply to. It
-  never expands through a different part, so a part seed is a strict subgraph
-  of the full seed.
-
-Every concrete node carries its class label and all ancestor labels from the
-ontology. Labels are ordered most specific first: a `PreAssembly` carries
-`PreAssembly`, `ManufacturingContainer`, `Item` and `Structure`, and a
-`QuantityDifference` carries `QuantityDifference`, `QuantityComparison` and
-`Correspondence`. The generator validates each label, property and
-relationship type, including the declared source and target classes, before
-it writes anything, and fails on an undeclared name.
-
-Node ids are stable and derived only from extract keys: `part:<name>`,
-`partvariant:<part_name>@<variant_index>`, `category:<slug>`,
-`productvariant:<code>`, `chapter:<path>`, `preassembly:<path>`,
-`service:<path>`, `container:<path>` for a kit or carton page,
-`bag:pack:<page>@<table>/<row>/<child>`, `bag:accessory:<page>`,
-`usage:assembly:<page>@<ordinal>`, `usage:preassembly:<page>@<line_number>`,
-`usage:packing:<page>@<table>/<row>/<child>`,
-`usage:service:<page>@<ordinal>`,
-`comparison:<packing_page>#<part_name>#<version>`,
-`designchange:<change_log_path>#<section>@<bullet>` and
-`unmatched:<display_name>`. The assembly and service ordinals count the page's
-rows after they are sorted, because assembly line numbers are not unique and a
-service line can carry more than one name.
-
-The seed is canonical: object keys are sorted, nodes are sorted by id, edges
-are sorted by type, source id and target id, and no clock, host name or
-environment value is read. The sidecar is named `<seed>.sha256` and contains
-one line:
-
-    farmbot-graph-v1 sha256:<64 lowercase hex>
-
-The hash is the SHA-256 of the exact bytes of the seed JSON. The format token
-comes first so a consumer can reject an unknown format before comparing
-hashes. The committed full seed is `farmbot/dist/farmbot.seed.json`, 395675
-bytes, with `farmbot/dist/farmbot.seed.json.sha256` beside it.
+The seed is canonical: object keys are sorted, nodes and edges are sorted, and
+no clock, host name or environment value is read. The committed seed's digest
+sidecar records the SHA-256 of its exact bytes.
 
 ## Class model
 
@@ -108,31 +72,11 @@ once for assembly chapters and containers alike. `ManufacturingContainer`
 inherits from both, which is what makes a container usable as a component of
 another container.
 
-| Class | Superclasses | Source | Meaning |
-|---|---|---|---|
-| Item | — | none (abstract) | Anything a usage line can point at |
-| Structure | — | none (abstract) | Anything that owns usage lines |
-| Part | Item | `part` | A part page in the BOM |
-| PartVariant | — | `part_variant` | One option of a part, e.g. a length |
-| BomCategory | — | `bom_category` | A BOM category page |
-| ProductVariant | — | two fixed nodes | A version of the machine as a whole |
-| AssemblyChapter | Structure | `assembly_page` | One assembly chapter (constructed EBOM grouping) |
-| ServiceProcedure | Structure | `service_page` | A troubleshooting or maintenance page that references parts |
-| ManufacturingContainer | Item, Structure | none (abstract) | A container in the constructed MBOM view |
-| PreAssembly | ManufacturingContainer | `preassembly_page` | A pre-assembly page |
-| Kit | ManufacturingContainer | `packing_page` | A packing page that lists a kit |
-| Bag | ManufacturingContainer | `packing_item`, `preassembly_reference` | A bag inside a kit |
-| Carton | ManufacturingContainer | `packing_page` | The main carton page |
-| Usage | — | `assembly_reference`, `preassembly_reference`, `packing_item`, `service_reference` | One reference line |
-| Correspondence | — | none (abstract) | A node derived by comparing the extract with itself |
-| QuantityComparison | Correspondence | `quantity_comparison` | One packing-versus-part quantity comparison |
-| QuantityDifference | QuantityComparison | `quantity_difference` | A comparison with a non-zero difference |
-| UnmatchedName | Correspondence | `unmatched_name`, unresolved `service_reference` | A display name that did not resolve |
-| DesignChange | — | `change_note` | One text unit of the Change Log page |
-
 `QuantityDifference` is a subclass of `QuantityComparison`, not a separate
 kind of node: both describe one comparison, and the subclass only marks the
-subset whose packing count disagrees with the part page.
+subset whose packing count disagrees with the part page. The full class list,
+superclasses and their source tables are in
+`farmbot/ontology/farmbot.native.yaml`.
 
 ### Constructed views, not official labels
 
@@ -146,21 +90,9 @@ how FarmBot organises or builds its product.
 
 Every relationship is declared exactly once and points outward
 (`direction: out`). There are no relationship properties in the native
-format; see the modelling rules for where the per-link facts went.
-
-| Relationship | From | To | Derived from |
-|---|---|---|---|
-| IN_CATEGORY | Part | BomCategory | `part.category_slug` → `bom_category.slug` |
-| HAS_PART_VARIANT | Part | PartVariant | `part_variant.part_name` |
-| HAS_USAGE | Structure | Usage | the page path of each reference row |
-| USES_ITEM | Usage | Item | the resolved part or container of the row |
-| APPLIES_TO | Usage | ProductVariant | the version the row's section or column applies to |
-| COMPARES_PART | QuantityComparison | Part | `quantity_comparison.part_name` |
-| COMPARED_IN | QuantityComparison | ManufacturingContainer | `quantity_comparison.packing_page` |
-| FOR_VARIANT | QuantityComparison | ProductVariant | `quantity_comparison.version` |
-| SEEN_IN | UnmatchedName | Structure | `unmatched_name.source_pages`, service `page_path` |
-| CANDIDATE | UnmatchedName | Part | `unmatched_name.candidates`, `service_reference.candidates` |
-| AFFECTS_PART | DesignChange | Part | `change_note_link.resolved_part` |
+format; see the modelling rules for where the per-link facts went. The
+declaration, with each relationship's source and target class, is in the
+ontology YAML.
 
 `SEEN_IN` and `CANDIDATE` are many-to-many in practice, because a name can be
 seen on several pages and can have several candidate parts. `CANDIDATE` only
@@ -171,164 +103,24 @@ duplicated.
 
 ## Properties
 
-Property names are DuckDB column names, except for the six documented
-derivations in this section. Datatypes follow the column types:
-`VARCHAR` → `string`, `INTEGER` → `integer`, `BOOLEAN` → `boolean`.
+Property names are DuckDB column names, except for a few values the graph
+derives rather than reads from one column. The declared datatypes follow the
+column types (`VARCHAR` → `string`, `INTEGER` → `integer`, `BOOLEAN` →
+`boolean`). The property list, owner classes and datatypes are in the ontology
+YAML; the derived names are the `DERIVED_PROPERTIES` set in
+`farmbot/test/ontology.test.mjs`.
 
-### Part (`part`)
+A few points of intent that the YAML does not carry:
 
-| Property | Datatype | Column | Notes |
-|---|---|---|---|
-| name | string | `name` | Required, unique; the join key everywhere |
-| slug | string | `slug` | |
-| category_slug | string | `category_slug` | Also the key for `IN_CATEGORY` |
-| quantity_standard | integer | `quantity_standard` | Summed over variant options |
-| quantity_xl | integer | `quantity_xl` | Summed over variant options |
-| has_variants | boolean | `has_variants` | |
-| market_price | string | `market_price` | Kept as text: the source mixes currencies and ranges |
-
-### PartVariant (`part_variant`)
-
-| Property | Datatype | Column |
-|---|---|---|
-| part_name | string | `part_name` |
-| variant_index | integer | `variant_index` |
-| label | string | `label` |
-| length | string | `length` |
-| internal_part_name | string | `internal_part_name` |
-| quantity_standard | integer | `quantity_standard` |
-| quantity_xl | integer | `quantity_xl` |
-
-### BomCategory (`bom_category`)
-
-| Property | Datatype | Column | Notes |
-|---|---|---|---|
-| slug | string | `slug` | Required, unique; the target key for `IN_CATEGORY` |
-| title | string | `title` | |
-| path | string | `path` | |
-| part_count | integer | `part_count` | |
-
-### ProductVariant (no source table)
-
-| Property | Datatype | Notes |
-|---|---|---|
-| code | string | Required, unique. `standard` or `xl`, matching the `version` values in the extract |
-| label | string | `Genesis` or `Genesis XL` |
-
-The extract stores versions as a column value, not as a table. The generation
-code therefore creates exactly two `ProductVariant` nodes and resolves the
-`version` column to `code`.
-
-### Structure, AssemblyChapter, ServiceProcedure, PreAssembly
-
-`path` and `title` are owned by `Structure` and are present in all four page
-tables (`assembly_page`, `preassembly_page`, `packing_page`, `service_page`)
-under the same names.
-
-| Class | Property | Datatype | Source column |
-|---|---|---|---|
-| Structure | path | string | `path` (required, unique in every page table) |
-| Structure | title | string | `title` |
-| AssemblyChapter | chapter | string | `assembly_page.chapter` |
-| AssemblyChapter | reference_count | integer | `assembly_page.reference_count` |
-| ServiceProcedure | kind | string | `service_page.kind` |
-| ServiceProcedure | reference_count | integer | `service_page.reference_count` |
-| PreAssembly | machine_readable | boolean | `preassembly_page.machine_readable` |
-| PreAssembly | machine_readable_reason | string | `preassembly_page.machine_readable_reason` |
-| PreAssembly | pdf_count | integer | `preassembly_page.pdf_count` |
-
-### Usage (four reference tables)
-
-| Property | Datatype | Column | Notes |
-|---|---|---|---|
-| quantity | integer | see below | Derived |
-| quantity_text | string | `preassembly_reference.quantity_text` | The literal cell text |
-| unit | string | see below | Derived |
-| section | string | `preassembly_reference.section`, `packing_item.section` | Null for assembly and service references |
-| source_kind | string | `preassembly_reference.source_kind`, fixed `service` for service references | `table`, `prose`, or `service` |
-| line_number | integer | `assembly_reference.line_number`, `preassembly_reference.line_number`, `service_reference.line_number` | |
-| display_name | string | `display_name` in every reference table | The text as written |
-| match_method | string | `match_method` in every reference table | How the name resolved |
-| sub_packing | string | `packing_item.sub_packing` | e.g. `Press-to-seal bag` |
-
-`Usage.quantity` is derived. For a pre-assembly reference it is
-`preassembly_reference.quantity`. For a packing item it is the
-`packing_item` quantity for the applicable version: `quantity_standard` when
-the usage applies to `standard`, `quantity_xl` when it applies to `xl`. For
-an assembly reference it is null, because assembly chapters list parts without
-quantities.
-
-`Usage.unit` is derived from `packing_item.quantity_standard_unit` or
-`packing_item.quantity_xl_unit`, whichever version the usage applies to. It
-is null for references that carry a bare count. When a packing row carries
-both version counts, the usage is not tied to one variant, so `quantity` and
-`unit` are left null and no `APPLIES_TO` edge is emitted.
-
-### QuantityComparison (`quantity_comparison`)
-
-| Property | Datatype | Column |
-|---|---|---|
-| packing_quantity | integer | `packing_quantity` |
-| part_quantity | integer | `part_quantity` |
-| difference | integer | `difference` |
-| status | string | `status` |
-| note | string | `note` |
-| sections | string | `sections` |
-
-### QuantityDifference (`quantity_difference`)
-
-| Property | Datatype | Column |
-|---|---|---|
-| packing_minus_part | integer | `packing_minus_part` |
-
-Inherited properties come from `quantity_comparison`; the difference table
-repeats the same rows and adds the signed difference. One node per row of
-`quantity_difference`, with both `COMPARES_PART` and `COMPARED_IN` set from
-the row's keys.
-
-### UnmatchedName (`unmatched_name`, unresolved `service_reference`)
-
-| Property | Datatype | Column |
-|---|---|---|
-| display_name | string | `display_name` |
-| normalized_name | string | `normalized_name` |
-| singular_name | string | `singular_name` |
-| reference_count | integer | `reference_count` |
-| source_kinds | string | `source_kinds` |
-| status | string | `status` |
-
-An unresolved service display name is grouped from `service_reference` by the
-same `display_name`, so it shares this node shape. When that name already has an
-`unmatched_name` row, the service occurrences add to `reference_count`, add
-`service` to `source_kinds`, and contribute their candidates to `CANDIDATE`
-instead of creating a second node.
-
-Service references share the `Usage` shape. `source_kind` is `service`, and
-`line_number` comes from `service_reference.line_number`; a service row has no
-quantity or section. Only a resolved service reference gets `USES_ITEM`.
-
-### DesignChange (`change_note`, `change_note_link`)
-
-| Property | Datatype | Source | Notes |
-|---|---|---|---|
-| path | string | constant | Required; the Change Log page path `v1.7/assembly/intro/change-log.md` |
-| section | string | `change_note.section` | The `#` heading the unit sits under |
-| text | string | `change_note.text` | The unit text as plain text |
-| line | integer | `change_note.line_number` | Derived into the `line` name; 1-based first source line |
-
-One node per text unit, keyed by section and the 0-based unit index (`bullet`).
-Each resolved `change_note_link` row adds one `AFFECTS_PART` edge to the part
-the extract resolved. An unresolved link stays visible in the extract but never
-becomes an edge, because the graph does not invent part links.
-
-### Service pages and references (`service_page`, `service_reference`)
-
-`service_page` rows become `ServiceProcedure` nodes. `service_reference` rows
-become `Usage` nodes owned by that page. An unresolved service display name is
-grouped across its rows into one `UnmatchedName` node whose `SEEN_IN` edge
-points at the service page; it is not a row of `unmatched_name`, so the graph
-derives it from `service_reference` itself. A display name that already has an
-`unmatched_name` node reuses that node rather than duplicating it.
+- `Part.market_price` stays a string because the source mixes currencies and
+  ranges.
+- The extract stores product versions as a column value, not as a table, so the
+  generator creates the two `ProductVariant` nodes itself and resolves the
+  `version` column to `code`.
+- `Usage.quantity` and `Usage.unit` are derived from the packing row for the
+  applicable version; when a row carries both version counts the usage is not
+  tied to one variant, so both are left null and no `APPLIES_TO` edge is
+  emitted.
 
 ## Modelling rules
 
@@ -350,21 +142,17 @@ derives it from `service_reference` itself. A display name that already has an
    normalized, qualified and so on), which is how a query can separate solid
    links from fuzzy ones.
 
-4. **Container classification by page path.** A pre-assembly page
-   (`v1.7/manufacturing/pre-assembly/**`) becomes a `PreAssembly`. The page
-   `v1.7/manufacturing/packing/main-carton.md` becomes the `Carton`. The
-   other packing pages that carry a packing list (`extrusion-kit`,
-   `hardware-kit`, `motor-kit`, `power-supply`, `solenoid-valve`,
-   `vacuum-pump`) become `Kit`. `pallet-stacking.md` has no references and is
-   not modelled.
+4. **Container classification by page path.** A pre-assembly page becomes a
+   `PreAssembly`, the main carton page becomes the `Carton`, and the other
+   packing pages that carry a packing list become `Kit`. A packing page with no
+   references is not modelled. `farmbot/scripts/graph.mjs` holds the paths.
 
-5. **Bags are narrow.** Only `packing_item` rows with `item_kind = 'pack'`
-   (three rows) and the `Accessory bag BOM` section of the pre-assembly pages
-   produce `Bag` nodes. An ordinary item whose `sub_packing` column reads
-   `Press-to-seal bag` does not create a bag; that value stays a `Usage`
-   attribute. In the current extract, component rows of a pack row keep the
-   kit page path and record the pack label as plain text in `parent_item`,
-   so components cannot yet be attached to a bag by key.
+5. **Bags are narrow.** Only pack-type `packing_item` rows and the
+   `Accessory bag BOM` section of the pre-assembly pages produce `Bag` nodes.
+   An ordinary item whose `sub_packing` column reads `Press-to-seal bag` does
+   not create a bag; that value stays a `Usage` attribute. Component rows of a
+   pack row keep the kit page path and record the pack label as plain text, so
+   components cannot yet be attached to a bag by key.
 
 6. **Carton-to-kit nesting is expressible but not populated.** `USES_ITEM`
    points at `Item`, and `ManufacturingContainer` is an `Item`, so a carton
@@ -382,7 +170,8 @@ derives it from `service_reference` itself. A display name that already has an
    `change_note_link.resolved_part`. The Change Log text itself stays on the
    `DesignChange` node as text; it is not parsed for extra part names.
 
-9. **Ontographia 0.1.10 limitations.**
+9. **Limitations of the currently pinned Ontographia version (see
+   `package.json`).**
    (a) With `direction: in`, validation still checks the relationship's
    `from_class` against the previous node's class. Intents must therefore
    start from the `from_class` side and traverse outward.
@@ -395,20 +184,18 @@ derives it from `service_reference` itself. A display name that already has an
 
 ## Validation
 
-The unit test parses the YAML and checks the shape of the declaration, checks
-that every named class exists, checks the datatypes and directions against the
-allowed sets, and checks that every modelled property (except the six
-documented derivations) is a real column of a mapped source table in the
-DuckDB extract. It also compiles a few intents through the WebAssembly
-binding to confirm that the declared relationships produce the expected
-Cypher. When the extract is missing, the test builds it with the existing
-extract script.
+`farmbot/test/ontology.test.mjs` parses the YAML and checks the shape of the
+declaration, every named class, the datatypes and directions against the allowed
+sets, and that every modelled property (except the derived ones) is a real
+column of a mapped source table in the DuckDB extract. It also compiles a few
+intents through the WebAssembly binding to confirm that the declared
+relationships produce the expected Cypher. When the extract is missing, the test
+builds it with the existing extract script.
 
 The graph test builds its own private copy of the extract, generates the full
-seed twice, and checks byte-identical output and digests. It checks the
-acceptance counts, confirms that every label, property and relationship type
-in the seed is declared and that ancestor labels are present, rebuilds the
-committed seed and digest from scratch, and confirms that an undeclared name
-makes the generator fail. It also runs the part recipe and checks that the
-result is a strict subset of the full graph. `npm run test:farmbot` runs the
-extract, ontology, and graph tests.
+seed twice, and checks byte-identical output and digests. It checks that every
+label, property and relationship type in the seed is declared and that ancestor
+labels are present, rebuilds the committed seed and digest from scratch, and
+confirms that an undeclared name makes the generator fail. It also runs the part
+recipe and checks that the result is a strict subset of the full graph.
+`npm run test:farmbot` runs the extract, ontology, and graph tests.

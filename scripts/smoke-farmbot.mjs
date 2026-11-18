@@ -18,7 +18,11 @@ import { basename, extname, join, resolve, sep } from 'node:path';
 import { chromium } from 'playwright';
 
 import { CHECK_CATALOG } from '../src/farmbot/check-catalog.mjs';
-import { summaryLine } from '../src/farmbot/findings-view.mjs';
+import {
+  orderFindings,
+  summaryLine,
+  visibleFindings,
+} from '../src/farmbot/findings-view.mjs';
 import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -520,6 +524,11 @@ async function main() {
   const expectedFindingIds = findings.map((finding) => finding.id).sort();
   const expectedSeverity = { action: 0, review: 0, info: 0 };
   for (const finding of findings) expectedSeverity[finding.severity] += 1;
+  const orderedFindings = orderFindings(findings);
+  const expectedVisibleIds = visibleFindings(orderedFindings, false).map(
+    (finding) => finding.id,
+  );
+  const expectedRevealedIds = orderedFindings.map((finding) => finding.id);
 
   // The deep link opens the finding with the most evidence rows; ties break by
   // id so the choice comes from the committed file only.
@@ -731,8 +740,8 @@ async function main() {
       `the panel shows ${panel.count} findings, the committed file has ${findings.length}`,
     );
     assert(
-      JSON.stringify([...panel.ids].sort()) === JSON.stringify(expectedFindingIds),
-      'the panel finding ids differ from the committed file',
+      JSON.stringify(panel.ids) === JSON.stringify(expectedVisibleIds),
+      'the default list does not show exactly the committed action and review findings',
     );
     for (const level of ['action', 'review', 'info']) {
       assert(
@@ -740,6 +749,41 @@ async function main() {
         `the panel shows ${panel[level]} ${level} findings, the committed file has ${expectedSeverity[level]}`,
       );
     }
+
+    const toggle = page.locator('[data-testid="toggle-info-findings"]');
+    assert(
+      (await toggle.count()) === 1,
+      'the findings severity filter control is missing',
+    );
+    assert(
+      (await toggle.getAttribute('aria-pressed')) === 'false',
+      'the findings severity filter is not in its default state',
+    );
+    await toggle.click();
+    const revealedIds = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
+        (element) => element.getAttribute('data-finding-id'),
+      ),
+    );
+    assert(
+      JSON.stringify(revealedIds) === JSON.stringify(expectedRevealedIds),
+      'revealing info findings did not show the whole committed list in order',
+    );
+    assert(
+      (await toggle.getAttribute('aria-pressed')) === 'true',
+      'the findings severity filter did not report the revealed state',
+    );
+    await toggle.click();
+    const restoredIds = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
+        (element) => element.getAttribute('data-finding-id'),
+      ),
+    );
+    assert(
+      JSON.stringify(restoredIds) === JSON.stringify(expectedVisibleIds),
+      'hiding info findings did not restore the default list',
+    );
+
     assert(
       panel.digest.includes(expectedFindingsDigest),
       `the panel does not show the committed digest: ${panel.digest}`,
@@ -773,6 +817,8 @@ async function main() {
     summary.findings = {
       panelCount: panel.count,
       committedCount: findings.length,
+      defaultVisibleCount: expectedVisibleIds.length,
+      revealedCount: revealedIds.length,
       idsMatch: true,
       severity: { panel: { action: panel.action, review: panel.review, info: panel.info }, file: expectedSeverity },
       digest: checksTimings.digest,
@@ -1348,6 +1394,10 @@ async function main() {
       timeout: 60000,
     });
     await deep.page.waitForSelector('[data-testid="finding-view"]', { timeout: 180000 });
+    await deep.page.waitForSelector(
+      `[data-testid="finding-row-${deepLinkFinding.id}"]`,
+      { timeout: 30000 },
+    );
     const deepState = await deep.page.evaluate(() => {
       const view = document.querySelector('[data-testid="finding-view"]');
       const rows = [...document.querySelectorAll('[data-testid="evidence-row"]')];
@@ -1369,6 +1419,10 @@ async function main() {
     assert(
       deepState.id === deepLinkFinding.id,
       `the deep link opened ${JSON.stringify(deepState.id)}`,
+    );
+    assert(
+      (await deep.page.locator(`[data-testid="finding-row-${deepLinkFinding.id}"]`).count()) === 1,
+      'the deep-linked finding has no row in the filtered list',
     );
     assert(
       deepState.summary.includes(deepExpectedSummary),
@@ -1403,6 +1457,49 @@ async function main() {
       ...deepClean,
     };
 
+    // Deep link to a finding the default filter hides: the checks run, the
+    // finding opens, the filter reveals it just enough, and its row appears.
+    const infoDeepLinkFinding = findings
+      .filter((finding) => finding.severity === 'info')
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(infoDeepLinkFinding, 'the committed file has no info finding');
+    const infoDeep = await prepareContext(browser, 'deep-link-info');
+    await infoDeep.page.goto(
+      `${entryUrl}#finding=${encodeURIComponent(infoDeepLinkFinding.id)}`,
+      { waitUntil: 'load', timeout: 60000 },
+    );
+    await infoDeep.page.waitForSelector('[data-testid="finding-view"]', { timeout: 180000 });
+    await infoDeep.page.waitForSelector(
+      `[data-testid="finding-row-${infoDeepLinkFinding.id}"]`,
+      { timeout: 30000 },
+    );
+    const infoDeepState = await infoDeep.page.evaluate(
+      (findingId) => ({
+        id: document.querySelector('[data-testid="finding-open-id"]')?.textContent?.trim() ?? '',
+        row: Boolean(document.querySelector(`[data-testid="finding-row-${findingId}"]`)),
+        ids: [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
+          (element) => element.getAttribute('data-finding-id'),
+        ),
+      }),
+      infoDeepLinkFinding.id,
+    );
+    assert(
+      infoDeepState.id === infoDeepLinkFinding.id,
+      'the info deep link did not open its finding',
+    );
+    assert(infoDeepState.row, 'the info deep link did not reveal its row');
+    assert(
+      JSON.stringify(infoDeepState.ids) === JSON.stringify(expectedRevealedIds),
+      'the info deep link did not reveal the whole committed list in order',
+    );
+    const infoDeepClean = await assertContextClean(infoDeep);
+    await infoDeep.context.close();
+    summary.deepLink.info = {
+      id: infoDeepLinkFinding.id,
+      rowVisible: infoDeepState.row,
+      ...infoDeepClean,
+    };
+
     // Process lanes: one deep link per rule in the committed file. The drawn
     // nodes and edges must equal the layout function's output for that finding,
     // a node click selects its evidence rows, and a row click selects its node.
@@ -1427,6 +1524,14 @@ async function main() {
       await fixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
         timeout: 180000,
       });
+      await fixture.page.waitForSelector(
+        `[data-testid="finding-row-${finding.id}"]`,
+        { timeout: 30000 },
+      );
+      assert(
+        (await fixture.page.locator(`[data-testid="finding-row-${finding.id}"]`).count()) === 1,
+        `${finding.rule}: the deep-linked finding has no row in the filtered list`,
+      );
       const diagram = await readDiagram(fixture.page);
       assert(diagram.present, `${finding.rule}: the process-lane diagram is missing`);
       assert(
@@ -1903,6 +2008,7 @@ async function main() {
       happy: happyCsp.length,
       tampered: tamperCsp.length,
       deepLink: summary.deepLink.cspViolations,
+      deepLinkInfo: summary.deepLink.info.cspViolations,
       processLanes: processLaneFixtures.map((entry) => entry.clean.cspViolations),
       unknown: summary.unknownFinding.cspViolations,
       malformed: summary.malformedHashes.map((entry) => entry.cspViolations),
@@ -1916,6 +2022,7 @@ async function main() {
       ...happy.pageErrors,
       ...tamper.pageErrors,
       ...deep.pageErrors,
+      ...infoDeep.pageErrors,
       ...processLaneFixtures.flatMap((entry) => entry.fixture.pageErrors),
       ...unknown.pageErrors,
       ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
@@ -1928,6 +2035,7 @@ async function main() {
         ...happyExternal,
         ...tamperExternal,
         ...deepClean.external,
+        ...infoDeepClean.external,
         ...processLaneFixtures.flatMap((entry) => entry.clean.external),
         ...unknownClean.external,
         ...summary.malformedHashes.flatMap((entry) => entry.external),

@@ -82,6 +82,27 @@ export function orderFindings(findings) {
   });
 }
 
+/** Severity level hidden by the default findings filter. */
+const DEFAULT_HIDDEN_SEVERITY = 'info';
+
+/**
+ * The findings shown for the current filter.
+ *
+ * The input is expected in `orderFindings` order; the order is preserved. The
+ * default hides `info` findings; with `includeInfo` the whole list is returned.
+ * Only `info` is filtered, so `action` and `review` rows always remain. Counts
+ * are not affected: count the full document, not this result.
+ *
+ * @param {Array<{ severity: string }>} findings
+ * @param {boolean} includeInfo
+ * @returns {Array<{ severity: string }>}
+ */
+export function visibleFindings(findings, includeInfo) {
+  if (!Array.isArray(findings)) throw new Error('visibleFindings needs an array');
+  if (includeInfo === true) return [...findings];
+  return findings.filter((finding) => finding.severity !== DEFAULT_HIDDEN_SEVERITY);
+}
+
 /**
  * Count findings per severity level.
  *

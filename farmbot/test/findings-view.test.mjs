@@ -15,6 +15,7 @@ import {
   parseFindingHash,
   parseFindingsDigestLine,
   summaryLine,
+  visibleFindings,
 } from '../../src/farmbot/findings-view.mjs';
 import {
   unresolvedServiceCauses,
@@ -351,4 +352,49 @@ test('the committed findings sidecar is a digest line', () => {
   assert.match(parsed.hex, /^[0-9a-f]{64}$/);
   assert.equal(parseFindingsDigestLine('farmbot-findings-v1 sha256:nope'), null);
   assert.equal(parseFindingsDigestLine('farmbot-graph-v1 sha256:' + '0'.repeat(64)), null);
+});
+
+test('the default findings filter hides info and keeps the urgent order', () => {
+  const ordered = orderFindings(findings);
+  const visible = visibleFindings(ordered, false);
+  const expected = ordered.filter((finding) => finding.severity !== 'info');
+
+  assert.deepEqual(
+    visible.map((finding) => finding.id),
+    expected.map((finding) => finding.id),
+  );
+  assert.ok(visible.every((finding) => finding.severity !== 'info'));
+  for (const level of ['action', 'review']) {
+    assert.equal(
+      visible.filter((finding) => finding.severity === level).length,
+      findings.filter((finding) => finding.severity === level).length,
+      `the default filter hides ${level} findings`,
+    );
+  }
+});
+
+test('including info shows the whole document in the same order', () => {
+  const ordered = orderFindings(findings);
+  const visible = visibleFindings(ordered, true);
+
+  assert.deepEqual(
+    visible.map((finding) => finding.id),
+    ordered.map((finding) => finding.id),
+  );
+  assert.equal(visible.length, findings.length);
+});
+
+test('toggling info leaves the full counts intact', () => {
+  const ordered = orderFindings(findings);
+  const full = countBySeverity(findings);
+
+  for (const includeInfo of [false, true]) {
+    const visible = visibleFindings(ordered, includeInfo);
+    assert.deepEqual(countBySeverity(findings), full);
+    assert.equal(
+      visible.filter((finding) => finding.severity === 'info').length,
+      includeInfo ? full.info : 0,
+    );
+    assert.equal(visible.length, includeInfo ? full.total : full.total - full.info);
+  }
 });

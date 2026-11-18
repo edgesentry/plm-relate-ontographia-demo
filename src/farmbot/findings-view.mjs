@@ -15,6 +15,7 @@ import {
   packedWithoutProcessCountermeasures,
   quantityCauses,
   quantityCountermeasures,
+  r5CauseCandidate,
   serviceOnlyPartCauses,
   serviceOnlyPartCountermeasures,
   unreadablePageCauses,
@@ -415,46 +416,75 @@ function storedCauseForRule(finding, rule) {
 }
 
 /**
- * The page paths interpolated into the shared R5 cause candidate. The path list
- * is not repeated in the evidence, so it is read back from the stored candidate
- * the collector wrote for this finding.
+ * The unreadable pre-assembly pages recorded in this finding's own evidence, or
+ * `null` when the finding carries no such rows. These are the only truthful
+ * source for the shared R5 candidate: the stored document keeps no list field.
  *
  * @param {Record<string, any>} finding
- * @returns {string[]}
+ * @returns {string[] | null}
  */
-function sharedR5Paths(finding) {
-  const stored = storedCauseForRule(finding, 'R5');
-  if (!stored) return [];
-  const match =
-    /^R5: .*?parts table \((.*)\), so their component lists cannot appear as references\.$/.exec(
-      text(stored.text),
-    );
-  return match ? match[1].split(', ') : [];
+function structuredR5Paths(finding) {
+  const pages = [
+    ...new Set(
+      evidenceByRole(finding, 'pre-assembly-page')
+        .filter((row) => text(fact(row, 'machineReadableReason')) !== '')
+        .map((row) => text(row.sourceFile))
+        .filter((file) => file !== ''),
+    ),
+  ].sort(compareText);
+  return pages.length === 0 ? null : pages;
 }
 
 /**
+ * The unresolved display names recorded on this finding's reference rows, or
+ * `null` when it carries none.
+ *
  * @param {Record<string, any>} finding
- * @returns {string[]}
+ * @returns {string[] | null}
  */
-function sharedUnresolvedNames(finding) {
-  const stored = storedCauseForRule(finding, 'R2');
-  if (!stored) return [];
-  const match =
-    /^The unresolved name\(s\) (.*) may be this part under another spelling\.$/.exec(
-      text(stored.text),
-    );
-  return match ? match[1].split(', ') : [];
+function structuredUnresolvedNames(finding) {
+  const rows = evidenceByRole(finding, 'reference').filter(
+    (row) => text(fact(row, 'resolvedPart')) === '',
+  );
+  if (rows.length === 0) return null;
+  return [
+    ...new Set(rows.map((row) => text(fact(row, 'displayName'))).filter((name) => name !== '')),
+  ].sort(compareText);
 }
 
 /**
+ * The other pages where an unresolved reference name also appears, recorded on
+ * this finding's reference rows, or `null` when it carries no such rows.
+ *
  * @param {Record<string, any>} finding
- * @returns {string[]}
+ * @returns {string[] | null}
  */
-function sharedAlsoUnresolvedPages(finding) {
-  const stored = storedCauseForRule(finding, 'R2');
-  if (!stored) return [];
-  const match = /^The same name is also unresolved on (.*)\.$/.exec(text(stored.text));
-  return match ? match[1].split(', ') : [];
+function structuredAlsoUnresolvedPages(finding) {
+  const ownPages = new Set(sourceFiles(evidenceByRole(finding, 'service')));
+  const pages = [
+    ...new Set(
+      evidenceByRole(finding, 'reference')
+        .filter((row) => text(fact(row, 'resolvedPart')) === '')
+        .map((row) => text(row.sourceFile))
+        .filter((file) => file !== '' && !ownPages.has(file)),
+    ),
+  ].sort(compareText);
+  return pages.length === 0 ? null : pages;
+}
+
+/**
+ * The R5 cause candidate for a finding. When the finding has no structured
+ * page rows, return the candidate the collector stored, unchanged and still in
+ * English, rather than guessing the list back out of its prose.
+ *
+ * @param {Record<string, any>} finding
+ * @param {'ja' | 'en'} lang
+ * @returns {Record<string, any> | null}
+ */
+function sharedR5Cause(finding, lang) {
+  const paths = structuredR5Paths(finding);
+  if (paths !== null) return r5CauseCandidate(paths, lang);
+  return storedCauseForRule(finding, 'R5');
 }
 
 /**
@@ -558,7 +588,8 @@ export function findingCauses(finding, lang) {
       {
         partName: findingPartName(finding),
         categorySlug: text(fact(firstEvidence(finding, 'part'), 'categorySlug')),
-        r5Paths: sharedR5Paths(finding),
+        r5Paths: structuredR5Paths(finding) ?? [],
+        r5Cause: sharedR5Cause(finding, lang) ?? undefined,
       },
       lang,
     );
@@ -568,7 +599,8 @@ export function findingCauses(finding, lang) {
       {
         partName: findingPartName(finding),
         files: sourceFiles(evidenceByRole(finding, 'packing-structure')),
-        r5Paths: sharedR5Paths(finding),
+        r5Paths: structuredR5Paths(finding) ?? [],
+        r5Cause: sharedR5Cause(finding, lang) ?? undefined,
       },
       lang,
     );
@@ -602,11 +634,16 @@ export function findingCauses(finding, lang) {
     );
   }
   if (rule === 'R7') {
+    const unresolvedNames = structuredUnresolvedNames(finding);
+    const unresolvedCause =
+      unresolvedNames === null ? storedCauseForRule(finding, 'R2') : null;
     return changedPartUnreachedCauses(
       {
         partName: findingPartName(finding),
-        unresolvedNames: sharedUnresolvedNames(finding),
-        r5Paths: sharedR5Paths(finding),
+        unresolvedNames: unresolvedNames ?? [],
+        unresolvedCause: unresolvedCause ?? undefined,
+        r5Paths: structuredR5Paths(finding) ?? [],
+        r5Cause: sharedR5Cause(finding, lang) ?? undefined,
       },
       lang,
     );
@@ -619,7 +656,8 @@ export function findingCauses(finding, lang) {
         servicePages: sourceFiles(evidenceByRole(finding, 'service')),
         packedFiles: sourceFiles(packed),
         unreferenced: packed.length === 0,
-        r5Paths: sharedR5Paths(finding),
+        r5Paths: structuredR5Paths(finding) ?? [],
+        r5Cause: sharedR5Cause(finding, lang) ?? undefined,
       },
       lang,
     );
@@ -634,13 +672,16 @@ export function findingCauses(finding, lang) {
           .filter((name) => name !== ''),
       ),
     ].sort(compareText);
+    const r2Names = structuredAlsoUnresolvedPages(finding);
+    const r2Cause = r2Names === null ? storedCauseForRule(finding, 'R2') : null;
     return unresolvedServiceCauses(
       {
         displayName:
           text(fact(references[0], 'displayName')) || text(finding.subject?.key),
         pages: servicePages(finding),
         candidates,
-        r2Names: sharedAlsoUnresolvedPages(finding),
+        r2Names: r2Names ?? [],
+        r2Cause: r2Cause ?? undefined,
       },
       lang,
     );

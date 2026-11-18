@@ -167,11 +167,12 @@ export function unresolvedReferenceCountermeasures(facts, lang = 'en') {
 }
 
 /**
- * @param {{ partName: string, categorySlug: string, r5Paths: readonly string[] }} facts
+ * @param {{ partName: string, categorySlug: string, r5Paths: readonly string[], r5Cause?: Cause }} facts
  * @param {'ja' | 'en'} [lang]
  * @returns {Cause[]}
  */
 export function unreferencedPartCauses(facts, lang = 'en') {
+  const r5 = facts.r5Cause ?? r5CauseCandidate(facts.r5Paths, lang);
   if (lang === 'ja') {
     return [
       cause(
@@ -183,7 +184,7 @@ export function unreferencedPartCauses(facts, lang = 'en') {
         'inference',
         'この部品は未使用か、置き換え済みか、機械可読でない部品表のページでのみ記載されている可能性があります。',
       ),
-      r5CauseCandidate(facts.r5Paths, lang),
+      r5,
     ];
   }
   return [
@@ -196,7 +197,7 @@ export function unreferencedPartCauses(facts, lang = 'en') {
       'inference',
       'The part may be unused, superseded, or documented only on a page whose component list is not machine-readable.',
     ),
-    r5CauseCandidate(facts.r5Paths, lang),
+    r5,
   ];
 }
 
@@ -219,11 +220,12 @@ export function unreferencedPartCountermeasures(facts, lang = 'en') {
 }
 
 /**
- * @param {{ partName: string, files: readonly string[], r5Paths: readonly string[] }} facts
+ * @param {{ partName: string, files: readonly string[], r5Paths: readonly string[], r5Cause?: Cause }} facts
  * @param {'ja' | 'en'} [lang]
  * @returns {Cause[]}
  */
 export function packedWithoutProcessCauses(facts, lang = 'en') {
+  const r5 = facts.r5Cause ?? r5CauseCandidate(facts.r5Paths, lang);
   if (lang === 'ja') {
     return [
       cause(
@@ -235,7 +237,7 @@ export function packedWithoutProcessCauses(facts, lang = 'en') {
         'inference',
         'この部品は意図的な同梱スペアであるか、これを使う組立手順が抽出から欠けている可能性があります。',
       ),
-      r5CauseCandidate(facts.r5Paths, lang),
+      r5,
     ];
   }
   return [
@@ -248,7 +250,7 @@ export function packedWithoutProcessCauses(facts, lang = 'en') {
       'inference',
       'The part may be a deliberate shipping spare, or an assembly step that uses it may be missing from the extract.',
     ),
-    r5CauseCandidate(facts.r5Paths, lang),
+    r5,
   ];
 }
 
@@ -376,11 +378,12 @@ export function changedNameCountermeasures(facts, lang = 'en') {
 }
 
 /**
- * @param {{ partName: string, unresolvedNames: readonly string[], r5Paths: readonly string[] }} facts
+ * @param {{ partName: string, unresolvedNames: readonly string[], r5Paths: readonly string[], unresolvedCause?: Cause, r5Cause?: Cause }} facts
  * @param {'ja' | 'en'} [lang]
  * @returns {Cause[]}
  */
 export function changedPartUnreachedCauses(facts, lang = 'en') {
+  const r5 = facts.r5Cause ?? r5CauseCandidate(facts.r5Paths, lang);
   if (lang === 'ja') {
     const causes = [
       cause(
@@ -392,7 +395,9 @@ export function changedPartUnreachedCauses(facts, lang = 'en') {
         'この部品は新しくまだ文書化されていないか、未使用か、部品ページに解決しなかった参照によってのみ名前が挙がっている可能性があります。',
       ),
     ];
-    if (facts.unresolvedNames.length > 0) {
+    if (facts.unresolvedCause) {
+      causes.push(facts.unresolvedCause);
+    } else if (facts.unresolvedNames.length > 0) {
       causes.push(
         cause(
           'inference',
@@ -401,7 +406,7 @@ export function changedPartUnreachedCauses(facts, lang = 'en') {
         ),
       );
     }
-    causes.push(r5CauseCandidate(facts.r5Paths, lang));
+    causes.push(r5);
     return causes;
   }
   const causes = [
@@ -414,7 +419,9 @@ export function changedPartUnreachedCauses(facts, lang = 'en') {
       'The part may be new and not yet documented, unused, or named only by a reference that did not resolve to a part page.',
     ),
   ];
-  if (facts.unresolvedNames.length > 0) {
+  if (facts.unresolvedCause) {
+    causes.push(facts.unresolvedCause);
+  } else if (facts.unresolvedNames.length > 0) {
     causes.push(
       cause(
         'inference',
@@ -423,7 +430,7 @@ export function changedPartUnreachedCauses(facts, lang = 'en') {
       ),
     );
   }
-  causes.push(r5CauseCandidate(facts.r5Paths, lang));
+  causes.push(r5);
   return causes;
 }
 
@@ -446,11 +453,12 @@ export function changedPartUnreachedCountermeasures(facts, lang = 'en') {
 }
 
 /**
- * @param {{ partName: string, servicePages: readonly string[], packedFiles: readonly string[], unreferenced: boolean, r5Paths: readonly string[] }} facts
+ * @param {{ partName: string, servicePages: readonly string[], packedFiles: readonly string[], unreferenced: boolean, r5Paths: readonly string[], r5Cause?: Cause }} facts
  * @param {'ja' | 'en'} [lang]
  * @returns {Cause[]}
  */
 export function serviceOnlyPartCauses(facts, lang = 'en') {
+  const r5 = facts.r5Cause ?? r5CauseCandidate(facts.r5Paths, lang);
   if (lang === 'ja') {
     const causes = [
       cause(
@@ -478,7 +486,7 @@ export function serviceOnlyPartCauses(facts, lang = 'en') {
         'この部品はサービス専用のスペアであるか、それを取り付ける組立手順が抽出から欠けている可能性があります。',
       ),
     );
-    causes.push(r5CauseCandidate(facts.r5Paths, lang));
+    causes.push(r5);
     return causes;
   }
   const causes = [
@@ -507,7 +515,7 @@ export function serviceOnlyPartCauses(facts, lang = 'en') {
       'The part may be a service-only spare, or an assembly step that installs it may be missing from the extract.',
     ),
   );
-  causes.push(r5CauseCandidate(facts.r5Paths, lang));
+  causes.push(r5);
   return causes;
 }
 
@@ -530,7 +538,7 @@ export function serviceOnlyPartCountermeasures(facts, lang = 'en') {
 }
 
 /**
- * @param {{ displayName: string, pages: readonly string[], candidates: readonly string[], r2Names: readonly string[] }} facts
+ * @param {{ displayName: string, pages: readonly string[], candidates: readonly string[], r2Names: readonly string[], r2Cause?: Cause }} facts
  * @param {'ja' | 'en'} [lang]
  * @returns {Cause[]}
  */
@@ -555,7 +563,9 @@ export function unresolvedServiceCauses(facts, lang = 'en') {
         cause('inference', 'この名前について、抽出には候補部品が記録されていません。'),
       );
     }
-    if (facts.r2Names.length > 0) {
+    if (facts.r2Cause) {
+      causes.push(facts.r2Cause);
+    } else if (facts.r2Names.length > 0) {
       causes.push(
         cause(
           'inference',
@@ -590,7 +600,9 @@ export function unresolvedServiceCauses(facts, lang = 'en') {
       cause('inference', 'The extract recorded no candidate part for this name.'),
     );
   }
-  if (facts.r2Names.length > 0) {
+  if (facts.r2Cause) {
+    causes.push(facts.r2Cause);
+  } else if (facts.r2Names.length > 0) {
     causes.push(
       cause(
         'inference',

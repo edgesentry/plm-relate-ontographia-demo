@@ -136,13 +136,14 @@ evidence are in `farmbot/dist/farmbot.findings.json`.
 Every file under `farmbot/checks/` is a complete Intent, and `INTENT_FILES` in
 `src/farmbot/agent/checks.mjs` lists the executed set. All traversals use
 `direction: out` and start on the relationship's `from_class` side, because
-Ontographia 0.1.10 still rejects inbound steps
-(`edgesentry/ontographia#164`). The absence Intents add a `not_exists` list,
-which 0.1.10 compiles to a correlated `NOT EXISTS` sub-pattern. No Intent uses
-`DISTINCT`, sums or branching; 0.1.10 still cannot express those, so the
-documented post-compile `RETURN DISTINCT` step for Q2 and Q3 stays, and sums and
-branching belong to the rule module (upstream issues
-`edgesentry/ontographia#166` and `edgesentry/ontographia#167`).
+the currently pinned Ontographia version (see `package.json`) still rejects
+inbound steps (`edgesentry/ontographia#164`). The absence Intents add a
+`not_exists` list, which that pinned version compiles to a correlated
+`NOT EXISTS` sub-pattern. No Intent uses `DISTINCT`, sums or branching; the
+pinned compiler still cannot express those, so the documented post-compile
+`RETURN DISTINCT` step for Q2 and Q3 stays, and sums and branching belong to the
+rule module (upstream issues `edgesentry/ontographia#166` and
+`edgesentry/ontographia#167`).
 
 Each Intent carries an explicit `limit`, and the runner throws when a result
 reaches it, so a limit never truncates a finding silently. A shared reference

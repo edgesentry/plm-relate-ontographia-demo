@@ -9,11 +9,11 @@ does not run WASM.
 
 ## How it runs
 
-The schedule, the test route and the limiter bindings are declared in
-`wrangler.jsonc`; the request handling, the digest-and-send flow and the
-fail-closed order are implemented in `worker/index.ts` and `worker/notify.ts`.
-Read those files for the trigger list, the limiter values and the payload shape.
-They are not restated here.
+The schedule and the limiter bindings are declared in `wrangler.jsonc`; the test
+route (`NOTIFY_PATH`) is defined in `worker/notify.ts`. The request handling,
+the digest-and-send flow and the fail-closed order are implemented in
+`worker/index.ts` and `worker/notify.ts`. Read those files for the trigger list,
+the limiter values and the payload shape. They are not restated here.
 
 ### The daily cap is best effort
 

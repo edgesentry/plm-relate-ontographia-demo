@@ -204,6 +204,7 @@ export function App() {
     initialFindingId,
   );
   const [selectedEvidence, setSelectedEvidence] = useState<number[]>([]);
+  const [hashRevealCount, setHashRevealCount] = useState(0);
   const evidenceRowRefs = useRef<Map<number, HTMLLIElement | null>>(new Map());
 
   const pendingRevealRef = useRef<string | null>(initialFindingId);
@@ -579,13 +580,15 @@ export function App() {
   }, [engine.status, initialFindingId]);
 
   // After load, a hash change opens the matching finding when it is available.
-  // Malformed hashes and other keys are ignored.
+  // Malformed hashes and other keys are ignored. Each valid finding hash is its
+  // own reveal event, even when it repeats the id that is already selected.
   useEffect(() => {
     const onHashChange = () => {
       const id = parseFindingHash(window.location.hash);
       if (id === null) return;
       pendingRevealRef.current = id;
       setSelectedFindingId(id);
+      setHashRevealCount((current) => current + 1);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
@@ -593,14 +596,15 @@ export function App() {
 
   // A finding opened from the URL hash must be visible: adjust the filter just
   // enough for its severity to appear. The pending id is consumed once, so a
-  // manual toggle is not overridden.
+  // manual toggle is not overridden. `hashRevealCount` keys the effect on the
+  // hash events themselves, so a return to the same id still reveals its row.
   useEffect(() => {
     const id = pendingRevealRef.current;
     if (id === null || checks.status !== 'ready') return;
     pendingRevealRef.current = null;
     const finding = checks.result.findings.find((candidate) => candidate.id === id);
     if (finding?.severity === 'info') setShowInfoFindings(true);
-  }, [checks, selectedFindingId]);
+  }, [checks, hashRevealCount]);
 
   const openFinding = (id: string) => {
     setSelectedFindingId(id);

@@ -21,7 +21,6 @@ import { CHECK_CATALOG } from '../src/farmbot/check-catalog.mjs';
 import {
   orderFindings,
   summaryLine,
-  visibleFindings,
 } from '../src/farmbot/findings-view.mjs';
 import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
 
@@ -525,9 +524,9 @@ async function main() {
   const expectedSeverity = { action: 0, review: 0, info: 0 };
   for (const finding of findings) expectedSeverity[finding.severity] += 1;
   const orderedFindings = orderFindings(findings);
-  const expectedVisibleIds = visibleFindings(orderedFindings, false).map(
-    (finding) => finding.id,
-  );
+  const expectedVisibleIds = orderedFindings
+    .filter((finding) => finding.severity !== 'info')
+    .map((finding) => finding.id);
   const expectedRevealedIds = orderedFindings.map((finding) => finding.id);
 
   // The deep link opens the finding with the most evidence rows; ties break by
@@ -1492,11 +1491,104 @@ async function main() {
       JSON.stringify(infoDeepState.ids) === JSON.stringify(expectedRevealedIds),
       'the info deep link did not reveal the whole committed list in order',
     );
+
+    // A return to the same finding hash must reveal its row again, even after a
+    // manual hide and a no-op hash in between. The id and check result are
+    // unchanged, so only the hash event itself can trigger the reveal.
+    const readInfoDeepState = () =>
+      infoDeep.page.evaluate(
+        (findingId) => ({
+          id: document.querySelector('[data-testid="finding-open-id"]')?.textContent?.trim() ?? '',
+          row: Boolean(document.querySelector(`[data-testid="finding-row-${findingId}"]`)),
+          pressed:
+            document
+              .querySelector('[data-testid="toggle-info-findings"]')
+              ?.getAttribute('aria-pressed') ?? null,
+          ids: [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
+            (element) => element.getAttribute('data-finding-id'),
+          ),
+        }),
+        infoDeepLinkFinding.id,
+      );
+
+    await infoDeep.page.locator('[data-testid="toggle-info-findings"]').click();
+    await infoDeep.page.waitForFunction(
+      (findingId) => !document.querySelector(`[data-testid="finding-row-${findingId}"]`),
+      infoDeepLinkFinding.id,
+      { timeout: 30000 },
+    );
+    const infoHiddenState = await readInfoDeepState();
+    assert(
+      infoHiddenState.id === infoDeepLinkFinding.id,
+      'hiding info findings closed the selected finding',
+    );
+    assert(!infoHiddenState.row, 'hiding info findings did not hide the selected row');
+    assert(
+      infoHiddenState.pressed === 'false',
+      'hiding info findings did not report the default state',
+    );
+    assert(
+      JSON.stringify(infoHiddenState.ids) === JSON.stringify(expectedVisibleIds),
+      'hiding info findings did not restore the default list',
+    );
+
+    // A non-finding hash is a no-op: the selection and the hidden filter stay.
+    await infoDeep.page.evaluate(() => {
+      window.location.hash = '#foo';
+    });
+    await infoDeep.page.waitForFunction(
+      () => window.location.hash === '#foo',
+      undefined,
+      { timeout: 30000 },
+    );
+    await delay(250);
+    const infoOtherHashState = await readInfoDeepState();
+    assert(
+      infoOtherHashState.id === infoDeepLinkFinding.id,
+      'a non-finding hash changed the selected finding',
+    );
+    assert(!infoOtherHashState.row, 'a non-finding hash revealed a hidden row');
+    assert(
+      infoOtherHashState.pressed === 'false',
+      'a non-finding hash changed the findings filter',
+    );
+
+    // Back to the same finding hash: the row must appear again.
+    await infoDeep.page.evaluate((findingId) => {
+      window.location.hash = `#finding=${encodeURIComponent(findingId)}`;
+    }, infoDeepLinkFinding.id);
+    await infoDeep.page.waitForFunction(
+      (findingId) => Boolean(document.querySelector(`[data-testid="finding-row-${findingId}"]`)),
+      infoDeepLinkFinding.id,
+      { timeout: 30000 },
+    );
+    const infoRepeatedState = await readInfoDeepState();
+    assert(
+      infoRepeatedState.id === infoDeepLinkFinding.id,
+      'returning to the same finding hash closed the selected finding',
+    );
+    assert(
+      infoRepeatedState.row,
+      'returning to the same finding hash did not reveal its row',
+    );
+    assert(
+      infoRepeatedState.pressed === 'true',
+      'returning to the same finding hash did not turn the filter on',
+    );
+    assert(
+      JSON.stringify(infoRepeatedState.ids) === JSON.stringify(expectedRevealedIds),
+      'returning to the same finding hash did not reveal the whole committed list in order',
+    );
+
     const infoDeepClean = await assertContextClean(infoDeep);
     await infoDeep.context.close();
     summary.deepLink.info = {
       id: infoDeepLinkFinding.id,
       rowVisible: infoDeepState.row,
+      repeatedReveal: {
+        rowVisible: infoRepeatedState.row,
+        filterPressed: infoRepeatedState.pressed,
+      },
       ...infoDeepClean,
     };
 

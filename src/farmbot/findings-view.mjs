@@ -1,9 +1,31 @@
 // Pure view helpers for the FarmBot notification panel and finding view.
 //
-// No DOM and no imports: `node --test` and the React screen share these
-// functions. The summary line is a template per rule filled from the finding's
-// subject and evidence `facts` / `sourceFile`. Every value is
-// rendered as text; nothing here produces or accepts HTML.
+// No DOM. The only import is the fixed rule templates, so `node --test` and the
+// React screen share these functions. The summary line and the cause and
+// countermeasure bodies are templates per rule filled from the finding's
+// subject and evidence `facts` / `sourceFile`. Every value is rendered as text;
+// nothing here produces or accepts HTML.
+
+import {
+  changedNameCauses,
+  changedNameCountermeasures,
+  changedPartUnreachedCauses,
+  changedPartUnreachedCountermeasures,
+  packedWithoutProcessCauses,
+  packedWithoutProcessCountermeasures,
+  quantityCauses,
+  quantityCountermeasures,
+  serviceOnlyPartCauses,
+  serviceOnlyPartCountermeasures,
+  unreadablePageCauses,
+  unreadablePageCountermeasures,
+  unreferencedPartCauses,
+  unreferencedPartCountermeasures,
+  unresolvedReferenceCauses,
+  unresolvedReferenceCountermeasures,
+  unresolvedServiceCauses,
+  unresolvedServiceCountermeasures,
+} from './agent/templates.mjs';
 
 /** Prefix of a finding deep link. */
 export const FINDING_HASH_PREFIX = '#finding=';
@@ -348,4 +370,344 @@ export function evidenceRows(finding) {
     rows.push({ ...row, queries });
   }
   return rows;
+}
+
+/**
+ * @param {unknown} left
+ * @param {unknown} right
+ * @returns {number}
+ */
+function compareText(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @param {string} role
+ * @returns {Array<Record<string, any>>}
+ */
+function evidenceByRole(finding, role) {
+  return (Array.isArray(finding.evidence) ? finding.evidence : []).filter(
+    (row) => row && row.role === role,
+  );
+}
+
+/**
+ * Unique non-empty source files of the given rows, in code-unit order.
+ *
+ * @param {Array<Record<string, any>>} rows
+ * @returns {string[]}
+ */
+function sourceFiles(rows) {
+  return [
+    ...new Set(rows.map((row) => text(row.sourceFile)).filter((file) => file !== '')),
+  ].sort(compareText);
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @param {string} rule
+ * @returns {Record<string, any> | null}
+ */
+function storedCauseForRule(finding, rule) {
+  const causes = Array.isArray(finding.causes) ? finding.causes : [];
+  return causes.find((entry) => entry && entry.rule === rule) ?? null;
+}
+
+/**
+ * The page paths interpolated into the shared R5 cause candidate. The path list
+ * is not repeated in the evidence, so it is read back from the stored candidate
+ * the collector wrote for this finding.
+ *
+ * @param {Record<string, any>} finding
+ * @returns {string[]}
+ */
+function sharedR5Paths(finding) {
+  const stored = storedCauseForRule(finding, 'R5');
+  if (!stored) return [];
+  const match =
+    /^R5: .*?parts table \((.*)\), so their component lists cannot appear as references\.$/.exec(
+      text(stored.text),
+    );
+  return match ? match[1].split(', ') : [];
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @returns {string[]}
+ */
+function sharedUnresolvedNames(finding) {
+  const stored = storedCauseForRule(finding, 'R2');
+  if (!stored) return [];
+  const match =
+    /^The unresolved name\(s\) (.*) may be this part under another spelling\.$/.exec(
+      text(stored.text),
+    );
+  return match ? match[1].split(', ') : [];
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @returns {string[]}
+ */
+function sharedAlsoUnresolvedPages(finding) {
+  const stored = storedCauseForRule(finding, 'R2');
+  if (!stored) return [];
+  const match = /^The same name is also unresolved on (.*)\.$/.exec(text(stored.text));
+  return match ? match[1].split(', ') : [];
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @returns {string}
+ */
+function sharedPagePath(finding) {
+  return text(firstEvidence(finding, 'pre-assembly-page')?.sourceFile);
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @returns {string}
+ */
+function findingPartName(finding) {
+  return (
+    text(fact(firstEvidence(finding, 'part'), 'name')) ||
+    text(finding.subject?.label) ||
+    text(finding.id)
+  );
+}
+
+/**
+ * @param {string} lang
+ * @param {string} caller
+ */
+function assertLanguage(lang, caller) {
+  if (lang !== 'ja' && lang !== 'en') {
+    throw new Error(`${caller} needs lang ja or en, got ${lang}`);
+  }
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @returns {string[]}
+ */
+function downstreamFiles(finding) {
+  return sourceFiles(
+    (Array.isArray(finding.evidence) ? finding.evidence : []).filter(
+      (row) => row && (row.role === 'packing-structure' || row.role === 'service'),
+    ),
+  );
+}
+
+/**
+ * @param {Record<string, any>} finding
+ * @returns {string[]}
+ */
+function servicePages(finding) {
+  const pages = sourceFiles(evidenceByRole(finding, 'service'));
+  if (pages.length === 0) {
+    const fallback = text(evidenceByRole(finding, 'reference')[0]?.sourceFile);
+    if (fallback !== '') pages.push(fallback);
+  }
+  return pages;
+}
+
+/**
+ * The cause candidates for one rule in the selected language, filled from the
+ * finding's own evidence and subject. English keeps the collector's meaning;
+ * Japanese carries the same claims in Japanese.
+ *
+ * @param {Record<string, any>} finding
+ * @param {'ja' | 'en'} lang
+ * @returns {Array<{ kind: 'fact' | 'inference', rule: string | null, text: string }>}
+ */
+export function findingCauses(finding, lang) {
+  if (!finding || typeof finding !== 'object') throw new Error('findingCauses needs a finding');
+  assertLanguage(lang, 'findingCauses');
+  const rule = text(finding.rule);
+
+  if (rule === 'R1') {
+    const difference = firstEvidence(finding, 'quantity-difference');
+    return quantityCauses(
+      {
+        file: text(difference?.sourceFile),
+        partName: findingPartName(finding),
+        variantCode: text(fact(difference, 'version')),
+        packingQuantity: Number(fact(difference, 'packingQuantity')),
+        partQuantity: Number(fact(difference, 'partQuantity')),
+        quantityDifference: Number(fact(difference, 'quantityDifference')),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R2') {
+    const references = evidenceByRole(finding, 'reference');
+    const structures = new Set(evidenceByRole(finding, 'structure').map((row) => row.nodeId));
+    return unresolvedReferenceCauses(
+      {
+        displayName:
+          text(fact(references[0], 'displayName')) || text(finding.subject?.key),
+        lineCount: references.length,
+        structureCount: structures.size,
+      },
+      lang,
+    );
+  }
+  if (rule === 'R3') {
+    return unreferencedPartCauses(
+      {
+        partName: findingPartName(finding),
+        categorySlug: text(fact(firstEvidence(finding, 'part'), 'categorySlug')),
+        r5Paths: sharedR5Paths(finding),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R4') {
+    return packedWithoutProcessCauses(
+      {
+        partName: findingPartName(finding),
+        files: sourceFiles(evidenceByRole(finding, 'packing-structure')),
+        r5Paths: sharedR5Paths(finding),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R5') {
+    const page = firstEvidence(finding, 'pre-assembly-page');
+    return unreadablePageCauses(
+      {
+        path: sharedPagePath(finding),
+        reason: text(fact(page, 'machineReadableReason')) || 'no reason recorded',
+        pdfCount: Number(fact(page, 'pdfCount') ?? 0),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R6') {
+    return changedNameCauses(
+      {
+        name: text(finding.subject?.label) || findingPartName(finding),
+        files: downstreamFiles(finding),
+        sections: [
+          ...new Set(
+            evidenceByRole(finding, 'design-change')
+              .map((row) => text(fact(row, 'section')))
+              .filter((section) => section !== ''),
+          ),
+        ].sort(compareText),
+        inferred: finding.inferred === true,
+      },
+      lang,
+    );
+  }
+  if (rule === 'R7') {
+    return changedPartUnreachedCauses(
+      {
+        partName: findingPartName(finding),
+        unresolvedNames: sharedUnresolvedNames(finding),
+        r5Paths: sharedR5Paths(finding),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R8') {
+    const packed = evidenceByRole(finding, 'packing-structure');
+    return serviceOnlyPartCauses(
+      {
+        partName: findingPartName(finding),
+        servicePages: sourceFiles(evidenceByRole(finding, 'service')),
+        packedFiles: sourceFiles(packed),
+        unreferenced: packed.length === 0,
+        r5Paths: sharedR5Paths(finding),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R9') {
+    const references = evidenceByRole(finding, 'reference');
+    const candidates = [
+      ...new Set(
+        evidenceByRole(finding, 'part')
+          .filter((row) => fact(row, 'candidate') === true)
+          .map((row) => text(fact(row, 'name')))
+          .filter((name) => name !== ''),
+      ),
+    ].sort(compareText);
+    return unresolvedServiceCauses(
+      {
+        displayName:
+          text(fact(references[0], 'displayName')) || text(finding.subject?.key),
+        pages: servicePages(finding),
+        candidates,
+        r2Names: sharedAlsoUnresolvedPages(finding),
+      },
+      lang,
+    );
+  }
+  throw new Error(`findingCauses has no body templates for rule ${rule}`);
+}
+
+/**
+ * The countermeasures for one rule in the selected language.
+ *
+ * @param {Record<string, any>} finding
+ * @param {'ja' | 'en'} lang
+ * @returns {string[]}
+ */
+export function findingCountermeasures(finding, lang) {
+  if (!finding || typeof finding !== 'object') {
+    throw new Error('findingCountermeasures needs a finding');
+  }
+  assertLanguage(lang, 'findingCountermeasures');
+  const rule = text(finding.rule);
+  const partName = findingPartName(finding);
+
+  if (rule === 'R1') {
+    return quantityCountermeasures(
+      {
+        partName,
+        variantCode: text(fact(firstEvidence(finding, 'quantity-difference'), 'version')),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R2') {
+    const references = evidenceByRole(finding, 'reference');
+    return unresolvedReferenceCountermeasures(
+      {
+        displayName:
+          text(fact(references[0], 'displayName')) || text(finding.subject?.key),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R3') return unreferencedPartCountermeasures({ partName }, lang);
+  if (rule === 'R4') return packedWithoutProcessCountermeasures({ partName }, lang);
+  if (rule === 'R5') {
+    return unreadablePageCountermeasures({ path: sharedPagePath(finding) }, lang);
+  }
+  if (rule === 'R6') {
+    return changedNameCountermeasures(
+      {
+        name: text(finding.subject?.label) || partName,
+        files: downstreamFiles(finding),
+      },
+      lang,
+    );
+  }
+  if (rule === 'R7') return changedPartUnreachedCountermeasures({ partName }, lang);
+  if (rule === 'R8') return serviceOnlyPartCountermeasures({ partName }, lang);
+  if (rule === 'R9') {
+    const references = evidenceByRole(finding, 'reference');
+    return unresolvedServiceCountermeasures(
+      {
+        displayName:
+          text(fact(references[0], 'displayName')) || text(finding.subject?.key),
+        pages: servicePages(finding),
+      },
+      lang,
+    );
+  }
+  throw new Error(`findingCountermeasures has no body templates for rule ${rule}`);
 }

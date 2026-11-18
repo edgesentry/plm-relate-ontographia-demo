@@ -3,20 +3,28 @@
 // document; no count, id or summary is written into this file.
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
+import { canonicalJson } from '../../src/farmbot/agent/canonical.mjs';
 import {
   countBySeverity,
   evidenceRows,
+  findingCauses,
+  findingCountermeasures,
   orderFindings,
   parseFindingHash,
   parseFindingsDigestLine,
   summaryLine,
 } from '../../src/farmbot/findings-view.mjs';
 import {
+  changedNameCauses,
+  changedPartUnreachedCauses,
+  r5CauseCandidate,
+  serviceOnlyPartCauses,
   unresolvedServiceCauses,
   unresolvedServiceCountermeasures,
 } from '../../src/farmbot/agent/templates.mjs';
@@ -351,4 +359,235 @@ test('the committed findings sidecar is a digest line', () => {
   assert.match(parsed.hex, /^[0-9a-f]{64}$/);
   assert.equal(parseFindingsDigestLine('farmbot-findings-v1 sha256:nope'), null);
   assert.equal(parseFindingsDigestLine('farmbot-graph-v1 sha256:' + '0'.repeat(64)), null);
+});
+
+/** The values a rendered body must contain, read from the finding itself. */
+function bodyInputs(finding) {
+  const part = evidenceOf(finding, 'part');
+  const partName = part?.facts?.name ?? finding.subject.label;
+  switch (finding.rule) {
+    case 'R1': {
+      const difference = evidenceOf(finding, 'quantity-difference');
+      return [
+        difference.sourceFile,
+        partName,
+        String(difference.facts.version),
+        String(difference.facts.packingQuantity),
+        String(difference.facts.partQuantity),
+        String(Math.abs(difference.facts.quantityDifference)),
+      ];
+    }
+    case 'R2': {
+      const references = finding.evidence.filter((row) => row.role === 'reference');
+      return [references[0].facts.displayName, String(references.length)];
+    }
+    case 'R3':
+      return [partName, part.facts.categorySlug];
+    case 'R4': {
+      const files = finding.evidence
+        .filter((row) => row.role === 'packing-structure')
+        .map((row) => row.sourceFile);
+      return [partName, ...new Set(files)];
+    }
+    case 'R5': {
+      const page = evidenceOf(finding, 'pre-assembly-page');
+      return [
+        page.sourceFile,
+        page.facts.machineReadableReason,
+        String(page.facts.pdfCount),
+      ];
+    }
+    case 'R6': {
+      const sections = finding.evidence
+        .filter((row) => row.role === 'design-change')
+        .map((row) => row.facts.section);
+      const files = finding.evidence
+        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [finding.subject.label, ...new Set(sections), ...new Set(files)];
+    }
+    case 'R7':
+      return [partName];
+    case 'R8': {
+      const servicePages = finding.evidence
+        .filter((row) => row.role === 'service')
+        .map((row) => row.sourceFile);
+      const packedFiles = finding.evidence
+        .filter((row) => row.role === 'packing-structure')
+        .map((row) => row.sourceFile);
+      return [partName, ...new Set(servicePages), ...new Set(packedFiles)];
+    }
+    case 'R9': {
+      const reference = finding.evidence.find((row) => row.role === 'reference');
+      const pages = finding.evidence
+        .filter((row) => row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [reference.facts.displayName, ...new Set(pages)];
+    }
+    default:
+      throw new Error(`no body inputs for rule ${finding.rule}`);
+  }
+}
+
+test('the rendered English bodies equal the committed bodies for every finding', () => {
+  for (const finding of findings) {
+    assert.deepEqual(
+      findingCauses(finding, 'en'),
+      finding.causes,
+      `${finding.id} English causes drifted`,
+    );
+    assert.deepEqual(
+      findingCountermeasures(finding, 'en'),
+      finding.countermeasures,
+      `${finding.id} English countermeasures drifted`,
+    );
+  }
+});
+
+test('every finding renders Japanese body text with its own interpolated values', () => {
+  const rules = new Set();
+  for (const finding of findings) {
+    rules.add(finding.rule);
+    const causesJa = findingCauses(finding, 'ja');
+    const countermeasuresJa = findingCountermeasures(finding, 'ja');
+
+    assert.equal(
+      causesJa.length,
+      finding.causes.length,
+      `${finding.id} Japanese causes dropped an entry`,
+    );
+    assert.equal(
+      countermeasuresJa.length,
+      finding.countermeasures.length,
+      `${finding.id} Japanese countermeasures dropped an entry`,
+    );
+    assert.deepEqual(
+      causesJa.map((cause) => [cause.kind, cause.rule]),
+      finding.causes.map((cause) => [cause.kind, cause.rule]),
+      `${finding.id} Japanese causes changed a fact or inference label`,
+    );
+    for (let index = 0; index < causesJa.length; index += 1) {
+      assert.notEqual(
+        causesJa[index].text,
+        finding.causes[index].text,
+        `${finding.id} cause ${index} is still English`,
+      );
+    }
+    for (let index = 0; index < countermeasuresJa.length; index += 1) {
+      assert.notEqual(
+        countermeasuresJa[index],
+        finding.countermeasures[index],
+        `${finding.id} countermeasure ${index} is still English`,
+      );
+    }
+
+    const body = [...causesJa.map((cause) => cause.text), ...countermeasuresJa].join('\n');
+    for (const value of bodyInputs(finding)) {
+      if (value === null || value === undefined || value === '') continue;
+      assert.ok(
+        body.includes(String(value)),
+        `${finding.id} Japanese body does not contain ${JSON.stringify(value)}: ${body}`,
+      );
+    }
+  }
+  assert.deepEqual(
+    [...rules].sort(),
+    ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9'],
+  );
+});
+
+test('template functions default to English and render Japanese on request', () => {
+  const emptyEn = r5CauseCandidate([]);
+  assert.match(emptyEn.text, /no pre-assembly page lacks a machine-readable parts table/);
+  assert.doesNotMatch(emptyEn.text, /プリ組立/);
+  const emptyJa = r5CauseCandidate([], 'ja');
+  assert.notEqual(emptyJa.text, emptyEn.text);
+  assert.match(emptyJa.text, /機械可読な部品表がないプリ組立ページはありません/);
+
+  const paths = ['a.md', 'b.md'];
+  assert.ok(r5CauseCandidate(paths).text.includes('a.md, b.md'));
+  assert.ok(r5CauseCandidate(paths, 'ja').text.includes('a.md、b.md'));
+
+  const unresolvedFacts = {
+    partName: 'Part X',
+    unresolvedNames: ['Wood Screws', 'wood screws'],
+    r5Paths: paths,
+  };
+  const unresolvedEn = changedPartUnreachedCauses(unresolvedFacts);
+  const unresolvedJa = changedPartUnreachedCauses(unresolvedFacts, 'ja');
+  assert.ok(
+    unresolvedEn.some((cause) =>
+      cause.text.includes('The unresolved name(s) Wood Screws, wood screws'),
+    ),
+  );
+  assert.ok(
+    unresolvedJa.some((cause) => cause.text.includes('Wood Screws、wood screws')),
+  );
+
+  const serviceFacts = {
+    displayName: 'tee nuts',
+    pages: ['a.md', 'b.md'],
+    candidates: ['Tee Nut'],
+    r2Names: ['packing.md'],
+  };
+  const serviceEn = unresolvedServiceCauses(serviceFacts);
+  const serviceJa = unresolvedServiceCauses(serviceFacts, 'ja');
+  assert.ok(serviceEn.some((cause) => cause.text.includes('candidate parts: Tee Nut')));
+  assert.ok(serviceEn.some((cause) => cause.text.includes('also unresolved on packing.md')));
+  assert.ok(serviceJa.some((cause) => cause.text.includes('Tee Nut')));
+  assert.ok(serviceJa.some((cause) => cause.text.includes('packing.md')));
+
+  const noCandidateJa = unresolvedServiceCauses(
+    { displayName: 'tee nuts', pages: ['a.md'], candidates: [], r2Names: [] },
+    'ja',
+  );
+  assert.ok(
+    noCandidateJa.some((cause) => cause.text.includes('候補部品が記録されていません')),
+  );
+
+  const serviceOnlyFacts = {
+    partName: 'Part X',
+    servicePages: ['service.md'],
+    packedFiles: ['kit.md'],
+    unreferenced: true,
+    r5Paths: paths,
+  };
+  const serviceOnlyEn = serviceOnlyPartCauses(serviceOnlyFacts);
+  const serviceOnlyJa = serviceOnlyPartCauses(serviceOnlyFacts, 'ja');
+  assert.ok(serviceOnlyEn.some((cause) => cause.text.includes('is packed on kit.md')));
+  assert.ok(
+    serviceOnlyEn.some((cause) => cause.text.includes('referenced by nothing else')),
+  );
+  assert.ok(serviceOnlyJa.some((cause) => cause.text.includes('kit.md')));
+  assert.ok(
+    serviceOnlyJa.some((cause) => cause.text.includes('他のどこからも参照されていません')),
+  );
+
+  const inferredFacts = {
+    name: 'Old Name',
+    inferred: true,
+    sections: ['Miscellaneous'],
+    files: ['a.md'],
+  };
+  const inferredEn = changedNameCauses(inferredFacts);
+  const inferredJa = changedNameCauses(inferredFacts, 'ja');
+  assert.ok(inferredEn[0].text.includes('removal statement'));
+  assert.ok(inferredEn[0].text.includes('Old Name'));
+  assert.ok(inferredJa[0].text.includes('Old Name'));
+  assert.notEqual(inferredJa[0].text, inferredEn[0].text);
+});
+
+test('an unsupported language is rejected for body rendering', () => {
+  assert.throws(() => findingCauses(findings[0], 'fr'), /lang ja or en/);
+  assert.throws(() => findingCountermeasures(findings[0], 'fr'), /lang ja or en/);
+});
+
+test('the committed findings document stays canonical and matches its digest', () => {
+  assert.equal(findingsText, canonicalJson(document));
+  assert.equal(JSON.stringify(document).includes('text_ja'), false);
+
+  const expected = parseFindingsDigestLine(readFileSync(FINDINGS_DIGEST_PATH, 'utf8'));
+  assert.ok(expected, 'the sidecar must parse');
+  const actual = createHash('sha256').update(canonicalJson(document)).digest('hex');
+  assert.equal(actual, expected.hex);
 });

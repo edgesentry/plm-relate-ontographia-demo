@@ -37,12 +37,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:farmbot
+      - run: node farmbot/scripts/extract.mjs --out "$RUNNER_TEMP/farmbot-extract"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: farmbot-duckdb
           path: |
-            farmbot/dist/farmbot.duckdb
-            farmbot/dist/farmbot.duckdb.sha256
+            ${{ runner.temp }}/farmbot-extract/farmbot.duckdb
+            ${{ runner.temp }}/farmbot-extract/farmbot.duckdb.sha256
           retention-days: 90
   farmbot-smoke:
     runs-on: ubuntu-latest

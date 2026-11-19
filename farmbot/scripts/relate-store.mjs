@@ -294,6 +294,12 @@ export function seedStatements(seed) {
  */
 export function buildStore(dir, options = {}) {
   const target = resolve(dir);
+  if (target === resolve(FARMBOT_DIR, 'dist')) {
+    throw new Error(
+      'refusing to build the Relate store into the committed farmbot/dist directory itself; ' +
+        `pass ${resolve(FARMBOT_DIR, 'dist', STORE_DIR_NAME)} or a temporary directory`,
+    );
+  }
   const { seed } = loadCommittedSeed(options.seedPath ?? COMMITTED_SEED);
 
   rmSync(target, { recursive: true, force: true });

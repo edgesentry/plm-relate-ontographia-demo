@@ -692,6 +692,50 @@ function firstSegment(token) {
 }
 
 /**
+ * Levenshtein edit distance between two strings.
+ *
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function editDistance(a, b) {
+  if (a === b) return 0;
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      const substitution = previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1);
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, substitution);
+    }
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+/**
+ * Classify a cited path's first segment against the live top-level names.
+ *
+ * `exact` keeps the normal existence check. `typo` means the segment is a
+ * case variant of a live name or one edit away from one: on a case-sensitive
+ * filesystem such a citation cannot resolve, so the token is a cited
+ * repository path that does not exist. `external` is any other segment, which
+ * may name a context-relative path or an external repository.
+ *
+ * @param {string} segment
+ * @param {ReadonlySet<string>} topLevel
+ * @returns {'exact' | 'typo' | 'external'}
+ */
+function topLevelMatch(segment, topLevel) {
+  if (topLevel.has(segment)) return 'exact';
+  const folded = segment.toLowerCase();
+  for (const name of topLevel) {
+    const candidate = name.toLowerCase();
+    if (candidate === folded || editDistance(folded, candidate) === 1) return 'typo';
+  }
+  return 'external';
+}
+
+/**
  * Translate one .gitignore glob into an anchored regular expression.
  *
  * @param {string} glob
@@ -796,8 +840,9 @@ function gitignored(relativePath) {
 }
 
 /**
- * Cited repository paths must resolve inside the repository. Only a token whose
- * first segment is a live top-level name can be a repository-root path, so
+ * Cited repository paths must resolve inside the repository. A token whose
+ * first segment is a live top-level name, a case variant of one, or one edit
+ * away from one is a repository-root path, so a typo of a live name fails;
  * context-relative or external names (`nodes/`, `manifest.json`,
  * `owner/repo#id`) are not judged. `..` segments and resolutions outside ROOT
  * fail. An absent path that a .gitignore covers is an acceptable build-output
@@ -822,7 +867,12 @@ function repoPathProblems(text) {
       problems.push(`cited repository path ${token} escapes the repository`);
       continue;
     }
-    if (!topLevel.has(firstSegment(token))) continue;
+    const match = topLevelMatch(firstSegment(token), topLevel);
+    if (match === 'external') continue;
+    if (match === 'typo') {
+      problems.push(`cited repository path ${token} does not exist in the repository`);
+      continue;
+    }
     if (existsSync(resolved)) continue;
     if (gitignored(token.replace(/\/+$/, ''))) continue;
     problems.push(`cited repository path ${token} does not exist in the repository`);
@@ -914,6 +964,32 @@ test('a cited missing or escaping repository path fails and names the token', ()
   assert.ok(
     escapedProblems.some((problem) => problem.includes(escaped)),
     `an escaping cited path must fail and name ${escaped}: ${escapedProblems.join('; ')}`,
+  );
+});
+
+test('a typo of a live top-level name fails and names the token', () => {
+  assert.ok(
+    existsSync(join(ROOT, 'wrangler.jsonc')),
+    'this fixture assumes wrangler.jsonc is a live repo-root file',
+  );
+  assert.ok(
+    existsSync(join(ROOT, 'farmbot')),
+    'this fixture assumes farmbot is a live repo-root directory',
+  );
+  const fixtures = ['farmbo/docs/ontology.md', 'wrangler.json', 'FarmBot/docs/ontology.md'];
+  for (const token of fixtures) {
+    const problems = repoPathProblems(`Claim source: \`${token}\``);
+    assert.ok(
+      problems.some((problem) => problem.includes(token)),
+      `a typo of a live top-level name must fail and name ${token}: ${problems.join('; ')}`,
+    );
+  }
+});
+
+test('a typo under a real top-level name still fails', () => {
+  assert.ok(
+    repoPathProblems('Typo: `farmbot/docs/does-not-exist-here.md`').length > 0,
+    'a typo under a real top-level name still fails',
   );
 });
 

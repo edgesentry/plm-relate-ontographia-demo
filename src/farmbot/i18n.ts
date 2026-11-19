@@ -120,7 +120,7 @@ const en = {
   inferenceLabel: 'inferred',
   nameMatchLabel: 'Name match',
   causeDataNote:
-    'Cause and countermeasure texts are stored in English. The labels and the summary line follow the selected language.',
+    'Cause and countermeasure bodies follow the selected language. Source identifiers stay in their original form.',
   severityAction: 'Action needed',
   severityReview: 'Check',
   severityInfo: 'Info',
@@ -321,7 +321,7 @@ const ja: Record<keyof typeof en, string> = {
   inferenceLabel: '推定',
   nameMatchLabel: '名前の照合',
   causeDataNote:
-    '原因と対策の本文は英語で保存されています。ラベルと要約行は選択した言語で表示します。',
+    '原因と対策の本文は選択した言語で表示します。ソースの識別子は元の表記のままです。',
   severityAction: '対応が必要',
   severityReview: '確認',
   severityInfo: '情報',

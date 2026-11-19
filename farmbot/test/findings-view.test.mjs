@@ -3,14 +3,18 @@
 // document; no count, id or summary is written into this file.
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
+import { canonicalJson } from '../../src/farmbot/agent/canonical.mjs';
 import {
   countBySeverity,
   evidenceRows,
+  findingCauses,
+  findingCountermeasures,
   orderFindings,
   parseFindingHash,
   parseFindingsDigestLine,
@@ -18,6 +22,10 @@ import {
   visibleFindings,
 } from '../../src/farmbot/findings-view.mjs';
 import {
+  changedNameCauses,
+  changedPartUnreachedCauses,
+  r5CauseCandidate,
+  serviceOnlyPartCauses,
   unresolvedServiceCauses,
   unresolvedServiceCountermeasures,
 } from '../../src/farmbot/agent/templates.mjs';
@@ -26,6 +34,12 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
 const FINDINGS_PATH = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
 const FINDINGS_DIGEST_PATH = `${FINDINGS_PATH}.sha256`;
+
+// Pinned from base f34e08609c3fb677d0582b01a89a3183f86d7df5. A change to the
+// canonical findings bytes must fail this test even if the sidecar is rewritten
+// to match, so the expected digest is never recomputed from the current file.
+const PINNED_FINDINGS_DIGEST =
+  'farmbot-findings-v1 sha256:9de39a97d890068e0b246e5b5e183937f01f4a468d101f3f0a945303284406d5';
 
 const findingsText = readFileSync(FINDINGS_PATH, 'utf8');
 const document = JSON.parse(findingsText);
@@ -352,6 +366,557 @@ test('the committed findings sidecar is a digest line', () => {
   assert.match(parsed.hex, /^[0-9a-f]{64}$/);
   assert.equal(parseFindingsDigestLine('farmbot-findings-v1 sha256:nope'), null);
   assert.equal(parseFindingsDigestLine('farmbot-graph-v1 sha256:' + '0'.repeat(64)), null);
+});
+
+/** The values a rendered body must contain, read from the finding itself. */
+function bodyInputs(finding) {
+  const part = evidenceOf(finding, 'part');
+  const partName = part?.facts?.name ?? finding.subject.label;
+  switch (finding.rule) {
+    case 'R1': {
+      const difference = evidenceOf(finding, 'quantity-difference');
+      return [
+        difference.sourceFile,
+        partName,
+        String(difference.facts.version),
+        String(difference.facts.packingQuantity),
+        String(difference.facts.partQuantity),
+        String(Math.abs(difference.facts.quantityDifference)),
+      ];
+    }
+    case 'R2': {
+      const references = finding.evidence.filter((row) => row.role === 'reference');
+      return [references[0].facts.displayName, String(references.length)];
+    }
+    case 'R3':
+      return [partName, part.facts.categorySlug];
+    case 'R4': {
+      const files = finding.evidence
+        .filter((row) => row.role === 'packing-structure')
+        .map((row) => row.sourceFile);
+      return [partName, ...new Set(files)];
+    }
+    case 'R5': {
+      const page = evidenceOf(finding, 'pre-assembly-page');
+      return [
+        page.sourceFile,
+        page.facts.machineReadableReason,
+        String(page.facts.pdfCount),
+      ];
+    }
+    case 'R6': {
+      const sections = finding.evidence
+        .filter((row) => row.role === 'design-change')
+        .map((row) => row.facts.section);
+      const files = finding.evidence
+        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [finding.subject.label, ...new Set(sections), ...new Set(files)];
+    }
+    case 'R7':
+      return [partName];
+    case 'R8': {
+      const servicePages = finding.evidence
+        .filter((row) => row.role === 'service')
+        .map((row) => row.sourceFile);
+      const packedFiles = finding.evidence
+        .filter((row) => row.role === 'packing-structure')
+        .map((row) => row.sourceFile);
+      return [partName, ...new Set(servicePages), ...new Set(packedFiles)];
+    }
+    case 'R9': {
+      const reference = finding.evidence.find((row) => row.role === 'reference');
+      const pages = finding.evidence
+        .filter((row) => row.role === 'service')
+        .map((row) => row.sourceFile);
+      return [reference.facts.displayName, ...new Set(pages)];
+    }
+    default:
+      throw new Error(`no body inputs for rule ${finding.rule}`);
+  }
+}
+
+test('the rendered English bodies equal the committed bodies for every finding', () => {
+  for (const finding of findings) {
+    assert.deepEqual(
+      findingCauses(finding, 'en'),
+      finding.causes,
+      `${finding.id} English causes drifted`,
+    );
+    assert.deepEqual(
+      findingCountermeasures(finding, 'en'),
+      finding.countermeasures,
+      `${finding.id} English countermeasures drifted`,
+    );
+  }
+});
+
+test('every finding renders Japanese body text, allowing an English shared-candidate fallback', () => {
+  const rules = new Set();
+  for (const finding of findings) {
+    rules.add(finding.rule);
+    const causesJa = findingCauses(finding, 'ja');
+    const countermeasuresJa = findingCountermeasures(finding, 'ja');
+
+    assert.equal(
+      causesJa.length,
+      finding.causes.length,
+      `${finding.id} Japanese causes dropped an entry`,
+    );
+    assert.equal(
+      countermeasuresJa.length,
+      finding.countermeasures.length,
+      `${finding.id} Japanese countermeasures dropped an entry`,
+    );
+    assert.deepEqual(
+      causesJa.map((cause) => [cause.kind, cause.rule]),
+      finding.causes.map((cause) => [cause.kind, cause.rule]),
+      `${finding.id} Japanese causes changed a fact or inference label`,
+    );
+    for (let index = 0; index < causesJa.length; index += 1) {
+      const stored = finding.causes[index];
+      // Only a shared candidate with no structured values may fall back to the
+      // stored English text; every other entry must be localised.
+      if (causesJa[index].text === stored.text) {
+        assert.ok(
+          stored.rule === 'R2' || stored.rule === 'R5',
+          `${finding.id} cause ${index} fell back to English but is not a shared candidate`,
+        );
+      }
+    }
+    for (let index = 0; index < countermeasuresJa.length; index += 1) {
+      assert.notEqual(
+        countermeasuresJa[index],
+        finding.countermeasures[index],
+        `${finding.id} countermeasure ${index} is still English`,
+      );
+    }
+
+    const body = [...causesJa.map((cause) => cause.text), ...countermeasuresJa].join('\n');
+    for (const value of bodyInputs(finding)) {
+      if (value === null || value === undefined || value === '') continue;
+      assert.ok(
+        body.includes(String(value)),
+        `${finding.id} Japanese body does not contain ${JSON.stringify(value)}: ${body}`,
+      );
+    }
+  }
+  assert.deepEqual(
+    [...rules].sort(),
+    ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9'],
+  );
+});
+
+test('every rule renders its own Japanese cause and countermeasure wording', () => {
+  const expected = {
+    R1: { cause: /数量/, countermeasure: /製造部門/ },
+    R2: { cause: /参照行/, countermeasure: /部品ページ/ },
+    R3: { cause: /組立チャプタ/, countermeasure: /BOM/ },
+    R4: { cause: /梱包/, countermeasure: /スペア/ },
+    R5: { cause: /機械可読/, countermeasure: /Markdown/ },
+    R6: { cause: /変更ログ/, countermeasure: /下流/ },
+    R7: { cause: /変更ログ/, countermeasure: /欠けている参照/ },
+    R8: { cause: /サービス/, countermeasure: /組立中/ },
+    R9: { cause: /未解決/, countermeasure: /サービス参照/ },
+  };
+  for (const [rule, patterns] of Object.entries(expected)) {
+    const finding = findings.find((entry) => entry.rule === rule);
+    assert.ok(finding, `no committed finding for ${rule}`);
+    const causes = findingCauses(finding, 'ja');
+    const countermeasures = findingCountermeasures(finding, 'ja');
+    assert.ok(
+      causes.some((cause) => patterns.cause.test(cause.text)),
+      `${rule} Japanese causes do not match ${patterns.cause}`,
+    );
+    assert.ok(
+      countermeasures.some((line) => patterns.countermeasure.test(line)),
+      `${rule} Japanese countermeasures do not match ${patterns.countermeasure}`,
+    );
+    assert.ok(
+      causes.some((cause) => !/^R5: /.test(cause.text)),
+      `${rule} Japanese causes are all the shared R5 candidate`,
+    );
+  }
+});
+
+test('shared candidates keep the stored English text when the finding has no structured values', () => {
+  let checkedR5 = 0;
+  let checkedR2 = 0;
+  for (const finding of findings) {
+    const causesJa = findingCauses(finding, 'ja');
+    for (let index = 0; index < finding.causes.length; index += 1) {
+      const stored = finding.causes[index];
+      if (stored.rule === 'R5') {
+        assert.equal(
+          causesJa[index].text,
+          stored.text,
+          `${finding.id} R5 candidate was not kept verbatim`,
+        );
+        checkedR5 += 1;
+      }
+      if (stored.rule === 'R2') {
+        assert.equal(
+          causesJa[index].text,
+          stored.text,
+          `${finding.id} R2 candidate was not kept verbatim`,
+        );
+        checkedR2 += 1;
+      }
+    }
+  }
+  assert.ok(checkedR5 > 0, 'expected at least one stored R5 candidate');
+  assert.ok(checkedR2 > 0, 'expected at least one stored R2 candidate');
+});
+
+test('template functions default to English and render Japanese on request', () => {
+  const emptyEn = r5CauseCandidate([]);
+  assert.match(emptyEn.text, /no pre-assembly page lacks a machine-readable parts table/);
+  assert.doesNotMatch(emptyEn.text, /プリ組立/);
+  const emptyJa = r5CauseCandidate([], 'ja');
+  assert.notEqual(emptyJa.text, emptyEn.text);
+  assert.match(emptyJa.text, /機械可読な部品表がないプリ組立ページはありません/);
+
+  const paths = ['a.md', 'b.md'];
+  assert.ok(r5CauseCandidate(paths).text.includes('a.md, b.md'));
+  assert.ok(r5CauseCandidate(paths, 'ja').text.includes('a.md、b.md'));
+
+  const unresolvedFacts = {
+    partName: 'Part X',
+    unresolvedNames: ['Wood Screws', 'wood screws'],
+    r5Paths: paths,
+  };
+  const unresolvedEn = changedPartUnreachedCauses(unresolvedFacts);
+  const unresolvedJa = changedPartUnreachedCauses(unresolvedFacts, 'ja');
+  assert.ok(
+    unresolvedEn.some((cause) =>
+      cause.text.includes('The unresolved name(s) Wood Screws, wood screws'),
+    ),
+  );
+  assert.ok(
+    unresolvedJa.some((cause) => cause.text.includes('Wood Screws、wood screws')),
+  );
+
+  const serviceFacts = {
+    displayName: 'tee nuts',
+    pages: ['a.md', 'b.md'],
+    candidates: ['Tee Nut'],
+    r2Names: ['packing.md'],
+  };
+  const serviceEn = unresolvedServiceCauses(serviceFacts);
+  const serviceJa = unresolvedServiceCauses(serviceFacts, 'ja');
+  assert.ok(serviceEn.some((cause) => cause.text.includes('candidate parts: Tee Nut')));
+  assert.ok(serviceEn.some((cause) => cause.text.includes('also unresolved on packing.md')));
+  assert.ok(serviceJa.some((cause) => cause.text.includes('Tee Nut')));
+  assert.ok(serviceJa.some((cause) => cause.text.includes('packing.md')));
+
+  const noCandidateJa = unresolvedServiceCauses(
+    { displayName: 'tee nuts', pages: ['a.md'], candidates: [], r2Names: [] },
+    'ja',
+  );
+  assert.ok(
+    noCandidateJa.some((cause) => cause.text.includes('候補部品が記録されていません')),
+  );
+
+  const serviceOnlyFacts = {
+    partName: 'Part X',
+    servicePages: ['service.md'],
+    packedFiles: ['kit.md'],
+    unreferenced: true,
+    r5Paths: paths,
+  };
+  const serviceOnlyEn = serviceOnlyPartCauses(serviceOnlyFacts);
+  const serviceOnlyJa = serviceOnlyPartCauses(serviceOnlyFacts, 'ja');
+  assert.ok(serviceOnlyEn.some((cause) => cause.text.includes('is packed on kit.md')));
+  assert.ok(
+    serviceOnlyEn.some((cause) => cause.text.includes('referenced by nothing else')),
+  );
+  assert.ok(serviceOnlyJa.some((cause) => cause.text.includes('kit.md')));
+  assert.ok(
+    serviceOnlyJa.some((cause) => cause.text.includes('他のどこからも参照されていません')),
+  );
+
+  const inferredFacts = {
+    name: 'Old Name',
+    inferred: true,
+    sections: ['Miscellaneous'],
+    files: ['a.md'],
+  };
+  const inferredEn = changedNameCauses(inferredFacts);
+  const inferredJa = changedNameCauses(inferredFacts, 'ja');
+  assert.ok(inferredEn[0].text.includes('removal statement'));
+  assert.ok(inferredEn[0].text.includes('Old Name'));
+  assert.ok(inferredJa[0].text.includes('Old Name'));
+  assert.notEqual(inferredJa[0].text, inferredEn[0].text);
+});
+
+test('an unsupported language is rejected for body rendering', () => {
+  assert.throws(() => findingCauses(findings[0], 'fr'), /lang ja or en/);
+  assert.throws(() => findingCountermeasures(findings[0], 'fr'), /lang ja or en/);
+});
+
+function fixture(rule, overrides) {
+  return {
+    id: `${rule}-fixture`,
+    rule,
+    inferred: false,
+    subject: { key: 'fixture', kind: 'part', label: 'fixture', nodeId: 'part:fixture' },
+    evidence: [],
+    queries: [],
+    causes: [],
+    countermeasures: [],
+    summary: '',
+    ...overrides,
+  };
+}
+
+function partRow(name, extraFacts = {}) {
+  return {
+    role: 'part',
+    nodeId: `part:${name}`,
+    sourceFile: 'v1.7/bom/fixture.md',
+    line: null,
+    facts: { name, slug: 'fixture', categorySlug: 'fixtures', ...extraFacts },
+  };
+}
+
+function countOccurrences(haystack, needle) {
+  return haystack.split(needle).length - 1;
+}
+
+test('structured identifiers with commas stay whole and keep their count in both languages', () => {
+  const r4 = fixture('R4', {
+    evidence: [
+      partRow('Screw, captive'),
+      {
+        role: 'packing-structure',
+        nodeId: 'container:tools, deluxe.md',
+        sourceFile: 'tools, deluxe.md',
+        line: null,
+        facts: { title: 'Tools' },
+      },
+      {
+        role: 'packing-structure',
+        nodeId: 'container:hardware-kit.md',
+        sourceFile: 'hardware-kit.md',
+        line: null,
+        facts: { title: 'Hardware Kit' },
+      },
+    ],
+  });
+  for (const lang of ['en', 'ja']) {
+    const body = findingCauses(r4, lang)
+      .map((cause) => cause.text)
+      .join('\n');
+    assert.equal(countOccurrences(body, 'tools, deluxe.md'), 1, `${lang} split the path`);
+    assert.equal(body.includes('tools、deluxe.md'), false, `${lang} rewrote the path`);
+    assert.equal(countOccurrences(body, 'Screw, captive'), 1, `${lang} split the name`);
+    assert.equal(body.includes('Screw、captive'), false, `${lang} rewrote the name`);
+  }
+  assert.ok(
+    findingCauses(r4, 'ja')[0].text.includes('hardware-kit.md、tools, deluxe.md'),
+    'Japanese must keep two items joined by its own separator',
+  );
+  assert.ok(
+    findingCauses(r4, 'en')[0].text.includes('hardware-kit.md, tools, deluxe.md'),
+    'English must keep two items',
+  );
+
+  const r7 = fixture('R7', {
+    evidence: [
+      partRow('Screw, captive'),
+      {
+        role: 'reference',
+        nodeId: 'usage:service:page.md@1',
+        sourceFile: 'page.md',
+        line: 1,
+        facts: { displayName: 'Screw, captive', resolvedPart: null, matchMethod: 'unmatched' },
+      },
+      {
+        role: 'reference',
+        nodeId: 'usage:service:page.md@2',
+        sourceFile: 'page.md',
+        line: 2,
+        facts: { displayName: 'Bolt', resolvedPart: null, matchMethod: 'unmatched' },
+      },
+    ],
+  });
+  const r7Ja = findingCauses(r7, 'ja')
+    .map((cause) => cause.text)
+    .join('\n');
+  assert.ok(r7Ja.includes('Bolt、Screw, captive'), `R7 ja lost the two names: ${r7Ja}`);
+  assert.equal(r7Ja.includes('Screw、captive'), false, 'R7 ja rewrote a name');
+
+  const r9 = fixture('R9', {
+    subject: { key: 'tee nuts', kind: 'unresolved-name', label: 'tee nuts', nodeId: null },
+    evidence: [
+      partRow('Screw, captive', { candidate: true }),
+      partRow('Nut', { candidate: true }),
+      {
+        role: 'service',
+        nodeId: 'service:tools, deluxe.md',
+        sourceFile: 'tools, deluxe.md',
+        line: null,
+        facts: { kind: 'maintenance', title: 'Tools' },
+      },
+      {
+        role: 'reference',
+        nodeId: 'usage:service:tools, deluxe.md@1',
+        sourceFile: 'tools, deluxe.md',
+        line: 1,
+        facts: { displayName: 'tee nuts', resolvedPart: null, matchMethod: 'unmatched' },
+      },
+    ],
+  });
+  for (const lang of ['en', 'ja']) {
+    const body = findingCauses(r9, lang)
+      .map((cause) => cause.text)
+      .join('\n');
+    assert.equal(countOccurrences(body, 'Screw, captive'), 1, `${lang} split an R9 candidate`);
+    assert.equal(body.includes('Screw、captive'), false, `${lang} rewrote an R9 candidate`);
+    assert.equal(countOccurrences(body, 'tools, deluxe.md'), 1, `${lang} split an R9 page`);
+  }
+  assert.ok(
+    findingCauses(r9, 'ja').some((cause) => cause.text.includes('Nut、Screw, captive')),
+    'Japanese must keep the R9 candidate count',
+  );
+});
+
+test('an R5 candidate with structured pages is localized without splitting identifiers', () => {
+  const finding = fixture('R3', {
+    evidence: [
+      partRow('Screw, captive'),
+      {
+        role: 'pre-assembly-page',
+        nodeId: 'preassembly:tools, deluxe.md',
+        sourceFile: 'tools, deluxe.md',
+        line: null,
+        facts: { machineReadableReason: 'pdf-only', pdfCount: 1 },
+      },
+      {
+        role: 'pre-assembly-page',
+        nodeId: 'preassembly:b.md',
+        sourceFile: 'b.md',
+        line: null,
+        facts: { machineReadableReason: 'no table', pdfCount: 1 },
+      },
+    ],
+  });
+  const ja = findingCauses(finding, 'ja');
+  const r5 = ja.find((cause) => cause.rule === 'R5');
+  assert.ok(r5, 'the R5 candidate must be present');
+  assert.ok(r5.text.includes('2 件'), `R5 ja must keep the count: ${r5.text}`);
+  assert.ok(
+    r5.text.includes('b.md、tools, deluxe.md'),
+    `R5 ja must keep both paths intact: ${r5.text}`,
+  );
+  assert.equal(r5.text.includes('tools、deluxe.md'), false, 'R5 ja rewrote a path');
+});
+
+test('an R5 candidate without structured pages falls back to the stored English text', () => {
+  const storedR5 = {
+    kind: 'inference',
+    rule: 'R5',
+    text:
+      'R5: 1 pre-assembly page(s) have no machine-readable parts table (tools, deluxe.md), ' +
+      'so their component lists cannot appear as references.',
+  };
+  const finding = fixture('R3', {
+    evidence: [partRow('Screw, captive')],
+    causes: [storedR5],
+  });
+  const r5 = findingCauses(finding, 'ja').find((cause) => cause.rule === 'R5');
+  assert.ok(r5, 'the R5 candidate must be present');
+  assert.equal(r5.text, storedR5.text, 'the stored English candidate must be kept verbatim');
+  assert.equal(countOccurrences(r5.text, 'tools, deluxe.md'), 1, 'the path must stay one item');
+  assert.equal(r5.text.includes('2 pre-assembly'), false, 'no quantity may be invented');
+});
+
+test('an R7 unresolved-name candidate without structured rows falls back to stored English', () => {
+  const storedR2 = {
+    kind: 'inference',
+    rule: 'R2',
+    text: 'The unresolved name(s) Screw, captive may be this part under another spelling.',
+  };
+  const finding = fixture('R7', {
+    evidence: [partRow('Screw, captive')],
+    causes: [storedR2],
+  });
+  const r2 = findingCauses(finding, 'ja').find((cause) => cause.rule === 'R2');
+  assert.ok(r2, 'the R2 candidate must be present');
+  assert.equal(r2.text, storedR2.text, 'the stored English candidate must be kept verbatim');
+  assert.equal(r2.text.includes('Screw、captive'), false, 'the name must not be rewritten');
+});
+
+test('an R9 also-unresolved candidate uses structured pages or the stored English text', () => {
+  const storedR2 = {
+    kind: 'inference',
+    rule: 'R2',
+    text: 'The same name is also unresolved on tools, deluxe.md.',
+  };
+  const base = {
+    subject: { key: 'tee nuts', kind: 'unresolved-name', label: 'tee nuts', nodeId: null },
+    evidence: [
+      {
+        role: 'service',
+        nodeId: 'service:tools, deluxe.md',
+        sourceFile: 'tools, deluxe.md',
+        line: null,
+        facts: { kind: 'maintenance', title: 'Tools' },
+      },
+      {
+        role: 'reference',
+        nodeId: 'usage:service:tools, deluxe.md@1',
+        sourceFile: 'tools, deluxe.md',
+        line: 1,
+        facts: { displayName: 'tee nuts', resolvedPart: null, matchMethod: 'unmatched' },
+      },
+    ],
+    causes: [storedR2],
+  };
+
+  const fallback = fixture('R9', base);
+  const fallbackR2 = findingCauses(fallback, 'ja').find((cause) => cause.rule === 'R2');
+  assert.ok(fallbackR2, 'the R2 candidate must be present');
+  assert.equal(fallbackR2.text, storedR2.text, 'the stored English candidate must be kept');
+  assert.equal(fallbackR2.text.includes('tools、deluxe.md'), false, 'no path rewrite');
+
+  const structured = fixture('R9', {
+    ...base,
+    causes: [],
+    evidence: [
+      ...base.evidence,
+      {
+        role: 'reference',
+        nodeId: 'usage:service:other, page.md@1',
+        sourceFile: 'other, page.md',
+        line: 1,
+        facts: { displayName: 'tee nuts', resolvedPart: null, matchMethod: 'unmatched' },
+      },
+    ],
+  });
+  const structuredR2 = findingCauses(structured, 'ja').find((cause) => cause.rule === 'R2');
+  assert.ok(structuredR2, 'the structured R2 candidate must be present');
+  assert.ok(
+    structuredR2.text.includes('other, page.md'),
+    `the structured page must stay intact: ${structuredR2.text}`,
+  );
+  assert.ok(structuredR2.text.includes('でも未解決です'), 'the candidate must be localized');
+});
+
+test('the committed findings document stays canonical and matches the pinned digest', () => {
+  assert.equal(findingsText, canonicalJson(document));
+  assert.equal(JSON.stringify(document).includes('text_ja'), false);
+
+  const pinned = parseFindingsDigestLine(PINNED_FINDINGS_DIGEST);
+  assert.ok(pinned, 'the pinned digest must parse');
+  assert.equal(pinned.format, 'farmbot-findings-v1');
+
+  const sidecar = parseFindingsDigestLine(readFileSync(FINDINGS_DIGEST_PATH, 'utf8'));
+  assert.ok(sidecar, 'the sidecar must parse');
+  assert.equal(sidecar.hex, pinned.hex, 'the sidecar is not the pinned digest');
+
+  const actual = createHash('sha256').update(canonicalJson(document)).digest('hex');
+  assert.equal(actual, pinned.hex, 'the committed findings bytes changed');
 });
 
 test('the default findings filter hides info and keeps the urgent order', () => {

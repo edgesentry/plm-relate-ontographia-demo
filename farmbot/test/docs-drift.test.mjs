@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { parse } from 'yaml';
@@ -17,6 +17,8 @@ const DUCKDB_DOC = join(DOCS_DIR, 'duckdb-distribution.md');
 const README = resolve(ROOT, 'README.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
 const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
+const PACKAGE_JSON = resolve(ROOT, 'package.json');
+const SPIKE_DOC = join(DOCS_DIR, 'relate-spike.md');
 const DEVPOST_DOC = join(DOCS_DIR, 'devpost-submission.md');
 const DEVPOST_SKIP = existsSync(DEVPOST_DOC)
   ? false
@@ -561,4 +563,472 @@ test('Devpost structural sentences pass the paste-ready inventory rule', () => {
       `this structural sentence must pass: ${pasteReady}`,
     );
   }
+});
+
+const DEPENDENCY_SECTIONS = [
+  'dependencies',
+  'devDependencies',
+  'optionalDependencies',
+  'peerDependencies',
+  'overrides',
+];
+const VERSION_TOKEN = /^\d+(?:\.\d+){1,3}(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+/**
+ * Derive the set of single-version tokens declared in a parsed package.json.
+ * Range operators are stripped so `^18.3.1` yields `18.3.1`; an entry that is
+ * still a range (`||`, a hyphen range, whitespace) is skipped rather than
+ * turned into an invented token. Nested dependency maps such as npm `overrides`
+ * are walked. The result maps a token to every package that declares it.
+ *
+ * @param {Record<string, unknown>} pkg
+ * @returns {Map<string, string[]>}
+ */
+function declaredVersionTokens(pkg) {
+  const tokens = new Map();
+  const add = (name, specification) => {
+    if (typeof specification !== 'string') return;
+    const token = specification.trim().replace(/^[<>=~^v\s]+/, '');
+    if (token === '' || /[\s|]/.test(token) || !VERSION_TOKEN.test(token)) return;
+    const packages = tokens.get(token);
+    if (packages) {
+      if (!packages.includes(name)) packages.push(name);
+    } else {
+      tokens.set(token, [name]);
+    }
+  };
+  const walk = (map) => {
+    for (const [name, specification] of Object.entries(map)) {
+      if (typeof specification === 'string') add(name, specification);
+      else if (specification && typeof specification === 'object') walk(specification);
+    }
+  };
+  for (const section of DEPENDENCY_SECTIONS) {
+    const map = pkg[section];
+    if (map && typeof map === 'object') walk(map);
+  }
+  return tokens;
+}
+
+/**
+ * Version tokens are matched as whole versions: a preceding `v` still counts,
+ * but a digit, dot, letter or operator next to the match means it is part of a
+ * longer version (`1.0.10`, `11.0.1`, `0.1.0.1`) and is not a copy.
+ *
+ * @param {string} text
+ * @param {Map<string, string[]>} tokens
+ * @returns {{ token: string, packages: string[] }[]}
+ */
+function versionCopyProblems(text, tokens) {
+  const problems = [];
+  for (const [token, packages] of tokens) {
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(
+      `(?:^|[^\\w.+-])[vV]?${escaped}(?![\\w+-])(?!\\.\\d)`,
+    );
+    if (pattern.test(text)) problems.push({ token, packages });
+  }
+  return problems;
+}
+
+const PATH_EXTENSIONS = new Set([
+  'md',
+  'mjs',
+  'cjs',
+  'ts',
+  'tsx',
+  'js',
+  'jsx',
+  'json',
+  'jsonc',
+  'yml',
+  'yaml',
+  'css',
+  'sql',
+]);
+
+/**
+ * @param {string} text
+ * @returns {string[]}
+ */
+function quotedTokens(text) {
+  return [...text.matchAll(/`([^`\n]+)`/g)].map((match) => match[1]);
+}
+
+/**
+ * A backtick token looks like a repository path when it has a slash or a known
+ * filename extension. URLs (any URI scheme), npm scoped packages, relative
+ * import specifiers, leading-slash browser routes, commands and bare
+ * identifiers do not.
+ *
+ * @param {string} token
+ * @returns {boolean}
+ */
+function looksLikeRepoPath(token) {
+  if (/\s/.test(token)) return false;
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:\/\//.test(token)) return false;
+  if (token.startsWith('@')) return false;
+  if (token.startsWith('./') || token.startsWith('../')) return false;
+  if (token.startsWith('/')) return false;
+  if (token.includes('/')) return true;
+  const extension = /\.([A-Za-z0-9]+)$/.exec(token);
+  return Boolean(extension && PATH_EXTENSIONS.has(extension[1].toLowerCase()));
+}
+
+/**
+ * @param {string} candidate
+ * @returns {boolean}
+ */
+function insideRoot(candidate) {
+  return candidate === ROOT || candidate.startsWith(`${ROOT}${sep}`);
+}
+
+function topLevelNames() {
+  return new Set(readdirSync(ROOT).filter((name) => name !== '.git'));
+}
+
+function firstSegment(token) {
+  return token.replace(/\/+$/, '').split('/')[0];
+}
+
+/**
+ * Levenshtein edit distance between two strings.
+ *
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function editDistance(a, b) {
+  if (a === b) return 0;
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      const substitution = previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1);
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, substitution);
+    }
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+/**
+ * Classify a cited path's first segment against the live top-level names.
+ *
+ * `exact` keeps the normal existence check. `typo` means the segment is a
+ * case variant of a live name or one edit away from one: on a case-sensitive
+ * filesystem such a citation cannot resolve, so the token is a cited
+ * repository path that does not exist. `external` is any other segment, which
+ * may name a context-relative path or an external repository.
+ *
+ * @param {string} segment
+ * @param {ReadonlySet<string>} topLevel
+ * @returns {'exact' | 'typo' | 'external'}
+ */
+function topLevelMatch(segment, topLevel) {
+  if (topLevel.has(segment)) return 'exact';
+  const folded = segment.toLowerCase();
+  for (const name of topLevel) {
+    const candidate = name.toLowerCase();
+    if (candidate === folded || editDistance(folded, candidate) === 1) return 'typo';
+  }
+  return 'external';
+}
+
+/**
+ * Translate one .gitignore glob into an anchored regular expression.
+ *
+ * @param {string} glob
+ * @returns {RegExp}
+ */
+function globToRegExp(glob) {
+  let source = '';
+  for (let index = 0; index < glob.length; index += 1) {
+    const char = glob[index];
+    if (char === '*') {
+      if (glob[index + 1] === '*') {
+        source += '.*';
+        index += 1;
+        if (glob[index + 1] === '/') index += 1;
+      } else {
+        source += '[^/]*';
+      }
+    } else if (char === '?') {
+      source += '[^/]';
+    } else if ('\\^$.|+()[]{}'.includes(char)) {
+      source += `\\${char}`;
+    } else {
+      source += char;
+    }
+  }
+  return new RegExp(`^${source}$`);
+}
+
+/**
+ * Match one .gitignore pattern against a repository-relative path. A pattern
+ * without a slash matches at any depth; a directory pattern also matches an
+ * ancestor directory. Patterns are relative to the directory that holds the
+ * ignore file.
+ *
+ * @param {string} pattern
+ * @param {boolean} dirOnly
+ * @param {string} relativePath
+ * @param {string} base
+ * @returns {boolean}
+ */
+function ignorePatternMatches(pattern, dirOnly, relativePath, base) {
+  let candidate = relativePath;
+  if (base !== '') {
+    if (candidate !== base && !candidate.startsWith(`${base}/`)) return false;
+    candidate = candidate === base ? '' : candidate.slice(base.length + 1);
+  }
+  if (candidate === '') return false;
+  let glob = pattern;
+  const anchored = glob.startsWith('/');
+  if (anchored) glob = glob.slice(1);
+  if (glob === '') return false;
+  const expression = globToRegExp(glob);
+  const parts = candidate.split('/');
+  if (!glob.includes('/') && !anchored) {
+    if (expression.test(parts[parts.length - 1])) return true;
+    return dirOnly && parts.slice(0, -1).some((part) => expression.test(part));
+  }
+  if (expression.test(candidate)) return true;
+  if (!dirOnly) return false;
+  for (let index = 1; index < parts.length; index += 1) {
+    if (expression.test(parts.slice(0, index).join('/'))) return true;
+  }
+  return false;
+}
+
+/**
+ * Follow the .gitignore files that apply to a repository-relative path, from
+ * the root outward, so a cited build output can be absent from a clean
+ * checkout. No path or pattern is kept here; the ignore files are the source.
+ *
+ * @param {string} relativePath
+ * @returns {boolean}
+ */
+function gitignored(relativePath) {
+  const segments = relativePath.split('/');
+  const bases = [''];
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    bases.push(segments.slice(0, index + 1).join('/'));
+  }
+  let ignored = false;
+  for (const base of bases) {
+    const ignoreFile = base === '' ? join(ROOT, '.gitignore') : join(ROOT, base, '.gitignore');
+    if (!existsSync(ignoreFile)) continue;
+    for (const raw of readFileSync(ignoreFile, 'utf8').split(/\r?\n/)) {
+      let line = raw.trim();
+      if (line === '' || line.startsWith('#')) continue;
+      let negated = false;
+      if (line.startsWith('!')) {
+        negated = true;
+        line = line.slice(1);
+      }
+      if (line.startsWith('\\')) line = line.slice(1);
+      const dirOnly = line.endsWith('/');
+      if (dirOnly) line = line.replace(/\/+$/, '');
+      if (line === '') continue;
+      if (ignorePatternMatches(line, dirOnly, relativePath, base)) {
+        ignored = !negated;
+      }
+    }
+  }
+  return ignored;
+}
+
+/**
+ * Cited repository paths must resolve inside the repository. A token whose
+ * first segment is a live top-level name, a case variant of one, or one edit
+ * away from one is a repository-root path, so a typo of a live name fails;
+ * context-relative or external names (`nodes/`, `manifest.json`,
+ * `owner/repo#id`) are not judged. `..` segments and resolutions outside ROOT
+ * fail. An absent path that a .gitignore covers is an acceptable build-output
+ * citation; a typo is not.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+function repoPathProblems(text) {
+  const problems = [];
+  const seen = new Set();
+  const topLevel = topLevelNames();
+  for (const token of quotedTokens(text)) {
+    if (seen.has(token) || !looksLikeRepoPath(token)) continue;
+    seen.add(token);
+    if (token.split('/').includes('..')) {
+      problems.push(`cited repository path ${token} escapes the repository`);
+      continue;
+    }
+    const resolved = resolve(ROOT, token);
+    if (!insideRoot(resolved)) {
+      problems.push(`cited repository path ${token} escapes the repository`);
+      continue;
+    }
+    const match = topLevelMatch(firstSegment(token), topLevel);
+    if (match === 'external') continue;
+    if (match === 'typo') {
+      problems.push(`cited repository path ${token} does not exist in the repository`);
+      continue;
+    }
+    if (existsSync(resolved)) continue;
+    if (gitignored(token.replace(/\/+$/, ''))) continue;
+    problems.push(`cited repository path ${token} does not exist in the repository`);
+  }
+  return problems;
+}
+
+test('farmbot/docs restate no dependency version pinned in package.json', () => {
+  const tokens = declaredVersionTokens(JSON.parse(readFileSync(PACKAGE_JSON, 'utf8')));
+  assert.ok(tokens.size > 0, 'package.json declares no single-version token this check can use');
+  for (const path of markdownFiles(DOCS_DIR)) {
+    // relate-spike.md is a dated spike report whose measured evidence may
+    // coincide with a current pin, so only check (b) applies to it.
+    if (path === SPIKE_DOC) continue;
+    const text = readFileSync(path, 'utf8');
+    for (const { token, packages } of versionCopyProblems(text, tokens)) {
+      assert.fail(
+        `${path}: restates dependency version ${token} (${packages.join(', ')}); ` +
+          'point at package.json instead',
+      );
+    }
+  }
+});
+
+test('farmbot/docs cite repository paths that exist', () => {
+  for (const path of markdownFiles(DOCS_DIR)) {
+    for (const problem of repoPathProblems(readFileSync(path, 'utf8'))) {
+      assert.fail(`${path}: ${problem}`);
+    }
+  }
+});
+
+test('a fixture dependency map yields whole version tokens and skips ranges', () => {
+  const tokens = declaredVersionTokens({
+    dependencies: { alpha: '^1.2.3', beta: '~4.5.6' },
+    devDependencies: { gamma: '1.4.5-r.1', delta: '>=7.0.0 <8.0.0' },
+    optionalDependencies: { epsilon: '9.9.9' },
+    peerDependencies: { zeta: '0.1.10' },
+    overrides: { eta: '2.0.0', theta: { iota: '3.0.0' } },
+  });
+  assert.deepEqual(tokens.get('1.2.3'), ['alpha']);
+  assert.deepEqual(tokens.get('4.5.6'), ['beta']);
+  assert.deepEqual(tokens.get('1.4.5-r.1'), ['gamma']);
+  assert.deepEqual(tokens.get('9.9.9'), ['epsilon']);
+  assert.deepEqual(tokens.get('0.1.10'), ['zeta']);
+  assert.deepEqual(tokens.get('2.0.0'), ['eta']);
+  assert.deepEqual(tokens.get('3.0.0'), ['iota']);
+  assert.equal(tokens.has('7.0.0'), false);
+  assert.equal(tokens.has('8.0.0'), false);
+});
+
+test('a copy of a declared dependency version fails and names it', () => {
+  const tokens = new Map([['1.0.1', ['@relate/relate']]]);
+  const problems = versionCopyProblems('The Node client `@relate/relate` 1.0.1.', tokens);
+  assert.ok(
+    problems.some(
+      (problem) => problem.token === '1.0.1' && problem.packages.includes('@relate/relate'),
+    ),
+    `a copied pin must fail and name the package: ${JSON.stringify(problems)}`,
+  );
+  assert.ok(
+    versionCopyProblems('Pin v0.1.10 for the engine.', new Map([['0.1.10', ['engine']]])).length >
+      0,
+    'a v-prefixed copy is still a copy',
+  );
+  const pkg = JSON.parse(readFileSync(PACKAGE_JSON, 'utf8'));
+  assert.deepEqual(
+    versionCopyProblems('FarmBot Genesis v1.7', declaredVersionTokens(pkg)),
+    [],
+    '1.7 is not a declared pin, so the Genesis version must pass',
+  );
+});
+
+test('a version that is only a substring of a longer version does not fail', () => {
+  const tokens = new Map([['1.0.1', ['pkg']]]);
+  assert.deepEqual(versionCopyProblems('1.0.10 11.0.1 1.0.11 0.1.0.1', tokens), []);
+});
+
+test('a cited missing or escaping repository path fails and names the token', () => {
+  const missing = 'farmbot/docs/does-not-exist-here.md';
+  const missingProblems = repoPathProblems(`Claim source: \`${missing}\``);
+  assert.ok(
+    missingProblems.some((problem) => problem.includes(missing)),
+    `a missing cited path must fail and name ${missing}: ${missingProblems.join('; ')}`,
+  );
+
+  const escaped = 'farmbot/docs/../../outside.md';
+  const escapedProblems = repoPathProblems(`Claim source: \`${escaped}\``);
+  assert.ok(
+    escapedProblems.some((problem) => problem.includes(escaped)),
+    `an escaping cited path must fail and name ${escaped}: ${escapedProblems.join('; ')}`,
+  );
+});
+
+test('a typo of a live top-level name fails and names the token', () => {
+  assert.ok(
+    existsSync(join(ROOT, 'wrangler.jsonc')),
+    'this fixture assumes wrangler.jsonc is a live repo-root file',
+  );
+  assert.ok(
+    existsSync(join(ROOT, 'farmbot')),
+    'this fixture assumes farmbot is a live repo-root directory',
+  );
+  const fixtures = ['farmbo/docs/ontology.md', 'wrangler.json', 'FarmBot/docs/ontology.md'];
+  for (const token of fixtures) {
+    const problems = repoPathProblems(`Claim source: \`${token}\``);
+    assert.ok(
+      problems.some((problem) => problem.includes(token)),
+      `a typo of a live top-level name must fail and name ${token}: ${problems.join('; ')}`,
+    );
+  }
+});
+
+test('a typo under a real top-level name still fails', () => {
+  assert.ok(
+    repoPathProblems('Typo: `farmbot/docs/does-not-exist-here.md`').length > 0,
+    'a typo under a real top-level name still fails',
+  );
+});
+
+test('non-repository backtick tokens are not judged as repository paths', () => {
+  const text = [
+    '- Package pin: `@edgesentry/ontographia-wasm`',
+    '- Relative import: `../lib/webllm-package`',
+    '- Demo route: `/farmbot/`',
+    '- Finding deep link: `/farmbot/#finding=R6-power-supply`',
+    '- Notify endpoint: `/api/notify/test`',
+    '- Website: `https://github.com/jexp/relate-ideas`',
+    '- Local file URL: `file:///tmp/report.json`',
+    '- Upstream issue: `edgesentry/ontographia#164`',
+    '- External repository: `jexp/relate-ideas`',
+    '- External docs: `FarmBot-Docs/farmbot-genesis`',
+    '- Source-relative path: `v1.7/extras/troubleshooting/`',
+    '- Bare artefact name: `graph.json`',
+    '- Bare directory: `nodes/`',
+    '- Short unit: `w/`',
+    '- Command: `npm run test:farmbot`',
+    '- Bare identifier: `findingCount`',
+  ].join('\n');
+  assert.deepEqual(
+    repoPathProblems(text),
+    [],
+    'an npm package, relative import, route, URL, owner/repo id, short unit or bare name is not a repository path',
+  );
+});
+
+test('a cited gitignored build output may be absent from the checkout', () => {
+  assert.deepEqual(
+    repoPathProblems(
+      'Store: `farmbot/dist/farmbot.relate-store/` and `farmbot/dist/farmbot.duckdb`.',
+    ),
+    [],
+    'a gitignored build output is an acceptable citation even when absent',
+  );
+  assert.ok(
+    repoPathProblems('Typo: `farmbot/docs/does-not-exist-here.md`').length > 0,
+    'a typo under a real top-level name still fails',
+  );
 });

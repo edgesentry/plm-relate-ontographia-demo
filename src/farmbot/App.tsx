@@ -21,6 +21,8 @@ import { canonicalJson } from './agent/canonical.mjs';
 import { collectFindings } from './agent/index.mjs';
 import {
   countBySeverity,
+  findingCauses,
+  findingCountermeasures,
   orderFindings,
   parseFindingHash,
   summaryLine,
@@ -624,6 +626,10 @@ export function App() {
     checksResult && selectedFindingId
       ? (checksResult.findings.find((finding) => finding.id === selectedFindingId) ?? null)
       : null;
+  const selectedCauses = selectedFinding ? findingCauses(selectedFinding, lang) : [];
+  const selectedCountermeasures = selectedFinding
+    ? findingCountermeasures(selectedFinding, lang)
+    : [];
 
   const checksStatus = (): string => {
     switch (checks.status) {
@@ -999,7 +1005,7 @@ export function App() {
 
           <h3>{t('causesHeading')}</h3>
           <ul className="cause-list" data-testid="finding-causes">
-            {selectedFinding.causes.map((cause, index) => (
+            {selectedCauses.map((cause, index) => (
               <li key={index}>
                 <span className={`fact-label fact-label-${cause.kind}`}>
                   {cause.kind === 'fact' ? t('factLabel') : t('inferenceLabel')}
@@ -1012,7 +1018,7 @@ export function App() {
 
           <h3>{t('countermeasuresHeading')}</h3>
           <ul className="countermeasure-list" data-testid="finding-countermeasures">
-            {selectedFinding.countermeasures.map((countermeasure, index) => (
+            {selectedCountermeasures.map((countermeasure, index) => (
               <li key={index}>{countermeasure}</li>
             ))}
           </ul>

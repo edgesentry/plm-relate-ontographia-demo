@@ -19,6 +19,7 @@ import {
   parseFindingHash,
   parseFindingsDigestLine,
   summaryLine,
+  visibleFindings,
 } from '../../src/farmbot/findings-view.mjs';
 import {
   changedNameCauses,
@@ -916,4 +917,49 @@ test('the committed findings document stays canonical and matches the pinned dig
 
   const actual = createHash('sha256').update(canonicalJson(document)).digest('hex');
   assert.equal(actual, pinned.hex, 'the committed findings bytes changed');
+});
+
+test('the default findings filter hides info and keeps the urgent order', () => {
+  const ordered = orderFindings(findings);
+  const visible = visibleFindings(ordered, false);
+  const expected = ordered.filter((finding) => finding.severity !== 'info');
+
+  assert.deepEqual(
+    visible.map((finding) => finding.id),
+    expected.map((finding) => finding.id),
+  );
+  assert.ok(visible.every((finding) => finding.severity !== 'info'));
+  for (const level of ['action', 'review']) {
+    assert.equal(
+      visible.filter((finding) => finding.severity === level).length,
+      findings.filter((finding) => finding.severity === level).length,
+      `the default filter hides ${level} findings`,
+    );
+  }
+});
+
+test('including info shows the whole document in the same order', () => {
+  const ordered = orderFindings(findings);
+  const visible = visibleFindings(ordered, true);
+
+  assert.deepEqual(
+    visible.map((finding) => finding.id),
+    ordered.map((finding) => finding.id),
+  );
+  assert.equal(visible.length, findings.length);
+});
+
+test('toggling info leaves the full counts intact', () => {
+  const ordered = orderFindings(findings);
+  const full = countBySeverity(findings);
+
+  for (const includeInfo of [false, true]) {
+    const visible = visibleFindings(ordered, includeInfo);
+    assert.deepEqual(countBySeverity(findings), full);
+    assert.equal(
+      visible.filter((finding) => finding.severity === 'info').length,
+      includeInfo ? full.info : 0,
+    );
+    assert.equal(visible.length, includeInfo ? full.total : full.total - full.info);
+  }
 });

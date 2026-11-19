@@ -26,6 +26,7 @@ import {
   orderFindings,
   parseFindingHash,
   summaryLine,
+  visibleFindings,
 } from './findings-view.mjs';
 import { planQuestion } from './plan.mjs';
 import { ProcessLanes } from './ProcessLanes';
@@ -200,12 +201,15 @@ export function App() {
   const [initialFindingId] = useState<string | null>(() =>
     parseFindingHash(window.location.hash),
   );
+  const [showInfoFindings, setShowInfoFindings] = useState(false);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     initialFindingId,
   );
   const [selectedEvidence, setSelectedEvidence] = useState<number[]>([]);
+  const [hashRevealCount, setHashRevealCount] = useState(0);
   const evidenceRowRefs = useRef<Map<number, HTMLLIElement | null>>(new Map());
 
+  const pendingRevealRef = useRef<string | null>(initialFindingId);
   const sessionRef = useRef<RelateSession | null>(null);
   const sessionPromise = useRef<Promise<RelateSession> | null>(null);
   const trappedRef = useRef(false);
@@ -578,16 +582,31 @@ export function App() {
   }, [engine.status, initialFindingId]);
 
   // After load, a hash change opens the matching finding when it is available.
-  // Malformed hashes and other keys are ignored.
+  // Malformed hashes and other keys are ignored. Each valid finding hash is its
+  // own reveal event, even when it repeats the id that is already selected.
   useEffect(() => {
     const onHashChange = () => {
       const id = parseFindingHash(window.location.hash);
       if (id === null) return;
+      pendingRevealRef.current = id;
       setSelectedFindingId(id);
+      setHashRevealCount((current) => current + 1);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  // A finding opened from the URL hash must be visible: adjust the filter just
+  // enough for its severity to appear. The pending id is consumed once, so a
+  // manual toggle is not overridden. `hashRevealCount` keys the effect on the
+  // hash events themselves, so a return to the same id still reveals its row.
+  useEffect(() => {
+    const id = pendingRevealRef.current;
+    if (id === null || checks.status !== 'ready') return;
+    pendingRevealRef.current = null;
+    const finding = checks.result.findings.find((candidate) => candidate.id === id);
+    if (finding?.severity === 'info') setShowInfoFindings(true);
+  }, [checks, hashRevealCount]);
 
   const openFinding = (id: string) => {
     setSelectedFindingId(id);
@@ -622,6 +641,9 @@ export function App() {
   }, [selectedFindingId]);
 
   const checksResult = checks.status === 'ready' ? checks.result : null;
+  const shownFindings = checksResult
+    ? (visibleFindings(checksResult.findings, showInfoFindings) as Finding[])
+    : [];
   const selectedFinding =
     checksResult && selectedFindingId
       ? (checksResult.findings.find((finding) => finding.id === selectedFindingId) ?? null)
@@ -818,6 +840,16 @@ export function App() {
               </span>
             </div>
 
+            <button
+              type="button"
+              className="chip findings-filter"
+              data-testid="toggle-info-findings"
+              aria-pressed={showInfoFindings}
+              onClick={() => setShowInfoFindings((current) => !current)}
+            >
+              {showInfoFindings ? t('hideInfoFindings') : t('showInfoFindings')}
+            </button>
+
             <p
               className={checksResult.matches ? 'muted small' : 'finding-mismatch small'}
               data-testid="findings-digest"
@@ -827,7 +859,7 @@ export function App() {
             </p>
 
             <ol className="finding-list" data-testid="finding-list">
-              {checksResult.findings.map((finding) => (
+              {shownFindings.map((finding) => (
                 <li key={finding.id}>
                   <button
                     type="button"

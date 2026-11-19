@@ -66,6 +66,10 @@
   margin: 1rem 0 0.5rem;
 }
 
+.findings-filter {
+  margin: 0 0 0.75rem;
+}
+
 .severity-chip {
   display: inline-flex;
   align-items: center;

@@ -4,7 +4,7 @@ The FarmBot screen at `/farmbot/` runs the committed seed in an in-memory
 Relate WASM database inside the browser tab. Nothing from that session is
 written to disk. For inspection without a browser, the same seed can be loaded
 into a persistent Relate **directory store** on disk with the Node client
-`@relate/relate` 1.0.1.
+`@relate/relate`, pinned in `package.json`.
 
 The store is a build output. It is not committed, and its files are not
 byte-hashed: the files are not guaranteed to be byte-identical across runs or

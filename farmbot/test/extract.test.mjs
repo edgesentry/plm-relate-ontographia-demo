@@ -4,19 +4,31 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import { DuckDBInstance } from '@duckdb/node-api';
 import { canonicalDigest } from '../scripts/extract.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
 const EXTRACT = resolve(ROOT, 'farmbot/scripts/extract.mjs');
-const DB_PATH = resolve(ROOT, 'farmbot/dist/farmbot.duckdb');
-const HASH_PATH = `${DB_PATH}.sha256`;
+const COMMITTED_HASH_PATH = resolve(ROOT, 'farmbot/dist/farmbot.duckdb.sha256');
 const EXPECTED_PIN = '44e0fa24d4a538dfa1255a4e89308ccabf3abaeb';
 
+// Build into a private temp directory: the committed farmbot/dist tree is a
+// source of expected bytes, never an output location for this test.
+const OUTPUT_DIRECTORY = mkdtempSync(join(tmpdir(), 'farmbot-extract-'));
+const DB_PATH = join(OUTPUT_DIRECTORY, 'farmbot.duckdb');
+
+after(() => {
+  rmSync(OUTPUT_DIRECTORY, { recursive: true, force: true });
+});
+
 function runExtract(args = [], overrides = {}) {
-  return spawnSync(process.execPath, [EXTRACT, ...args], {
+  const hasOut = args.some(
+    (argument) => argument === '--out' || argument.startsWith('--out='),
+  );
+  const finalArgs = hasOut ? args : [...args, '--out', OUTPUT_DIRECTORY];
+  return spawnSync(process.execPath, [EXTRACT, ...finalArgs], {
     cwd: ROOT,
     encoding: 'utf8',
     env: { ...process.env, FARMBOT_GENESIS_DIR: '', FARMBOT_OUT_DIR: '', ...overrides },
@@ -44,6 +56,14 @@ async function rows(sql) {
 function tempDir(prefix) {
   return mkdtempSync(join(tmpdir(), prefix));
 }
+
+test('the extract helper writes outside the committed farmbot/dist tree', () => {
+  assert.notEqual(
+    resolve(OUTPUT_DIRECTORY),
+    resolve(ROOT, 'farmbot/dist'),
+    'the extract test must not use the committed farmbot/dist as an output',
+  );
+});
 
 test('extract builds the pinned DuckDB with 149 parts', async () => {
   const result = runExtract();
@@ -74,8 +94,9 @@ test('M5 x 10mm Screw XL 200 vs 225 is listed as a quantity difference', async (
 });
 
 test('the canonical extract hash matches the committed hash file', async () => {
-  assert.ok(existsSync(HASH_PATH), `${HASH_PATH} is missing`);
-  const expected = readFileSync(HASH_PATH, 'utf8').trim();
+  assert.ok(existsSync(COMMITTED_HASH_PATH), `${COMMITTED_HASH_PATH} is missing`);
+  const committed = readFileSync(COMMITTED_HASH_PATH);
+  const expected = committed.toString('utf8').trim();
   assert.match(expected, /^[0-9a-f]{64}$/);
   assert.equal(await canonicalDigest(DB_PATH), expected);
 
@@ -84,7 +105,9 @@ test('the canonical extract hash matches the committed hash file', async () => {
   const rebuilt = runExtract();
   assert.equal(rebuilt.status, 0, `rebuild failed:\n${rebuilt.stderr}`);
   assert.equal(await canonicalDigest(DB_PATH), expected);
-  assert.equal(readFileSync(HASH_PATH, 'utf8').trim(), expected);
+  // The sidecar is compared read-only: the committed file must not be rewritten.
+  assert.equal(readFileSync(COMMITTED_HASH_PATH).toString('utf8'), committed.toString('utf8'));
+  assert.equal(readFileSync(`${DB_PATH}.sha256`, 'utf8').trim(), expected);
 });
 
 test('a missing submodule fails clearly and writes nothing', () => {

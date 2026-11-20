@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { after, test } from 'node:test';
 
 import {
@@ -129,4 +129,11 @@ test('a bad seed leaves an existing output directory untouched', () => {
   assert.deepEqual(readdirSync(out), ['keep.txt']);
   assert.equal(readFileSync(join(out, 'keep.txt'), 'utf8'), 'keep me');
   assert.equal(existsSync(join(out, 'graph.json')), false);
+});
+
+test('buildStore refuses the committed farmbot/dist directory itself', () => {
+  assert.throws(
+    () => buildStore(dirname(COMMITTED_SEED)),
+    /refusing to build the Relate store/,
+  );
 });

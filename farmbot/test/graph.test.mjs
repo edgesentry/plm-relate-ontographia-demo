@@ -47,9 +47,10 @@ after(() => {
   }
 });
 
-// Build the extract into a private directory. The extract test rebuilds the
-// shared farmbot/dist/farmbot.duckdb read-write in another process, and the
-// test runner runs files in parallel, so this file must not open that path.
+// Build the extract into a private directory. FarmBot tests write their
+// extract into a temp directory of their own; the committed farmbot/dist
+// tree is only a read-only source of expected bytes. This file must not
+// open farmbot/dist/farmbot.duckdb.
 const PRIVATE_DIRECTORY = tempDir('farmbot-graph-extract-');
 const built = spawnSync(
   process.execPath,

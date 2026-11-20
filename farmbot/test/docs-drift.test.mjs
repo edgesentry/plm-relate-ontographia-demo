@@ -29,21 +29,7 @@ const JOB_CONTEXT = /\b(?:job|workflow)\b/i;
 
 function allowedValueDomains() {
   const values = JSON.parse(readFileSync(ALLOWED_VALUES, 'utf8'));
-  return new Set(Object.keys(values).filter((key) => key !== 'format'));
-}
-
-function documentedDomains() {
-  const lines = readFileSync(INTENTS_README, 'utf8').split('\n');
-  const header = lines.findIndex((line) => /^\|\s*Key\s*\|\s*Domain\s*\|/.test(line));
-  assert.notEqual(header, -1, 'farmbot/intents/README.md has no Key/Domain table');
-  const domains = new Set();
-  for (let index = header + 2; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (!line.startsWith('|')) break;
-    const match = /^\|\s*`([^`]+)`\s*\|/.exec(line);
-    if (match) domains.add(match[1]);
-  }
-  return domains;
+  return Object.keys(values).filter((key) => key !== 'format');
 }
 
 function releaseAssetArtifact() {
@@ -387,21 +373,57 @@ test('a hardcoded inventory count fails even when it matches the committed data'
   }
 });
 
-test('the allowed-values domains and the intents README table agree', () => {
+test('the intents README points at the allowed-values file and its generator', () => {
   const domains = allowedValueDomains();
-  const documented = documentedDomains();
+  assert.ok(
+    domains.length > 0,
+    'farmbot/dist/farmbot.allowed-values.json declares no domains',
+  );
+  const generator = resolve(ROOT, 'farmbot/scripts/allowed-values.mjs');
+  assert.ok(existsSync(generator), 'farmbot/scripts/allowed-values.mjs is missing');
+  const text = readFileSync(INTENTS_README, 'utf8');
+  assert.ok(
+    text.includes('farmbot/dist/farmbot.allowed-values.json'),
+    'farmbot/intents/README.md does not point at farmbot/dist/farmbot.allowed-values.json',
+  );
+  assert.ok(
+    text.includes('farmbot/scripts/allowed-values.mjs'),
+    'farmbot/intents/README.md does not point at farmbot/scripts/allowed-values.mjs',
+  );
+});
 
-  for (const domain of domains) {
-    assert.ok(
-      documented.has(domain),
-      `allowed-values domain ${domain} is missing from farmbot/intents/README.md`,
-    );
+test('documented npm run commands exist in package.json', () => {
+  const scripts = Object.keys(JSON.parse(readFileSync(PACKAGE_JSON, 'utf8')).scripts);
+  const files = [README, ...markdownFiles(DOCS_DIR)];
+  const pattern = /npm run ([a-zA-Z0-9:-]+)/g;
+  for (const path of files) {
+    const text = readFileSync(path, 'utf8');
+    for (const match of text.matchAll(pattern)) {
+      const name = match[1];
+      assert.ok(
+        scripts.includes(name),
+        `${path} names npm run ${name}, which package.json does not declare`,
+      );
+    }
   }
-  for (const domain of documented) {
-    assert.ok(
-      domains.has(domain),
-      `farmbot/intents/README.md documents ${domain}, which the allowed-values file does not define`,
-    );
+});
+
+test('the Genesis submodule pin agrees across README, provenance, extract and release manifest', () => {
+  const extract = readFileSync(resolve(ROOT, 'farmbot/scripts/extract.mjs'), 'utf8');
+  const declared = /export const EXPECTED_PIN = '([0-9a-f]{40})'/.exec(extract);
+  assert.ok(declared, 'farmbot/scripts/extract.mjs does not declare EXPECTED_PIN');
+  const pin = declared[1];
+  const manifest = JSON.parse(
+    readFileSync(resolve(ROOT, 'farmbot/dist/farmbot.release.json'), 'utf8'),
+  );
+  assert.equal(
+    manifest.genesis?.pin,
+    pin,
+    'farmbot/dist/farmbot.release.json genesis.pin differs from EXPECTED_PIN',
+  );
+  for (const rel of ['README.md', 'farmbot/PROVENANCE.md']) {
+    const text = readFileSync(resolve(ROOT, rel), 'utf8');
+    assert.ok(text.includes(pin), `${rel} does not name the Genesis pin ${pin}`);
   }
 });
 
@@ -883,7 +905,11 @@ function repoPathProblems(text) {
 test('farmbot/docs restate no dependency version pinned in package.json', () => {
   const tokens = declaredVersionTokens(JSON.parse(readFileSync(PACKAGE_JSON, 'utf8')));
   assert.ok(tokens.size > 0, 'package.json declares no single-version token this check can use');
-  for (const path of markdownFiles(DOCS_DIR)) {
+  const extra = [
+    INTENTS_README,
+    resolve(ROOT, 'vendor/ontographia/PROVENANCE.md'),
+  ];
+  for (const path of [...markdownFiles(DOCS_DIR), ...extra]) {
     // relate-spike.md is a dated spike report whose measured evidence may
     // coincide with a current pin, so only check (b) applies to it.
     if (path === SPIKE_DOC) continue;

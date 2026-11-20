@@ -180,11 +180,9 @@ async function readRowsFrom(dbPath, sql) {
 }
 
 async function queryRows(sql) {
-  // The other FarmBot test file builds and reopens the shared
-  // farmbot/dist/farmbot.duckdb in its own process, and the test runner runs
-  // files in parallel. Opening that file here, even read-only, can make the
-  // other file's read-write opens fail on the DuckDB lock. Build the same
-  // extract into a private directory instead and read only that copy.
+  // Build the extract into a private temp directory and read only that
+  // copy. The committed farmbot/dist tree is a read-only source of
+  // expected bytes; this file must not open farmbot/dist/farmbot.duckdb.
   const directory = mkdtempSync(join(tmpdir(), 'farmbot-ontology-'));
   try {
     const built = spawnSync(process.execPath, [EXTRACT, '--out', directory], {

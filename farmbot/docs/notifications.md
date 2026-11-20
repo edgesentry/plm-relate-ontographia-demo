@@ -83,31 +83,20 @@ Any of these stops email without affecting the static site:
 
 ## Local development and tests
 
-The commands for regenerating the bundle and the Worker types, the pure logic
-tests, the contract test and the browser smoke live in `package.json` as
-`build:notify`, `types:worker`, `test:worker`, `test:worker:contract` and
-`smoke:wrangler`. The contract test and the smoke need `dist/`; the smoke also
-needs Playwright Chromium.
-
-`npm run typecheck` checks both the app and `worker/tsconfig.json`. `npm run
-build` runs `build:notify` first, so a findings file that does not match its
-sidecar digest fails the build instead of reaching an inbox. `npm run verify`
-also runs `wrangler types --check worker/worker-configuration.d.ts` and fails if
-`worker/generated/notify-bundle.json` differs from a fresh `npm run
-build:notify` output. Both generated files are committed, so tests and CI need
+The commands for the bundle, Worker types, tests and browser smoke, and the
+checks `npm run verify` performs, are defined in `package.json` and
+`scripts/verify.mjs`. Both generated files are committed, so tests and CI need
 no generation step.
 
-Tests must use fake addresses and fake tokens. The committed examples use the
+Tests must use fake addresses and fake tokens; the committed examples use the
 `.invalid` TLD and a token generated inside each test run. Logs are structured
 JSON and deliberately exclude the recipient, sender, token, and Authorization
 header.
 
 ## Operational notes
 
-- `to` is only ever `env.NOTIFY_TO`; `from` is only ever `env.NOTIFY_FROM`. The
-  email binding intentionally has no destination allowlist override.
-- Every interpolated value in the HTML body is escaped, there are no remote
-  images and no external CSS, and subjects contain only bundled data with CR/LF
-  stripped.
-- A missing email, KV, or limiter binding is treated as a configuration
-  failure, never as a reason to send unthrottled.
+- `to` is only ever `env.NOTIFY_TO`; `from` is only ever `env.NOTIFY_FROM`, and
+  the email binding intentionally has no destination allowlist override.
+- HTML escaping, the no-remote-assets policy, subject sanitising and the
+  fail-closed handling of missing bindings are implemented in
+  `worker/notify.ts`; read that file for the exact guarantees.

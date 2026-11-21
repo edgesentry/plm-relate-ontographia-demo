@@ -1760,14 +1760,23 @@ async function main() {
     // is not a 404.
     const favicon = await sample.page.evaluate(async () => {
       const response = await fetch('/favicon.ico', { cache: 'no-store' });
+      const body = await response.arrayBuffer();
       return {
         status: response.status,
         contentType: response.headers.get('content-type') ?? '',
+        bytes: body.byteLength,
       };
     });
     assert(favicon.status === 200, `GET /favicon.ico returned HTTP ${favicon.status}`);
     assert(
-      favicon.contentType.startsWith('image/x-icon'),
+      favicon.bytes > 0,
+      `GET /favicon.ico returned an empty body (${favicon.bytes} bytes)`,
+    );
+    // Vite preview serves ICO as image/x-icon; wrangler dev uses the IANA type
+    // image/vnd.microsoft.icon. Accept either essence, including a charset parameter.
+    const faviconType = favicon.contentType.split(';')[0].trim().toLowerCase();
+    assert(
+      faviconType === 'image/x-icon' || faviconType === 'image/vnd.microsoft.icon',
       `GET /favicon.ico has content type ${JSON.stringify(favicon.contentType)}`,
     );
 
@@ -1791,7 +1800,7 @@ async function main() {
         relateRequests: clickRelate.length,
         notifyRequests: notifyRequests.length,
       },
-      favicon: { status: favicon.status, contentType: favicon.contentType },
+      favicon: { status: favicon.status, contentType: favicon.contentType, bytes: favicon.bytes },
       titleFollowsToggle: true,
       ...sampleModel,
       ...sampleClean,

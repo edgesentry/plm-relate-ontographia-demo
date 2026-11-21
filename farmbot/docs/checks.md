@@ -66,8 +66,9 @@ R6 reads packing items and service references only; pre-assembly pages and the
 Accessory bag BOM are manufacturing containers, not packing items. The inference
 shares the extract's normalization (`farmbot/docs/name-normalization.md`): names
 that normalize to one key merge into one finding, and a linked-and-inferred name
-stays one finding with the fact winning. The finding carries `inferred`
-(`fact` or `inferred`); totals are in `farmbot/dist/farmbot.findings.json`.
+stays one finding with the fact winning. The finding carries the boolean
+`inferred` (true only for the prose match); the finding view labels it
+`fact` or `inferred`. Totals are in `farmbot/dist/farmbot.findings.json`.
 
 ### R7: a changed part reaches nothing
 

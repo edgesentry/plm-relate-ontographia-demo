@@ -99,6 +99,39 @@ function markdownBlocks(text) {
  * @param {string} block
  * @returns {string[]}
  */
+
+/**
+ * GitHub-style heading slug, derived from the heading text.
+ *
+ * @param {string} title
+ * @returns {string}
+ */
+function markdownHeadingSlug(title) {
+  return title
+    .replace(/`+/g, '')
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+/**
+ * @param {string} text
+ * @returns {{ title: string, slug: string }[]}
+ */
+function markdownHeadings(text) {
+  const headings = [];
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
+    if (match) {
+      const title = match[2].replace(/\s+#+$/, '').trim();
+      headings.push({ title, slug: markdownHeadingSlug(title) });
+    }
+  }
+  return headings;
+}
+
 function releaseTokens(block) {
   return [...block.matchAll(/farmbot-release-assets[\w.-]*/g)].map((match) =>
     match[0].trim(),
@@ -451,9 +484,17 @@ test('release-asset docs point at the script and manifest rather than a copied t
       `${path} does not point at the release manifest`,
     );
   }
+  const headings = markdownHeadings(store);
+  const verify = headings.find((heading) =>
+    /verify and publish release assets/i.test(heading.title),
+  );
   assert.ok(
-    readme.includes('farmbot/docs/relate-store.md#verify-and-publish-release-assets'),
-    'README.md does not point at the verify and publish walkthrough heading',
+    verify,
+    'farmbot/docs/relate-store.md has no Verify and publish release assets heading',
+  );
+  assert.ok(
+    readme.includes(`farmbot/docs/relate-store.md#${verify.slug}`),
+    `README.md does not point at farmbot/docs/relate-store.md#${verify.slug}, derived from "${verify.title}"`,
   );
   const duckdbProse = markdownBlocks(duckdb).join('\n');
   assert.ok(
@@ -492,6 +533,33 @@ test('extract and store docs do not restate CLI flags outside code fences', () =
       );
     }
   }
+});
+
+test('preset and release-asset docs do not restate inventory counts', () => {
+  const readme = readFileSync(README, 'utf8');
+  const duckdb = readFileSync(DUCKDB_DOC, 'utf8');
+  const readmeProse = markdownBlocks(readme).join('\n');
+  const duckdbProse = markdownBlocks(duckdb).join('\n');
+  assert.ok(
+    readme.includes('farmbot/oracle/default-results.gold.json'),
+    'README.md does not point at farmbot/oracle/default-results.gold.json',
+  );
+  assert.ok(
+    !/\b(?:[0-9]+|five)\s+preset questions\b/i.test(readmeProse),
+    'README.md restates a hardcoded preset-question count',
+  );
+  assert.ok(
+    duckdb.includes('farmbot/scripts/release-assets.mjs'),
+    'farmbot/docs/duckdb-distribution.md does not point at farmbot/scripts/release-assets.mjs',
+  );
+  assert.ok(
+    !/\b(?:[0-9]+|four)\s+release files\b/i.test(duckdbProse),
+    'farmbot/docs/duckdb-distribution.md restates a hardcoded release-asset count',
+  );
+  assert.ok(
+    !/carries the DuckDB extract, the Relate directory store archive/.test(readmeProse),
+    'README.md restates the release-asset list instead of pointing at the script',
+  );
 });
 
 test('the documented release artifact name matches the workflow', () => {

@@ -45,7 +45,7 @@ npx -y node@22 scripts/verify.mjs
 npm run smoke:farmbot
 ```
 
-`npm run smoke:farmbot` requires `dist/` and checks the five preset questions against `farmbot/oracle/default-results.gold.json`.
+`npm run smoke:farmbot` requires `dist/` and checks the preset questions against `farmbot/oracle/default-results.gold.json`.
 
 Worker notification checks (no account, no email sent):
 
@@ -110,7 +110,7 @@ The directory store and the DuckDB file are gitignored under `farmbot/dist/.giti
 
 Each committed digest means something different. The seed digest is the SHA-256 of the seed file bytes. The DuckDB digest is a canonical dump of all tables, not the file bytes; the Change Log and service tables were already in the extract, so the graph mapping leaves it unchanged. The Relate store digest is a canonical logical dump over all nodes and relationships, whose format is documented in [`farmbot/docs/relate-store.md`](farmbot/docs/relate-store.md); the archive bytes can differ between builds, so verify the logical digest rather than assuming byte-identical archives.
 
-Release `farmbot-data-v1`: <https://github.com/edgesentry/plm-relate-ontographia-demo/releases/tag/farmbot-data-v1>. It carries the DuckDB extract, the Relate directory store archive, the release manifest and `SHA256SUMS`. Asset names and roles are declared in `farmbot/scripts/release-assets.mjs`; logical digests and counts are in `farmbot/dist/farmbot.release.json`. How to verify a downloaded copy and publish the next tag is in [`farmbot/docs/relate-store.md`](farmbot/docs/relate-store.md#verify-and-publish-release-assets). The next tag, `farmbot-data-v2`, uses the same asset names and the digests in that manifest; CI builds and verifies it as the `farmbot-release-assets-v2` artifact, and creating the Release is a maintainer step. Once v2 exists it replaces v1. The `/farmbot/` screen never fetches release assets — it reads the committed seed and manifest — so it keeps working regardless of which tag is current.
+Release `farmbot-data-v1`: <https://github.com/edgesentry/plm-relate-ontographia-demo/releases/tag/farmbot-data-v1>. It carries the assets listed in `farmbot/scripts/release-assets.mjs`. Asset names and roles are declared in that script; logical digests and counts are in `farmbot/dist/farmbot.release.json`. How to verify a downloaded copy and publish the next tag is in [`farmbot/docs/relate-store.md`](farmbot/docs/relate-store.md#verify-and-publish-release-assets). The next tag, `farmbot-data-v2`, uses the same asset names and the digests in that manifest; CI builds and verifies it as the `farmbot-release-assets-v2` artifact, and creating the Release is a maintainer step. Once v2 exists it replaces v1. The `/farmbot/` screen never fetches release assets — it reads the committed seed and manifest — so it keeps working regardless of which tag is current.
 
 ### Third-party provenance and licenses
 

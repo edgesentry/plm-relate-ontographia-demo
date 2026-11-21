@@ -50,17 +50,19 @@ checks it.
 
 ## What the extract contains
 
-The table definitions, metadata writes and graph-seed mapping live in
+The table definitions and metadata writes live in
 `farmbot/scripts/extract.mjs`, and the built extract is the source for the
-tables, columns and row counts. Name matching rules and the meaning of
-`not_comparable` are documented in `farmbot/docs/name-normalization.md`.
+tables, columns and row counts. Graph-seed mapping lives in
+`farmbot/scripts/graph.mjs` and `farmbot/recipes/`. Name matching rules and
+the meaning of `not_comparable` are documented in
+`farmbot/docs/name-normalization.md`.
 
 ## Short-term distribution: CI artifacts
 
 `.github/workflows/ci.yml` builds the extract and the release assets and
-uploads them as artifacts. The release-assets job uploads the four release
-files as the `farmbot-release-assets-v2` artifact. Artifacts expire, so they
-are not the lasting distribution channel.
+uploads them as artifacts. The release-assets job uploads the assets listed
+in `farmbot/scripts/release-assets.mjs` as the `farmbot-release-assets-v2`
+artifact. Artifacts expire, so they are not the lasting distribution channel.
 
 ## Lasting distribution: GitHub Releases
 

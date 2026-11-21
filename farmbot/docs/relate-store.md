@@ -19,10 +19,10 @@ node farmbot/scripts/relate-store.mjs
 ```
 
 The default output directory is `farmbot/dist/farmbot.relate-store/`
-(gitignored); `--out <dir>` writes elsewhere. The build steps, the seed-digest
-check, and the manifest fields that `--write-manifest` rewrites are in
-`farmbot/scripts/relate-store.mjs`; use `--write-manifest` only for a changed
-seed or load.
+(gitignored). The CLI, the build steps, the seed-digest check, and which
+committed manifest fields a rebuild may rewrite are in
+`farmbot/scripts/relate-store.mjs`. Use the manifest-rewrite option only for
+a changed seed or load.
 
 The store is built in a child Node process. The Node client has no `close()`
 method, so the writer handle lives until its process exits; archiving or
@@ -88,7 +88,9 @@ npm run release:verify -- release-assets
 ```
 
 `npm run release:assets` (`farmbot/scripts/release-assets.mjs`) rebuilds and
-checks the assets and writes the release files plus `SHA256SUMS`;
+checks the assets and writes the release files plus `SHA256SUMS`; that script
+lists the asset names and their roles, and `farmbot/dist/farmbot.release.json`
+holds the logical digests and counts.
 `npm run release:verify` (`farmbot/scripts/verify-release-assets.mjs`) checks a
 downloaded directory, and `farmbot/scripts/lib/archive-guard.mjs` guards
 extraction of the untrusted store archive. Both scripts are the source of truth

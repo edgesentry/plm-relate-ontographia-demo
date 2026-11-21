@@ -14,6 +14,7 @@ const INTENTS_README = resolve(ROOT, 'farmbot/intents/README.md');
 const WORKFLOW = resolve(ROOT, '.github/workflows/ci.yml');
 const DOCS_DIR = resolve(ROOT, 'farmbot/docs');
 const DUCKDB_DOC = join(DOCS_DIR, 'duckdb-distribution.md');
+const RELATE_STORE_DOC = join(DOCS_DIR, 'relate-store.md');
 const README = resolve(ROOT, 'README.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
 const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
@@ -424,6 +425,72 @@ test('the Genesis submodule pin agrees across README, provenance, extract and re
   for (const rel of ['README.md', 'farmbot/PROVENANCE.md']) {
     const text = readFileSync(resolve(ROOT, rel), 'utf8');
     assert.ok(text.includes(pin), `${rel} does not name the Genesis pin ${pin}`);
+  }
+});
+
+test('release-asset docs point at the script and manifest rather than a copied table', () => {
+  const script = resolve(ROOT, 'farmbot/scripts/release-assets.mjs');
+  assert.ok(existsSync(script), 'farmbot/scripts/release-assets.mjs is missing');
+  const manifest = resolve(ROOT, 'farmbot/dist/farmbot.release.json');
+  assert.ok(existsSync(manifest), 'farmbot/dist/farmbot.release.json is missing');
+  const readme = readFileSync(README, 'utf8');
+  const duckdb = readFileSync(DUCKDB_DOC, 'utf8');
+  const store = readFileSync(RELATE_STORE_DOC, 'utf8');
+  for (const [path, text] of [
+    ['README.md', readme],
+    ['farmbot/docs/duckdb-distribution.md', duckdb],
+    ['farmbot/docs/relate-store.md', store],
+  ]) {
+    assert.ok(
+      text.includes('farmbot/scripts/release-assets.mjs'),
+      `${path} does not point at farmbot/scripts/release-assets.mjs`,
+    );
+    assert.ok(
+      text.includes('farmbot/dist/farmbot.release.json') ||
+        text.includes('farmbot.release.json'),
+      `${path} does not point at the release manifest`,
+    );
+  }
+  assert.ok(
+    readme.includes('farmbot/docs/relate-store.md#verify-and-publish-release-assets'),
+    'README.md does not point at the verify and publish walkthrough heading',
+  );
+  const duckdbProse = markdownBlocks(duckdb).join('\n');
+  assert.ok(
+    !/asset table/i.test(duckdbProse),
+    'farmbot/docs/duckdb-distribution.md still promises an asset table',
+  );
+});
+
+test('extract and store docs do not restate CLI flags outside code fences', () => {
+  const flags = [
+    '--source',
+    '--out',
+    '--write-manifest',
+    'FARMBOT_GENESIS_DIR',
+    'FARMBOT_OUT_DIR',
+  ];
+  const duckdb = readFileSync(DUCKDB_DOC, 'utf8');
+  const store = readFileSync(RELATE_STORE_DOC, 'utf8');
+  assert.ok(
+    duckdb.includes('farmbot/scripts/extract.mjs'),
+    'farmbot/docs/duckdb-distribution.md does not point at farmbot/scripts/extract.mjs',
+  );
+  assert.ok(
+    store.includes('farmbot/scripts/relate-store.mjs'),
+    'farmbot/docs/relate-store.md does not point at farmbot/scripts/relate-store.mjs',
+  );
+  for (const [path, text] of [
+    ['farmbot/docs/duckdb-distribution.md', duckdb],
+    ['farmbot/docs/relate-store.md', store],
+  ]) {
+    const prose = markdownBlocks(text).join('\n');
+    for (const flag of flags) {
+      assert.ok(
+        !prose.includes(flag),
+        `${path} restates ${flag} outside code fences`,
+      );
+    }
   }
 });
 

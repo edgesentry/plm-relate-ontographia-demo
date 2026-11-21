@@ -19,11 +19,10 @@ node farmbot/scripts/extract.mjs
 npm run test:farmbot
 ```
 
-The extract script accepts `--source` and `--out` (or the
-`FARMBOT_GENESIS_DIR` and `FARMBOT_OUT_DIR` environment variables); the CLI and
-the expected pinned submodule commit are in `farmbot/scripts/extract.mjs`. The
-script refuses to run when the source is missing, is not a git checkout, or is
-not at that pin.
+The CLI, including source and output overrides and their environment
+variables, and the expected pinned submodule commit are in
+`farmbot/scripts/extract.mjs`. The script refuses to run when the source is
+missing, is not a git checkout, or is not at that pin.
 
 After a successful build, `farmbot/dist/farmbot.duckdb` is the database
 (gitignored) and `farmbot/dist/farmbot.duckdb.sha256` is the tracked SHA-256 of
@@ -65,10 +64,12 @@ are not the lasting distribution channel.
 
 ## Lasting distribution: GitHub Releases
 
-The lasting release carries the same four assets: the DuckDB file, the store
-archive, `farmbot.release.json` and `SHA256SUMS`. The asset table and the
-verify walkthrough are in `farmbot/docs/relate-store.md`. Verify a downloaded
-copy with `npm run release:verify -- <dir>`. Publishing is a maintainer step:
+The lasting release carries the assets listed in
+`farmbot/scripts/release-assets.mjs`. That script is the source of truth for
+asset names and roles; logical digests and counts are in
+`farmbot/dist/farmbot.release.json`. The verify and publish walkthrough is in
+`farmbot/docs/relate-store.md`. Verify a downloaded copy with
+`npm run release:verify -- <dir>`. Publishing is a maintainer step:
 CI builds and uploads the artifact but never creates a release.
 
 Cloudflare R2 is not used for these files. The release assets are the only

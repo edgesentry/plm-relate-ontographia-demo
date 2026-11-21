@@ -51,6 +51,75 @@
   margin-top: 1rem;
 }
 
+/* Landing: short explanation under the headline. */
+
+.farmbot-explain {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.farmbot-explain p {
+  margin: 0 0 0.45rem;
+}
+
+/* Landing: sample notification-email cards. */
+
+.sample-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem;
+}
+
+.sample-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.sample-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.sample-card-badge {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.sample-card-scenario {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.sample-card-found {
+  margin: 0;
+}
+
+.sample-card-summary {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.sample-card-link-row {
+  margin: 0.1rem 0 0;
+}
+
 /* Notification panel and finding view. */
 
 .farmbot-findings,

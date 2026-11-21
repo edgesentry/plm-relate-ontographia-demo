@@ -60,8 +60,8 @@ npm run smoke:wrangler
 
 ### Live demo
 
-- Live demo: <https://ontographia-plm-demo.egdesentry.workers.dev/> (HTTP 200 confirmed 2026-11-14)
-- FarmBot query screen: <https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/>
+- FarmBot screen (primary): <https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/> — cross-document inconsistency checks over FarmBot Genesis v1.7, with findings, evidence and the process-lane diagram.
+- Desk-fan fixture (secondary): <https://ontographia-plm-demo.egdesentry.workers.dev/> — the EOL / ECO desk-fan screen at `/` (HTTP 200 confirmed 2026-11-14).
 
 To run the browser smoke suite against the live deployment:
 

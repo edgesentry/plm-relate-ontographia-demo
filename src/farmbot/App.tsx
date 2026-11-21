@@ -31,6 +31,7 @@ import {
 import { planQuestion } from './plan.mjs';
 import { ProcessLanes } from './ProcessLanes';
 import { orderEvidenceRows } from './process-lanes.mjs';
+import { SAMPLE_NOTIFICATIONS } from './sample-notifications.mjs';
 import { formatSeedDigest, SEED_DIGEST, sha256Hex } from './seed-digest.mjs';
 import {
   STORE_DIGEST,
@@ -147,6 +148,19 @@ const SELECTOR_LABEL_KEYS: Record<SelectorDomain, MessageKey> = {
   category_slugs_in_kits: 'selectorCategory',
 };
 
+/** Localized rule label per check id, reused by the sample email cards. */
+const CHECK_RULE_LABEL_KEYS: Record<string, MessageKey> = {
+  R1: 'checkR1Label',
+  R2: 'checkR2Label',
+  R3: 'checkR3Label',
+  R4: 'checkR4Label',
+  R5: 'checkR5Label',
+  R6: 'checkR6Label',
+  R7: 'checkR7Label',
+  R8: 'checkR8Label',
+  R9: 'checkR9Label',
+};
+
 const ERROR_MESSAGE_KEYS: Record<ScreenError['kind'], MessageKey> = {
   compile: 'compileError',
   'seed-fetch': 'seedFetchError',
@@ -201,6 +215,9 @@ export function App() {
   const [initialFindingId] = useState<string | null>(() =>
     parseFindingHash(window.location.hash),
   );
+  // The last well-formed finding id that arrived by a same-page hash change
+  // after load, such as a sample-email link clicked on an idle screen.
+  const [findingHashId, setFindingHashId] = useState<string | null>(null);
   const [showInfoFindings, setShowInfoFindings] = useState(false);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     initialFindingId,
@@ -210,6 +227,8 @@ export function App() {
   const evidenceRowRefs = useRef<Map<number, HTMLLIElement | null>>(new Map());
 
   const pendingRevealRef = useRef<string | null>(initialFindingId);
+  // The finding id whose hash reveal still owes a scroll of the finding view.
+  const pendingScrollRef = useRef<string | null>(null);
   const sessionRef = useRef<RelateSession | null>(null);
   const sessionPromise = useRef<Promise<RelateSession> | null>(null);
   const trappedRef = useRef(false);
@@ -258,6 +277,7 @@ export function App() {
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    document.title = messages[lang].title;
   }, [lang]);
 
   useEffect(
@@ -498,6 +518,9 @@ export function App() {
     if (engine.status !== 'ready' || checksRunningRef.current) return;
     const checkEngine = engine.engine;
     checksRunningRef.current = true;
+    // Any started checks satisfy the deep-link auto-run, so a later
+    // `#finding=` hash change cannot start a second run after a manual one.
+    autoChecksRef.current = true;
     // Checks own `checks`; a preset-question error stays visible in its own box.
     setChecks({ status: 'running' });
 
@@ -573,13 +596,18 @@ export function App() {
   };
 
   // A well-formed deep link runs the checks once, after the engine is ready.
+  // The hash can be present at load or arrive later on the same page: a click
+  // on a sample-email link only changes the hash, so both paths land here.
+  // `runChecks` itself latches `autoChecksRef`, so checks that already started
+  // — by this effect or by a manual Run checks — are never started twice.
   // Any other hash does nothing: no session, no request, no error.
   useEffect(() => {
     if (autoChecksRef.current) return;
-    if (engine.status !== 'ready' || initialFindingId === null) return;
+    if (engine.status !== 'ready') return;
+    if (initialFindingId === null && findingHashId === null) return;
     autoChecksRef.current = true;
     void runChecks();
-  }, [engine.status, initialFindingId]);
+  }, [engine.status, initialFindingId, findingHashId]);
 
   // After load, a hash change opens the matching finding when it is available.
   // Malformed hashes and other keys are ignored. Each valid finding hash is its
@@ -590,6 +618,7 @@ export function App() {
       if (id === null) return;
       pendingRevealRef.current = id;
       setSelectedFindingId(id);
+      setFindingHashId(id);
       setHashRevealCount((current) => current + 1);
     };
     window.addEventListener('hashchange', onHashChange);
@@ -605,8 +634,33 @@ export function App() {
     if (id === null || checks.status !== 'ready') return;
     pendingRevealRef.current = null;
     const finding = checks.result.findings.find((candidate) => candidate.id === id);
-    if (finding?.severity === 'info') setShowInfoFindings(true);
+    if (!finding) return;
+    // The view for this finding renders in the same commit; one scroll of it
+    // is owed once the info filter has settled.
+    pendingScrollRef.current = id;
+    if (finding.severity === 'info') setShowInfoFindings(true);
   }, [checks, hashRevealCount]);
+
+  // A hash-revealed finding usually renders below the fold, under the sample
+  // cards, the questions, the check routing panel and the findings list, so
+  // scroll the rendered view into the viewport. An info reveal waits for the
+  // filter the reveal just turned on, so the added rows cannot push the view
+  // out of place, and `prefers-reduced-motion` selects an instant scroll.
+  useEffect(() => {
+    const id = pendingScrollRef.current;
+    if (id === null || checks.status !== 'ready') return;
+    const finding = checks.result.findings.find((candidate) => candidate.id === id);
+    if (!finding) {
+      pendingScrollRef.current = null;
+      return;
+    }
+    if (finding.severity === 'info' && !showInfoFindings) return;
+    pendingScrollRef.current = null;
+    const view = document.querySelector('[data-testid="finding-view"]');
+    if (!(view instanceof HTMLElement)) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    view.scrollIntoView({ block: 'start', behavior: reduced ? 'instant' : 'smooth' });
+  }, [checks, hashRevealCount, showInfoFindings]);
 
   const openFinding = (id: string) => {
     setSelectedFindingId(id);
@@ -714,6 +768,11 @@ export function App() {
         </label>
       </header>
 
+      <div className="farmbot-explain" data-testid="farmbot-explain">
+        <p className="muted small">{t('explainSources')}</p>
+        <p className="muted small">{t('explainEngine')}</p>
+      </div>
+
       {engine.status === 'loading' && (
         <p role="status" className="muted small">
           {t('loadingEngine')}
@@ -734,6 +793,54 @@ export function App() {
           {t('engineLabel')}: {engine.engine.abiVersion}
         </p>
       )}
+
+      <section
+        className="panel farmbot-samples"
+        aria-labelledby="samples-heading"
+        data-testid="sample-notifications"
+      >
+        <h2 id="samples-heading">{t('sampleHeading')}</h2>
+        <p className="muted small">{t('sampleIntro')}</p>
+        <ul className="sample-list">
+          {SAMPLE_NOTIFICATIONS.map((card) => (
+            <li
+              key={card.id}
+              className="sample-card"
+              data-testid="sample-card"
+              data-finding-id={card.id}
+              data-rule={card.rule}
+              data-severity={card.severity}
+            >
+              <p className="sample-card-head">
+                <span className="sample-card-badge" data-testid="sample-badge">
+                  {t('sampleCardLabel')}
+                </span>
+                <span className="sample-card-scenario">
+                  <span className="muted">{t('sampleScenarioLabel')}:</span>{' '}
+                  {t(card.scenarioKey)}
+                </span>
+              </p>
+              <p className="sample-card-found">
+                <span
+                  className={`severity-badge severity-${card.severity}`}
+                  data-testid="sample-severity"
+                >
+                  {t(SEVERITY_LABEL_KEYS[card.severity])}
+                </span>{' '}
+                {t(CHECK_RULE_LABEL_KEYS[card.rule])}
+              </p>
+              <p className="sample-card-summary" data-testid="sample-summary">
+                {t(card.summaryKey)}
+              </p>
+              <p className="sample-card-link-row">
+                <a data-testid="sample-open-finding" href={`#finding=${card.id}`}>
+                  {t('sampleOpenFinding')} <code>{`#finding=${card.id}`}</code>
+                </a>
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="panel">
         <h2>{t('questionsHeading')}</h2>

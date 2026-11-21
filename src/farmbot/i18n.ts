@@ -1,9 +1,41 @@
 export type Lang = 'ja' | 'en';
 
 const en = {
-  title: 'FarmBot graph questions',
+  title: 'Cross-document inconsistencies in FarmBot Genesis documentation, traced to evidence',
   subtitle:
     'Committed seed, Intents compiled by Ontographia, Cypher executed by Relate — all in this tab',
+  explainSources:
+    'EBOM here means the engineering part pages taken from the pinned FarmBot Genesis source. ' +
+    'MBOM is a view constructed by this repository — assembly chapters, pre-assemblies, kits, ' +
+    'bags and the carton — not an official FarmBot term. Service and Change Log pages are ' +
+    'further sources for the same hardware: when two documents disagree, this screen shows the ' +
+    'disagreement and does not decide which one is right.',
+  explainEngine:
+    'Ontographia compiles committed, ontology-constrained Intents into parameter-bound Cypher. ' +
+    'Relate executes that Cypher in this tab against the digest-verified seed (:memory:). ' +
+    'No user-typed or model-written Cypher is executed.',
+  sampleHeading: 'Sample notification emails',
+  sampleIntro:
+    'Each card is a sample of a notification email, not a sent one. Nothing is sent from this ' +
+    'page: opening a link runs the checks in this tab and highlights that finding.',
+  sampleCardLabel: 'Sample',
+  sampleScenarioLabel: 'Scenario checked',
+  sampleScenarioPacking: 'Packing and process documents versus part pages',
+  sampleScenarioDesignChange: 'Design-change reach into downstream documents',
+  sampleScenarioService: 'Service documents feeding back to design',
+  sampleScenarioCoverage: 'Coverage gaps in process documentation',
+  sampleSummaryR1NutBar:
+    'The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for ' +
+    '40mm Nut Bar disagree by 4 for standard.',
+  sampleSummaryR6PowerSupply:
+    'The Change Log links "Power Supply", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, ' +
+    'v1.7/manufacturing/packing/power-supply.md still list it.',
+  sampleSummaryR8ShaftCoupler:
+    'Shaft Coupler is named on v1.7/extras/troubleshooting/z-axis-movements.md but no assembly ' +
+    'chapter or pre-assembly references it.',
+  sampleSummaryR3Fuse:
+    'Fuse is referenced by no assembly chapter, pre-assembly, bag or packing list.',
+  sampleOpenFinding: 'Open the finding',
   language: 'Language',
   loadingEngine: 'Loading Ontographia (WASM)…',
   engineFailed: 'Ontographia (WASM) failed to load',
@@ -194,12 +226,44 @@ const en = {
   checkResultHeading: 'Confirmed check Intent results',
   checkResultNote:
     'These rows come only from the confirmed Intents. This path does not collect findings or calculate causes and severity.',
+  checkResultHint: 'Run checks collects the findings, causes and severity.',
 } as const;
 
 const ja: Record<keyof typeof en, string> = {
-  title: 'FarmBot グラフの質問',
+  title: 'FarmBot Genesis ドキュメントの文書間不一致とその根拠',
   subtitle:
     'コミット済みシード、Ontographia がコンパイルした Intent、Relate が実行する Cypher — すべてこのタブ内で完結します',
+  explainSources:
+    'この画面での EBOM は、ピン留めした FarmBot Genesis ソースから取り出したエンジニアリング用の部品ページを指します。' +
+    'MBOM は、組立チャプタ・プリ組立・キット・バッグ・カートンをまとめた、このリポジトリが構成した見方であり、' +
+    'FarmBot の公式用語ではありません。サービスページと変更ログも同じハードウェアの情報源です。' +
+    '2 つの文書が一致しないとき、この画面はその不一致を示すだけで、どちらが正しいかは判定しません。',
+  explainEngine:
+    'Ontographia は、コミット済みでオントロジーに制約された Intent を、パラメータを束縛した Cypher にコンパイルします。' +
+    'Relate はその Cypher を、このタブの中で、ダイジェストを検証したシード（:memory:）に対して実行します。' +
+    'ユーザーが入力した Cypher も、モデルが書いた Cypher も実行しません。',
+  sampleHeading: '通知メールのサンプル',
+  sampleIntro:
+    '各カードは通知メールのサンプルであり、実際に送信したものではありません。このページからは何も送信しません。' +
+    'リンクを開くと、このタブ内でチェックを実行して該当の検出を強調表示します。',
+  sampleCardLabel: 'サンプル',
+  sampleScenarioLabel: '確認したシナリオ',
+  sampleScenarioPacking: '梱包・工程文書と部品ページの突き合わせ',
+  sampleScenarioDesignChange: '設計変更の下流文書への到達',
+  sampleScenarioService: 'サービス文書から設計へのフィードバック',
+  sampleScenarioCoverage: '工程文書のカバレッジの欠落',
+  sampleSummaryR1NutBar:
+    'v1.7/manufacturing/packing/hardware-kit.md の梱包リストと 40mm Nut Bar の部品ページでは ' +
+    'standard の数量が 4 だけ異なります。',
+  sampleSummaryR6PowerSupply:
+    '"Power Supply" は変更ログで変更または削除されましたが、v1.7/extras/maintenance/storing-farmbot-for-winter.md、' +
+    'v1.7/manufacturing/packing/power-supply.md に依然として記載されています。',
+  sampleSummaryR8ShaftCoupler:
+    'Shaft Coupler は v1.7/extras/troubleshooting/z-axis-movements.md で名前が挙がっていますが、' +
+    '組立チャプタからもプリ組立からも参照されていません。',
+  sampleSummaryR3Fuse:
+    'Fuse は組立チャプタ、プリ組立、バッグ、梱包リストのいずれからも参照されていません。',
+  sampleOpenFinding: '検出を開く',
   language: '言語',
   loadingEngine: 'Ontographia (WASM) を読み込み中…',
   engineFailed: 'Ontographia (WASM) の読み込みに失敗しました',
@@ -391,6 +455,7 @@ const ja: Record<keyof typeof en, string> = {
   checkResultHeading: '確認済みチェック Intent の結果',
   checkResultNote:
     '確認された Intent の行だけを表示しています。この経路では検出結果の収集、原因候補の生成、重大度の計算を行いません。',
+  checkResultHint: '検出結果、原因候補、重大度は「チェックを実行」が収集します。',
 };
 
 export const messages = { en, ja };

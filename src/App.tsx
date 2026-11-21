@@ -463,6 +463,12 @@ export function App() {
         {t('disclaimer')}
       </p>
 
+      <p className="muted small entry-links">
+        <a href="farmbot/" data-testid="farmbot-entry-link">
+          {t('farmbotEntry')}
+        </a>
+      </p>
+
       {engine.status === 'loading' && (
         <p role="status" data-testid="loading">
           {t('loading')}

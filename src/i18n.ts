@@ -11,6 +11,8 @@ export const messages = {
     abiLabel: 'ABI version',
     disclaimer:
       'Ontographia compiled the Cypher. Results come from the in-browser Intent executor over the fixture (not a graph DB; the Cypher string was not executed).',
+    farmbotEntry:
+      'FarmBot screen: cross-document inconsistency checks over FarmBot Genesis documentation (/farmbot/)',
     chipsHeading: 'Ask a change question',
     chipsHint: 'Choose one question. Each run executes the same vendored Intent over the fixture.',
     chipsDisabled: 'Chips are disabled until the WASM engine loads.',
@@ -122,6 +124,8 @@ export const messages = {
     abiLabel: 'ABI バージョン',
     disclaimer:
       'Ontographia が Cypher をコンパイルしました。結果はフィクスチャ上でブラウザ内の Intent エグゼキュータが算出したものです（グラフ DB ではありません。Cypher 文字列は実行されていません）。',
+    farmbotEntry:
+      'FarmBot 画面: FarmBot Genesis ドキュメントの文書間不一致チェック（/farmbot/）',
     chipsHeading: '変更に関する問いを選ぶ',
     chipsHint: '問いを 1 つ選んでください。各実行は同じ同梱 Intent をフィクスチャ上で実行します。',
     chipsDisabled: 'WASM エンジンが読み込まれるまでチップは無効です。',

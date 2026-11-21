@@ -4,6 +4,8 @@ import {
   INTENT_MODEL_DOWNLOAD_BYTES,
   INTENT_MODEL_ID,
   INTENT_MODEL_VRAM_MB,
+  modelLoadAbortError,
+  reloadModelWithAbort,
 } from '../lib/webllm';
 import { allowedValues } from './data';
 import { CHECK_ROUTING_JSON_SCHEMA } from './check-routing.mjs';
@@ -32,19 +34,17 @@ export interface LoadedCheckModel {
 
 export const CHECK_ROUTING_SYSTEM_PROMPT = buildCheckRoutingSystemPrompt(allowedValues);
 
-const abortError = () => new DOMException('Model load cancelled', 'AbortError');
-
 /** Nothing is imported from the WebLLM package until this function is called. */
 export async function loadCheckRoutingModel(
   options: CheckModelLoadOptions = {},
 ): Promise<LoadedCheckModel> {
   const { signal } = options;
-  if (signal?.aborted) throw abortError();
+  if (signal?.aborted) throw modelLoadAbortError();
 
   const pkg = options.createEngine
     ? { createIntentEngine: options.createEngine }
     : await import('../lib/webllm-package');
-  if (signal?.aborted) throw abortError();
+  if (signal?.aborted) throw modelLoadAbortError();
 
   const engine = await pkg.createIntentEngine({
     initProgressCallback: (report) => {
@@ -55,24 +55,9 @@ export async function loadCheckRoutingModel(
       options.onProgress?.({ progress, text: report.text });
     },
   });
-  if (signal?.aborted) {
-    await engine.unload();
-    throw abortError();
-  }
 
-  const abort = () => {
-    void engine.unload();
-  };
-  signal?.addEventListener('abort', abort, { once: true });
-  try {
-    await engine.reload(INTENT_MODEL_ID);
-  } finally {
-    signal?.removeEventListener('abort', abort);
-  }
-  if (signal?.aborted) {
-    await engine.unload();
-    throw abortError();
-  }
+  // Shared abort-aware reload; identical to the desk-fan `loadIntentModel` path.
+  await reloadModelWithAbort(engine, INTENT_MODEL_ID, signal);
 
   return {
     async generate(text: string): Promise<string> {

@@ -255,6 +255,8 @@ export function buildIntentUserMessage(text: string): string {
 export interface LoadIntentModelOptions {
   signal?: AbortSignal;
   onProgress?: (report: { progress: number; text: string }) => void;
+  /** Test-only factory; production keeps the consent-gated lazy package import. */
+  createEngine?: typeof import('./webllm-package').createIntentEngine;
 }
 
 export interface LoadedIntentModel {
@@ -262,16 +264,66 @@ export interface LoadedIntentModel {
   unload(): Promise<void>;
 }
 
-const abortError = () => new DOMException('Model load cancelled', 'AbortError');
+/**
+ * The engine surface the shared reload step needs. Structural on purpose: both
+ * loaders' engines satisfy it, and tests inject a plain `{ reload, unload }`
+ * fake through the test-only `createEngine` option.
+ */
+export interface ReloadableModelEngine {
+  reload(modelId: string): Promise<void>;
+  unload(): Promise<void>;
+}
+
+/** The one AbortError both model loaders throw for a cancelled load. */
+export const modelLoadAbortError = () => new DOMException('Model load cancelled', 'AbortError');
+
+/**
+ * Abort-aware `engine.reload(modelId)`, shared by `loadIntentModel` below and
+ * the FarmBot `loadCheckRoutingModel` so the two paths cannot drift:
+ *
+ * - If the signal is already aborted when the freshly created engine arrives,
+ *   the engine is unloaded and the abort error is thrown before `reload` can
+ *   start the model download.
+ * - A later abort during `reload` unloads the engine through the listener.
+ * - An abort that lands while `reload` resolves is still caught by the final
+ *   check, so a cancelled load never returns a live engine.
+ */
+export async function reloadModelWithAbort(
+  engine: ReloadableModelEngine,
+  modelId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  if (signal?.aborted) {
+    await engine.unload();
+    throw modelLoadAbortError();
+  }
+
+  const abort = () => {
+    void engine.unload();
+  };
+  signal?.addEventListener('abort', abort, { once: true });
+  try {
+    await engine.reload(modelId);
+  } finally {
+    signal?.removeEventListener('abort', abort);
+  }
+
+  if (signal?.aborted) {
+    await engine.unload();
+    throw modelLoadAbortError();
+  }
+}
 
 export async function loadIntentModel(
   options: LoadIntentModelOptions = {},
 ): Promise<LoadedIntentModel> {
   const { signal } = options;
-  if (signal?.aborted) throw abortError();
+  if (signal?.aborted) throw modelLoadAbortError();
 
-  const pkg = await import('./webllm-package');
-  if (signal?.aborted) throw abortError();
+  const pkg = options.createEngine
+    ? { createIntentEngine: options.createEngine }
+    : await import('./webllm-package');
+  if (signal?.aborted) throw modelLoadAbortError();
 
   const engine = await pkg.createIntentEngine({
     initProgressCallback: (report) => {
@@ -283,21 +335,9 @@ export async function loadIntentModel(
     },
   });
 
-  const abort = () => {
-    void engine.unload();
-  };
-  signal?.addEventListener('abort', abort, { once: true });
-
-  try {
-    await engine.reload(INTENT_MODEL_ID);
-  } finally {
-    signal?.removeEventListener('abort', abort);
-  }
-
-  if (signal?.aborted) {
-    await engine.unload();
-    throw abortError();
-  }
+  // Closes the window between engine creation and reload: an abort in that gap
+  // unloads and throws inside the helper instead of starting the download.
+  await reloadModelWithAbort(engine, INTENT_MODEL_ID, signal);
 
   return {
     async generate(text: string): Promise<string> {

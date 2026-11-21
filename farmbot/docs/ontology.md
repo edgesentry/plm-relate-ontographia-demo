@@ -184,18 +184,6 @@ A few points of intent that the YAML does not carry:
 
 ## Validation
 
-`farmbot/test/ontology.test.mjs` parses the YAML and checks the shape of the
-declaration, every named class, the datatypes and directions against the allowed
-sets, and that every modelled property (except the derived ones) is a real
-column of a mapped source table in the DuckDB extract. It also compiles a few
-intents through the WebAssembly binding to confirm that the declared
-relationships produce the expected Cypher. When the extract is missing, the test
-builds it with the existing extract script.
-
-The graph test builds its own private copy of the extract, generates the full
-seed twice, and checks byte-identical output and digests. It checks that every
-label, property and relationship type in the seed is declared and that ancestor
-labels are present, rebuilds the committed seed and digest from scratch, and
-confirms that an undeclared name makes the generator fail. It also runs the part
-recipe and checks that the result is a strict subset of the full graph.
-`npm run test:farmbot` runs the extract, ontology, and graph tests.
+`farmbot/test/ontology.test.mjs` checks the declaration and its mapping onto
+the extract, and `farmbot/test/graph.test.mjs` checks the generated seed. Read
+those tests for what they assert; `npm run test:farmbot` runs both.

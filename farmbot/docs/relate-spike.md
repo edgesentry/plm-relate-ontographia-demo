@@ -15,11 +15,10 @@ seed is not the output of the official generator and is not the committed seed.
 Every node and edge count in this document (601 nodes, 1017 relationships)
 belongs to the probe seed only.
 
-The official generator `farmbot/scripts/graph.mjs` and the committed seed
-`farmbot/dist/farmbot.seed.json` hold **656 nodes and 1087 edges**, with digest
-`farmbot-graph-v1 sha256:5e0a2e2b65bf89ce61a1dbc217c7df2bcf09f61b527bf4626348892a52b15cd3`.
-Read those figures, not the probe figures, when reasoning about the shipped
-graph.
+The current committed graph's node and edge counts are in
+`farmbot/dist/farmbot.release.json`, and its digest is in
+`farmbot/dist/farmbot.seed.json.sha256`. Read those, not the probe figures,
+when reasoning about the shipped graph.
 
 ## Versions tested
 
@@ -118,20 +117,9 @@ Relationships by type (measured while loading):
 | IN_CATEGORY | 149 |
 | HAS_PART_VARIANT | 44 |
 
-Modelling choices in the seed, all taken from `farmbot/docs/ontology.md`:
-
-- 276 `Usage` nodes: 160 `assembly_reference` rows, 54 `preassembly_reference`
-  rows and 62 `packing_item` rows. The three `packing_item` rows with
-  `item_kind = 'pack'` are `Bag` nodes, not usage lines.
-- 5 `Bag` nodes: 3 from `pack` rows and 2 from the `Accessory bag BOM` section
-  (rotary-tool, seeder). The 6 references in those two sections are owned by
-  the bag, not by the enclosing pre-assembly page. The 3 pack-row bags have no
-  usage lines because the extract records their components only as plain text.
-- `APPLIES_TO` is set only where exactly one product version applies; a packing
-  row that applies to both versions has no edge.
-- Carton-to-kit nesting is not populated, matching the documented gap.
-- `QuantityDifference` nodes are the 12 `difference` rows among the 76
-  comparisons, carrying both labels rather than duplicating nodes.
+The seed follows the modelling choices in `farmbot/docs/ontology.md` and the
+generation logic in `farmbot/scripts/graph.mjs`; those files, not this
+historical report, define them.
 
 ## Query parameters
 

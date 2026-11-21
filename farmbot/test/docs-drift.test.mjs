@@ -14,6 +14,7 @@ const INTENTS_README = resolve(ROOT, 'farmbot/intents/README.md');
 const WORKFLOW = resolve(ROOT, '.github/workflows/ci.yml');
 const DOCS_DIR = resolve(ROOT, 'farmbot/docs');
 const DUCKDB_DOC = join(DOCS_DIR, 'duckdb-distribution.md');
+const RELATE_STORE_DOC = join(DOCS_DIR, 'relate-store.md');
 const README = resolve(ROOT, 'README.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
 const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
@@ -29,21 +30,7 @@ const JOB_CONTEXT = /\b(?:job|workflow)\b/i;
 
 function allowedValueDomains() {
   const values = JSON.parse(readFileSync(ALLOWED_VALUES, 'utf8'));
-  return new Set(Object.keys(values).filter((key) => key !== 'format'));
-}
-
-function documentedDomains() {
-  const lines = readFileSync(INTENTS_README, 'utf8').split('\n');
-  const header = lines.findIndex((line) => /^\|\s*Key\s*\|\s*Domain\s*\|/.test(line));
-  assert.notEqual(header, -1, 'farmbot/intents/README.md has no Key/Domain table');
-  const domains = new Set();
-  for (let index = header + 2; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (!line.startsWith('|')) break;
-    const match = /^\|\s*`([^`]+)`\s*\|/.exec(line);
-    if (match) domains.add(match[1]);
-  }
-  return domains;
+  return Object.keys(values).filter((key) => key !== 'format');
 }
 
 function releaseAssetArtifact() {
@@ -112,6 +99,39 @@ function markdownBlocks(text) {
  * @param {string} block
  * @returns {string[]}
  */
+
+/**
+ * GitHub-style heading slug, derived from the heading text.
+ *
+ * @param {string} title
+ * @returns {string}
+ */
+function markdownHeadingSlug(title) {
+  return title
+    .replace(/`+/g, '')
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+/**
+ * @param {string} text
+ * @returns {{ title: string, slug: string }[]}
+ */
+function markdownHeadings(text) {
+  const headings = [];
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
+    if (match) {
+      const title = match[2].replace(/\s+#+$/, '').trim();
+      headings.push({ title, slug: markdownHeadingSlug(title) });
+    }
+  }
+  return headings;
+}
+
 function releaseTokens(block) {
   return [...block.matchAll(/farmbot-release-assets[\w.-]*/g)].map((match) =>
     match[0].trim(),
@@ -387,22 +407,159 @@ test('a hardcoded inventory count fails even when it matches the committed data'
   }
 });
 
-test('the allowed-values domains and the intents README table agree', () => {
+test('the intents README points at the allowed-values file and its generator', () => {
   const domains = allowedValueDomains();
-  const documented = documentedDomains();
+  assert.ok(
+    domains.length > 0,
+    'farmbot/dist/farmbot.allowed-values.json declares no domains',
+  );
+  const generator = resolve(ROOT, 'farmbot/scripts/allowed-values.mjs');
+  assert.ok(existsSync(generator), 'farmbot/scripts/allowed-values.mjs is missing');
+  const text = readFileSync(INTENTS_README, 'utf8');
+  assert.ok(
+    text.includes('farmbot/dist/farmbot.allowed-values.json'),
+    'farmbot/intents/README.md does not point at farmbot/dist/farmbot.allowed-values.json',
+  );
+  assert.ok(
+    text.includes('farmbot/scripts/allowed-values.mjs'),
+    'farmbot/intents/README.md does not point at farmbot/scripts/allowed-values.mjs',
+  );
+});
 
-  for (const domain of domains) {
+test('documented npm run commands exist in package.json', () => {
+  const scripts = Object.keys(JSON.parse(readFileSync(PACKAGE_JSON, 'utf8')).scripts);
+  const files = [README, ...markdownFiles(DOCS_DIR)];
+  const pattern = /npm run ([a-zA-Z0-9:-]+)/g;
+  for (const path of files) {
+    const text = readFileSync(path, 'utf8');
+    for (const match of text.matchAll(pattern)) {
+      const name = match[1];
+      assert.ok(
+        scripts.includes(name),
+        `${path} names npm run ${name}, which package.json does not declare`,
+      );
+    }
+  }
+});
+
+test('the Genesis submodule pin agrees across README, provenance, extract and release manifest', () => {
+  const extract = readFileSync(resolve(ROOT, 'farmbot/scripts/extract.mjs'), 'utf8');
+  const declared = /export const EXPECTED_PIN = '([0-9a-f]{40})'/.exec(extract);
+  assert.ok(declared, 'farmbot/scripts/extract.mjs does not declare EXPECTED_PIN');
+  const pin = declared[1];
+  const manifest = JSON.parse(
+    readFileSync(resolve(ROOT, 'farmbot/dist/farmbot.release.json'), 'utf8'),
+  );
+  assert.equal(
+    manifest.genesis?.pin,
+    pin,
+    'farmbot/dist/farmbot.release.json genesis.pin differs from EXPECTED_PIN',
+  );
+  for (const rel of ['README.md', 'farmbot/PROVENANCE.md']) {
+    const text = readFileSync(resolve(ROOT, rel), 'utf8');
+    assert.ok(text.includes(pin), `${rel} does not name the Genesis pin ${pin}`);
+  }
+});
+
+test('release-asset docs point at the script and manifest rather than a copied table', () => {
+  const script = resolve(ROOT, 'farmbot/scripts/release-assets.mjs');
+  assert.ok(existsSync(script), 'farmbot/scripts/release-assets.mjs is missing');
+  const manifest = resolve(ROOT, 'farmbot/dist/farmbot.release.json');
+  assert.ok(existsSync(manifest), 'farmbot/dist/farmbot.release.json is missing');
+  const readme = readFileSync(README, 'utf8');
+  const duckdb = readFileSync(DUCKDB_DOC, 'utf8');
+  const store = readFileSync(RELATE_STORE_DOC, 'utf8');
+  for (const [path, text] of [
+    ['README.md', readme],
+    ['farmbot/docs/duckdb-distribution.md', duckdb],
+    ['farmbot/docs/relate-store.md', store],
+  ]) {
     assert.ok(
-      documented.has(domain),
-      `allowed-values domain ${domain} is missing from farmbot/intents/README.md`,
+      text.includes('farmbot/scripts/release-assets.mjs'),
+      `${path} does not point at farmbot/scripts/release-assets.mjs`,
+    );
+    assert.ok(
+      text.includes('farmbot/dist/farmbot.release.json') ||
+        text.includes('farmbot.release.json'),
+      `${path} does not point at the release manifest`,
     );
   }
-  for (const domain of documented) {
-    assert.ok(
-      domains.has(domain),
-      `farmbot/intents/README.md documents ${domain}, which the allowed-values file does not define`,
-    );
+  const headings = markdownHeadings(store);
+  const verify = headings.find((heading) =>
+    /verify and publish release assets/i.test(heading.title),
+  );
+  assert.ok(
+    verify,
+    'farmbot/docs/relate-store.md has no Verify and publish release assets heading',
+  );
+  assert.ok(
+    readme.includes(`farmbot/docs/relate-store.md#${verify.slug}`),
+    `README.md does not point at farmbot/docs/relate-store.md#${verify.slug}, derived from "${verify.title}"`,
+  );
+  const duckdbProse = markdownBlocks(duckdb).join('\n');
+  assert.ok(
+    !/asset table/i.test(duckdbProse),
+    'farmbot/docs/duckdb-distribution.md still promises an asset table',
+  );
+});
+
+test('extract and store docs do not restate CLI flags outside code fences', () => {
+  const flags = [
+    '--source',
+    '--out',
+    '--write-manifest',
+    'FARMBOT_GENESIS_DIR',
+    'FARMBOT_OUT_DIR',
+  ];
+  const duckdb = readFileSync(DUCKDB_DOC, 'utf8');
+  const store = readFileSync(RELATE_STORE_DOC, 'utf8');
+  assert.ok(
+    duckdb.includes('farmbot/scripts/extract.mjs'),
+    'farmbot/docs/duckdb-distribution.md does not point at farmbot/scripts/extract.mjs',
+  );
+  assert.ok(
+    store.includes('farmbot/scripts/relate-store.mjs'),
+    'farmbot/docs/relate-store.md does not point at farmbot/scripts/relate-store.mjs',
+  );
+  for (const [path, text] of [
+    ['farmbot/docs/duckdb-distribution.md', duckdb],
+    ['farmbot/docs/relate-store.md', store],
+  ]) {
+    const prose = markdownBlocks(text).join('\n');
+    for (const flag of flags) {
+      assert.ok(
+        !prose.includes(flag),
+        `${path} restates ${flag} outside code fences`,
+      );
+    }
   }
+});
+
+test('preset and release-asset docs do not restate inventory counts', () => {
+  const readme = readFileSync(README, 'utf8');
+  const duckdb = readFileSync(DUCKDB_DOC, 'utf8');
+  const readmeProse = markdownBlocks(readme).join('\n');
+  const duckdbProse = markdownBlocks(duckdb).join('\n');
+  assert.ok(
+    readme.includes('farmbot/oracle/default-results.gold.json'),
+    'README.md does not point at farmbot/oracle/default-results.gold.json',
+  );
+  assert.ok(
+    !/\b(?:[0-9]+|five)\s+preset questions\b/i.test(readmeProse),
+    'README.md restates a hardcoded preset-question count',
+  );
+  assert.ok(
+    duckdb.includes('farmbot/scripts/release-assets.mjs'),
+    'farmbot/docs/duckdb-distribution.md does not point at farmbot/scripts/release-assets.mjs',
+  );
+  assert.ok(
+    !/\b(?:[0-9]+|four)\s+release files\b/i.test(duckdbProse),
+    'farmbot/docs/duckdb-distribution.md restates a hardcoded release-asset count',
+  );
+  assert.ok(
+    !/carries the DuckDB extract, the Relate directory store archive/.test(readmeProse),
+    'README.md restates the release-asset list instead of pointing at the script',
+  );
 });
 
 test('the documented release artifact name matches the workflow', () => {
@@ -883,7 +1040,11 @@ function repoPathProblems(text) {
 test('farmbot/docs restate no dependency version pinned in package.json', () => {
   const tokens = declaredVersionTokens(JSON.parse(readFileSync(PACKAGE_JSON, 'utf8')));
   assert.ok(tokens.size > 0, 'package.json declares no single-version token this check can use');
-  for (const path of markdownFiles(DOCS_DIR)) {
+  const extra = [
+    INTENTS_README,
+    resolve(ROOT, 'vendor/ontographia/PROVENANCE.md'),
+  ];
+  for (const path of [...markdownFiles(DOCS_DIR), ...extra]) {
     // relate-spike.md is a dated spike report whose measured evidence may
     // coincide with a current pin, so only check (b) applies to it.
     if (path === SPIKE_DOC) continue;

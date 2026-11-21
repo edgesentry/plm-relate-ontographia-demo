@@ -116,10 +116,10 @@ function multiset(rows) {
     .sort();
 }
 
-// Build the extract into a private directory. The extract and graph tests
-// rebuild or reopen the shared farmbot/dist/farmbot.duckdb in other processes,
-// and the test runner runs files in parallel, so this file must not open that
-// path.
+// Build the extract into a private directory. FarmBot tests write their
+// extract into a temp directory of their own; the committed farmbot/dist
+// tree is only a read-only source of expected bytes. This file must not
+// open farmbot/dist/farmbot.duckdb.
 const PRIVATE_DIRECTORY = tempDir('farmbot-questions-extract-');
 const built = spawnSync(process.execPath, [EXTRACT, '--out', PRIVATE_DIRECTORY], {
   cwd: ROOT,

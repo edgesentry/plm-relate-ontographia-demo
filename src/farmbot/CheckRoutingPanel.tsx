@@ -431,6 +431,9 @@ export function CheckRoutingPanel({ engine, disabled, onRun, t }: CheckRoutingPa
         <div className="farmbot-check-result" data-testid="farmbot-check-result">
           <h3>{t('checkResultHeading')}</h3>
           <p className="muted small">{t('checkResultNote')}</p>
+          <p className="note small" data-testid="check-result-hint">
+            {t('checkResultHint')}
+          </p>
           <p className="muted small">
             {t('receivedDigestLabel')}: <code>{result.digest}</code>
           </p>

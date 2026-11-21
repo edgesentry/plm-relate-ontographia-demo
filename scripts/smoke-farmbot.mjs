@@ -23,6 +23,7 @@ import {
   summaryLine,
 } from '../src/farmbot/findings-view.mjs';
 import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
+import { SAMPLE_NOTIFICATIONS } from '../src/farmbot/sample-notifications.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const liveBase = process.env.SMOKE_BASE_URL?.trim();
@@ -557,6 +558,7 @@ async function main() {
     budgets: budgetRecords,
     findings: null,
     deepLink: null,
+    sampleEmails: null,
     processLanes: null,
     unknownFinding: null,
     malformedHashes: [],
@@ -1592,6 +1594,210 @@ async function main() {
       ...infoDeepClean,
     };
 
+    // Sample notification emails: the landing leads with clearly labelled
+    // cards whose cited ids exist in the committed findings document, and a
+    // click on a card from an idle page (checks not run yet) must auto-run the
+    // checks through the same-page hash change and open the cited finding.
+    // This is the idle `hashchange` path, not a fresh load with a hash.
+    const sample = await prepareContext(browser, 'sample-email');
+    await sample.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await sample.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+    await sample.page.waitForSelector('[data-testid="sample-notifications"]', {
+      timeout: 30000,
+    });
+
+    const titleEn = await sample.page.title();
+    assert(
+      /Cross-document inconsistencies in FarmBot Genesis documentation/i.test(titleEn),
+      `the document title is ${JSON.stringify(titleEn)}`,
+    );
+    await sample.page.selectOption('[data-testid="lang-toggle"]', 'ja');
+    await sample.page.waitForFunction(
+      () => /FarmBot Genesis ドキュメントの文書間不一致/.test(document.title),
+      undefined,
+      { timeout: 30000 },
+    );
+    await sample.page.selectOption('[data-testid="lang-toggle"]', 'en');
+    await sample.page.waitForFunction(
+      () => /Cross-document inconsistencies in FarmBot Genesis documentation/i.test(document.title),
+      undefined,
+      { timeout: 30000 },
+    );
+
+    const sampleCards = await sample.page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="sample-card"]')].map((card) => ({
+        id: card.getAttribute('data-finding-id') ?? '',
+        rule: card.getAttribute('data-rule') ?? '',
+        severity: card.getAttribute('data-severity') ?? '',
+        href: card.querySelector('[data-testid="sample-open-finding"]')?.getAttribute('href') ?? '',
+        badge:
+          card.querySelector('[data-testid="sample-badge"]')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+        summary:
+          (card.querySelector('[data-testid="sample-summary"]')?.textContent ?? '')
+            .replace(/\s+/g, ' ')
+            .trim(),
+        text: (card.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      })),
+    );
+    assert(
+      sampleCards.length === SAMPLE_NOTIFICATIONS.length,
+      `the landing shows ${sampleCards.length} sample cards, expected ${SAMPLE_NOTIFICATIONS.length}`,
+    );
+    assert(
+      JSON.stringify(sampleCards.map((card) => card.id)) ===
+        JSON.stringify(SAMPLE_NOTIFICATIONS.map((card) => card.id)),
+      'the sample cards differ from the catalog ids or order',
+    );
+    for (const card of sampleCards) {
+      const finding = findings.find((candidate) => candidate.id === card.id);
+      assert(finding, `a sample card cites unknown finding id ${card.id}`);
+      assert(
+        card.rule === finding.rule,
+        `sample card ${card.id} states rule ${card.rule}, the committed finding has ${finding.rule}`,
+      );
+      assert(
+        card.severity === finding.severity,
+        `sample card ${card.id} states severity ${card.severity}, the committed finding has ${finding.severity}`,
+      );
+      assert(
+        card.href === `#finding=${card.id}`,
+        `sample card ${card.id} links to ${JSON.stringify(card.href)}`,
+      );
+      assert(
+        card.badge === 'Sample',
+        `sample card ${card.id} is not labelled as a sample: ${card.badge}`,
+      );
+      const expectedSummary = summaryLine(finding, 'en').replace(/\s+/g, ' ').trim();
+      assert(
+        card.summary === expectedSummary,
+        `sample card ${card.id} does not show the committed summary\n` +
+          `  expected: ${expectedSummary}\n  actual:   ${card.summary}`,
+      );
+    }
+    const samplesAboveQuestions = await sample.page.evaluate(() => {
+      const samples = document.querySelector('[data-testid="sample-notifications"]');
+      const questions = document.querySelector('[data-testid="question-q1"]');
+      return Boolean(
+        samples &&
+          questions &&
+          samples.compareDocumentPosition(questions) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
+    assert(
+      samplesAboveQuestions,
+      'the sample notification cards are not above the preset questions',
+    );
+
+    // The cited finding is drawn from the committed file only, so the diagram
+    // and row expectations come from the same document.
+    const idleCard = sampleCards[0];
+    const idleFinding = findings.find((candidate) => candidate.id === idleCard.id);
+    assert(idleFinding, `the first sample card cites unknown finding id ${idleCard.id}`);
+    assert(
+      !(await sample.page.locator('[data-testid="findings-count"]').count()),
+      'the checks ran before the sample card was clicked',
+    );
+    const idleRelate = sample.requests.filter((url) => isRelateAssetUrl(url, entryInfo));
+    assert(idleRelate.length === 0, `the idle landing requested Relate: ${idleRelate.join(', ')}`);
+
+    await sample.page
+      .locator(`[data-testid="sample-card"][data-finding-id="${idleCard.id}"]`)
+      .locator('[data-testid="sample-open-finding"]')
+      .click();
+    await sample.page.waitForSelector('[data-testid="finding-view"]', { timeout: 180000 });
+    await sample.page.waitForSelector(
+      `[data-testid="finding-row-${idleCard.id}"]`,
+      { timeout: 30000 },
+    );
+    const sampleClickState = await sample.page.evaluate(
+      (findingId) => ({
+        hash: window.location.hash,
+        id: document.querySelector('[data-testid="finding-open-id"]')?.textContent?.trim() ?? '',
+        count: Number(document.querySelector('[data-testid="findings-count"]')?.textContent ?? '0'),
+        lanes: Boolean(document.querySelector('[data-testid="process-lanes"]')),
+        evidenceRows: document.querySelectorAll('[data-testid="evidence-row"]').length,
+      }),
+      idleCard.id,
+    );
+    assert(
+      sampleClickState.hash === `#finding=${idleCard.id}`,
+      `the sample click left the hash at ${sampleClickState.hash}`,
+    );
+    assert(
+      sampleClickState.id === idleCard.id,
+      `the sample click opened ${JSON.stringify(sampleClickState.id)}`,
+    );
+    assert(
+      sampleClickState.count === findings.length,
+      `the sample click ran checks reporting ${sampleClickState.count} findings`,
+    );
+    assert(
+      sampleClickState.lanes,
+      'the sample finding opened without its process-lane diagram',
+    );
+    assert(
+      sampleClickState.evidenceRows === idleFinding.evidence.length,
+      `the sample finding shows ${sampleClickState.evidenceRows} evidence rows, expected ` +
+        `${idleFinding.evidence.length}`,
+    );
+    const sampleTimings = await readTimings(sample.page);
+    assert(sampleTimings.checks, 'the sample click left no check result');
+    assert(
+      sampleTimings.checks.matches === true,
+      'the sample click produced a result that does not match the committed findings',
+    );
+    const clickRelate = sample.requests.filter((url) => isRelateAssetUrl(url, entryInfo));
+    assert(clickRelate.length > 0, 'the sample card click did not run the checks');
+    const notifyRequests = sample.requests.filter((url) =>
+      pathOf(url).startsWith('/api/notify'),
+    );
+    assert(
+      notifyRequests.length === 0,
+      `the sample card sent a notification request: ${notifyRequests.join(', ')}`,
+    );
+
+    // The production build serves a same-origin favicon, so GET /favicon.ico
+    // is not a 404.
+    const favicon = await sample.page.evaluate(async () => {
+      const response = await fetch('/favicon.ico', { cache: 'no-store' });
+      return {
+        status: response.status,
+        contentType: response.headers.get('content-type') ?? '',
+      };
+    });
+    assert(favicon.status === 200, `GET /favicon.ico returned HTTP ${favicon.status}`);
+    assert(
+      favicon.contentType.startsWith('image/x-icon'),
+      `GET /favicon.ico has content type ${JSON.stringify(favicon.contentType)}`,
+    );
+
+    const sampleClean = await assertContextClean(sample);
+    const sampleModel = assertNoModelRequests(sample.requests, 'sample email landing');
+    summary.sampleEmails = {
+      cards: sampleCards.map((card) => ({
+        id: card.id,
+        rule: card.rule,
+        severity: card.severity,
+        href: card.href,
+      })),
+      aboveQuestions: true,
+      idleClick: {
+        id: idleCard.id,
+        hash: sampleClickState.hash,
+        findingsCount: sampleClickState.count,
+        processLanes: sampleClickState.lanes,
+        evidenceRows: sampleClickState.evidenceRows,
+        checksDigestMatches: sampleTimings.checks.matches,
+        relateRequests: clickRelate.length,
+        notifyRequests: notifyRequests.length,
+      },
+      favicon: { status: favicon.status, contentType: favicon.contentType },
+      titleFollowsToggle: true,
+      ...sampleModel,
+      ...sampleClean,
+    };
+    await sample.context.close();
+
     // Process lanes: one deep link per rule in the committed file. The drawn
     // nodes and edges must equal the layout function's output for that finding,
     // a node click selects its evidence rows, and a row click selects its node.
@@ -2101,6 +2307,7 @@ async function main() {
       tampered: tamperCsp.length,
       deepLink: summary.deepLink.cspViolations,
       deepLinkInfo: summary.deepLink.info.cspViolations,
+      sampleEmails: summary.sampleEmails.cspViolations,
       processLanes: processLaneFixtures.map((entry) => entry.clean.cspViolations),
       unknown: summary.unknownFinding.cspViolations,
       malformed: summary.malformedHashes.map((entry) => entry.cspViolations),
@@ -2115,6 +2322,7 @@ async function main() {
       ...tamper.pageErrors,
       ...deep.pageErrors,
       ...infoDeep.pageErrors,
+      ...sample.pageErrors,
       ...processLaneFixtures.flatMap((entry) => entry.fixture.pageErrors),
       ...unknown.pageErrors,
       ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
@@ -2128,6 +2336,7 @@ async function main() {
         ...tamperExternal,
         ...deepClean.external,
         ...infoDeepClean.external,
+        ...sampleClean.external,
         ...processLaneFixtures.flatMap((entry) => entry.clean.external),
         ...unknownClean.external,
         ...summary.malformedHashes.flatMap((entry) => entry.external),

@@ -164,6 +164,10 @@ button:disabled {
   margin: 0 0 1rem;
 }
 
+.entry-links {
+  margin: 0 0 1rem;
+}
+
 .error-box {
   border: 1px solid #e5b3ae;
   background: var(--error-soft);

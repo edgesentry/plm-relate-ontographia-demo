@@ -125,14 +125,24 @@ evaluation never reads it.
 `src/farmbot/data.ts` imports every committed file the browser needs; nothing
 under `farmbot/checks/` is copied. The screen imports only the sidecar, not the
 findings document, to compare the browser result with the committed digest.
-Checks run on **Run checks**, or once after load from a well-formed deep link,
-both reusing the preset-question Relate session.
+Checks run on **Run checks**, once after load from a well-formed deep link, or
+once when a well-formed finding hash is clicked on a page whose checks have not
+run; all three reuse the preset-question Relate session.
 
 ## Notification panel
 
 The panel is computed from the produced findings and needs no committed document;
 `src/farmbot/findings-view.mjs` and `src/farmbot/App.tsx` define its counts,
 ordering, labels and digest comparison, with strings in `src/farmbot/i18n.ts`.
+
+The landing leads with sample notification-email cards. `SCENARIO_DIRECTIONS` in
+`src/farmbot/sample-notifications.mjs` groups the rules by the `direction`
+field on `CHECKS`, and each card cites one finding id from
+`farmbot/dist/farmbot.findings.json`; the localized scenario and summary strings
+live in `src/farmbot/i18n.ts`, and `scripts/smoke-farmbot.mjs` compares the
+rendered cards with the committed document. The cards are samples: nothing is
+sent from the page, and the Worker email path in `worker/notify.ts` is the only
+sender.
 
 ## Finding view
 
@@ -160,8 +170,10 @@ invented node, since the target lane may not be drawn.
 The format is `#finding=<id>` from the committed document. `parseFindingHash` in
 `src/farmbot/findings-view.mjs` defines the accepted shape: a malformed or
 overlong hash is ignored without a session or error, and a well-formed missing id
-runs the checks but opens nothing. Selecting a finding updates the address
-without a request.
+runs the checks but opens nothing. A hash change on an already-open page opens
+the matching finding and starts the checks when they have not run, which is the
+path a sample-email card takes on an idle screen. Selecting a finding updates
+the address without a request.
 
 ## Finding id
 

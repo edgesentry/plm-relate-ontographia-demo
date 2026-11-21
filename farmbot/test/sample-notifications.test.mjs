@@ -2,9 +2,11 @@
 //
 // Each card is a display citation: its id, rule and severity must come from
 // farmbot/dist/farmbot.findings.json, and every card must sit in the scenario
-// group its rule's `direction` belongs to. The localized scenario and summary
-// strings themselves live in src/farmbot/i18n.ts; the browser smoke compares
-// the rendered summaries with summaryLine output for the committed document.
+// group its rule's `direction` belongs to. The localized summary strings in
+// src/farmbot/i18n.ts must stay byte-identical to summaryLine output for the
+// cited finding in each language, so a regenerated findings file or a changed
+// template cannot leave stale sample text; the browser smoke additionally
+// compares the rendered cards with the same committed document.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -13,6 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import { CHECKS } from '../../src/farmbot/agent/checks.mjs';
+import { summaryLine } from '../../src/farmbot/findings-view.mjs';
+import { messages } from '../../src/farmbot/i18n.ts';
 import {
   SAMPLE_NOTIFICATIONS,
   SCENARIO_DIRECTIONS,
@@ -77,4 +81,23 @@ test('no two sample notifications cite the same finding or scenario', () => {
     scenarios.length,
     'a scenario group is cited twice',
   );
+});
+
+test('every sample notification summary equals summaryLine for its finding', () => {
+  for (const card of SAMPLE_NOTIFICATIONS) {
+    const finding = findingsDocument.findings.find(
+      (candidate) => candidate.id === card.id,
+    );
+    assert.ok(finding, `sample notification cites unknown finding id ${card.id}`);
+    for (const lang of ['en', 'ja']) {
+      const actual = messages[lang][card.summaryKey];
+      const expected = summaryLine(finding, lang);
+      assert.equal(
+        actual,
+        expected,
+        `sample notification ${card.id} ${lang} summary differs from summaryLine\n` +
+          `  expected: ${expected}\n  actual:   ${actual}`,
+      );
+    }
+  }
 });

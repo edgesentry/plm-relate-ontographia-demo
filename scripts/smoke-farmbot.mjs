@@ -403,6 +403,22 @@ async function readTimings(page) {
   return JSON.parse(text);
 }
 
+/**
+ * How many times the checks started and finished in this page. Every run of
+ * `runChecks()` records one `farmbot:checks:start:` mark when it starts and,
+ * once finished, one `farmbot:checks` measure, so the counts prove whether a
+ * sample-card click started or completed a second run.
+ */
+async function readChecksRuns(page) {
+  return page.evaluate(() => ({
+    starts:
+      performance.getEntriesByType('mark').filter((entry) =>
+        /^farmbot:checks:start:/.test(entry.name),
+      ).length,
+    measures: performance.getEntriesByName('farmbot:checks', 'measure').length,
+  }));
+}
+
 const budgetRecords = [];
 
 function checkBudget(label, measuredMs, budgetMs) {
@@ -1617,6 +1633,32 @@ async function main() {
       undefined,
       { timeout: 30000 },
     );
+    // While the UI is in Japanese, every rendered card summary must equal
+    // summaryLine(finding, 'ja') for the committed findings document.
+    const jaCards = await sample.page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="sample-card"]')].map((card) => ({
+        id: card.getAttribute('data-finding-id') ?? '',
+        summary:
+          (card.querySelector('[data-testid="sample-summary"]')?.textContent ?? '')
+            .replace(/\s+/g, ' ')
+            .trim(),
+      })),
+    );
+    assert(
+      jaCards.length === SAMPLE_NOTIFICATIONS.length,
+      `the Japanese landing shows ${jaCards.length} sample cards, expected ` +
+        `${SAMPLE_NOTIFICATIONS.length}`,
+    );
+    for (const card of jaCards) {
+      const finding = findings.find((candidate) => candidate.id === card.id);
+      assert(finding, `a sample card cites unknown finding id ${card.id}`);
+      const expectedJaSummary = summaryLine(finding, 'ja').replace(/\s+/g, ' ').trim();
+      assert(
+        card.summary === expectedJaSummary,
+        `sample card ${card.id} does not show the committed Japanese summary\n` +
+          `  expected: ${expectedJaSummary}\n  actual:   ${card.summary}`,
+      );
+    }
     await sample.page.selectOption('[data-testid="lang-toggle"]', 'en');
     await sample.page.waitForFunction(
       () => /Cross-document inconsistencies in FarmBot Genesis documentation/i.test(document.title),
@@ -1756,6 +1798,91 @@ async function main() {
       `the sample card sent a notification request: ${notifyRequests.join(', ')}`,
     );
 
+    // The revealed finding renders below the fold, so the reveal must scroll
+    // the view into the viewport. The default context expresses no
+    // reduced-motion preference, so the scroll is animated and settles here.
+    await sample.page.waitForFunction(
+      () => {
+        const view = document.querySelector('[data-testid="finding-view"]');
+        if (!view) return false;
+        const rect = view.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      },
+      undefined,
+      { timeout: 30000 },
+    );
+    const revealScroll = await sample.page.evaluate(() => {
+      const view = document.querySelector('[data-testid="finding-view"]');
+      const rect = view ? view.getBoundingClientRect() : null;
+      return {
+        inViewport: Boolean(rect && rect.top < window.innerHeight && rect.bottom > 0),
+        scrolled: window.scrollY > 0,
+      };
+    });
+    assert(
+      revealScroll.inViewport,
+      'the revealed finding view is not in the viewport',
+    );
+    assert(revealScroll.scrolled, 'the reveal did not scroll the page');
+
+    // Under prefers-reduced-motion: reduce the same reveal scrolls without
+    // animation: reset the scroll position, open a second sample card, and
+    // read the position as soon as the finding id has changed.
+    await sample.page.emulateMedia({ reducedMotion: 'reduce' });
+    assert(
+      await sample.page.evaluate(
+        () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      ),
+      'prefers-reduced-motion: reduce is not emulated',
+    );
+    await sample.page.evaluate(() => window.scrollTo(0, 0));
+    await sample.page.waitForFunction(() => window.scrollY === 0, undefined, {
+      timeout: 30000,
+    });
+    const reduceCard = sampleCards[1];
+    await sample.page
+      .locator(`[data-testid="sample-card"][data-finding-id="${reduceCard.id}"]`)
+      .locator('[data-testid="sample-open-finding"]')
+      .click();
+    await sample.page.waitForFunction(
+      (findingId) => {
+        const view = document.querySelector('[data-testid="finding-view"]');
+        if (!view) return false;
+        const id = document
+          .querySelector('[data-testid="finding-open-id"]')
+          ?.textContent?.trim();
+        if (id !== findingId) return false;
+        const rect = view.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0 && window.scrollY > 0;
+      },
+      reduceCard.id,
+      { timeout: 30000 },
+    );
+    const reducedScroll = await sample.page.evaluate(() => {
+      const view = document.querySelector('[data-testid="finding-view"]');
+      const rect = view ? view.getBoundingClientRect() : null;
+      return {
+        inViewport: Boolean(rect && rect.top < window.innerHeight && rect.bottom > 0),
+        scrolled: window.scrollY > 0,
+      };
+    });
+    assert(
+      reducedScroll.inViewport,
+      'the reduced-motion reveal left the finding view out of the viewport',
+    );
+    assert(reducedScroll.scrolled, 'the reduced-motion reveal did not scroll the page');
+
+    // Both sample-card clicks together must still have run the checks once.
+    const sampleRuns = await readChecksRuns(sample.page);
+    assert(
+      sampleRuns.starts === 1,
+      `the sample-card clicks started checks ${sampleRuns.starts} time(s)`,
+    );
+    assert(
+      sampleRuns.measures === 1,
+      `the sample-card clicks completed checks ${sampleRuns.measures} time(s)`,
+    );
+
     // The production build serves a same-origin favicon, so GET /favicon.ico
     // is not a 404.
     const favicon = await sample.page.evaluate(async () => {
@@ -1790,6 +1917,7 @@ async function main() {
         href: card.href,
       })),
       aboveQuestions: true,
+      jaSummariesMatch: true,
       idleClick: {
         id: idleCard.id,
         hash: sampleClickState.hash,
@@ -1797,8 +1925,19 @@ async function main() {
         processLanes: sampleClickState.lanes,
         evidenceRows: sampleClickState.evidenceRows,
         checksDigestMatches: sampleTimings.checks.matches,
+        checksStarted: sampleRuns.starts,
+        checksCompleted: sampleRuns.measures,
         relateRequests: clickRelate.length,
         notifyRequests: notifyRequests.length,
+        revealScroll: {
+          inViewport: revealScroll.inViewport,
+          scrolled: revealScroll.scrolled,
+        },
+        reducedMotionScroll: {
+          id: reduceCard.id,
+          inViewport: reducedScroll.inViewport,
+          scrolled: reducedScroll.scrolled,
+        },
       },
       favicon: { status: favicon.status, contentType: favicon.contentType, bytes: favicon.bytes },
       titleFollowsToggle: true,
@@ -1806,6 +1945,84 @@ async function main() {
       ...sampleClean,
     };
     await sample.context.close();
+
+    // A completed manual Run checks latches the hash auto-run: a later
+    // sample-card click opens the cited finding without starting checks again.
+    // Every run of runChecks() appends one `farmbot:checks:start:` mark and,
+    // once finished, one `farmbot:checks` measure, so the counts show whether
+    // the click started or completed a second run.
+    const manual = await prepareContext(browser, 'sample-email-manual-run');
+    await manual.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await manual.page.waitForSelector('[data-testid="run-checks"]:not([disabled])', {
+      timeout: 30000,
+    });
+    await manual.page.click('[data-testid="run-checks"]');
+    await manual.page.waitForSelector('[data-testid="findings-count"]', {
+      timeout: 180000,
+    });
+    const manualRuns = await readChecksRuns(manual.page);
+    assert(
+      manualRuns.starts === 1 && manualRuns.measures === 1,
+      `the manual Run checks recorded ${manualRuns.starts} start mark(s) and ` +
+        `${manualRuns.measures} measure(s), expected 1 and 1`,
+    );
+    const manualCard = SAMPLE_NOTIFICATIONS[0];
+    await manual.page
+      .locator(`[data-testid="sample-card"][data-finding-id="${manualCard.id}"]`)
+      .locator('[data-testid="sample-open-finding"]')
+      .click();
+    await manual.page.waitForSelector('[data-testid="finding-view"]', { timeout: 30000 });
+    await manual.page.waitForSelector(`[data-testid="finding-row-${manualCard.id}"]`, {
+      timeout: 30000,
+    });
+    // Give a would-be second run time to start and to finish.
+    await delay(500);
+    const afterManualClick = await readChecksRuns(manual.page);
+    assert(
+      afterManualClick.starts === manualRuns.starts,
+      `the sample-card click after a manual run started checks again ` +
+        `(${afterManualClick.starts} start mark(s))`,
+    );
+    assert(
+      afterManualClick.measures === manualRuns.measures,
+      `the sample-card click after a manual run completed checks again ` +
+        `(${afterManualClick.measures} measure(s))`,
+    );
+    const manualClickState = await manual.page.evaluate(
+      (findingId) => ({
+        hash: window.location.hash,
+        id: document.querySelector('[data-testid="finding-open-id"]')?.textContent?.trim() ?? '',
+        count: Number(document.querySelector('[data-testid="findings-count"]')?.textContent ?? '0'),
+        checksError: Boolean(document.querySelector('[data-testid="checks-error"]')),
+      }),
+      manualCard.id,
+    );
+    assert(
+      manualClickState.hash === `#finding=${manualCard.id}`,
+      `the sample click after a manual run left the hash at ${manualClickState.hash}`,
+    );
+    assert(
+      manualClickState.id === manualCard.id,
+      `the sample click after a manual run opened ${JSON.stringify(manualClickState.id)}`,
+    );
+    assert(
+      manualClickState.count === findings.length,
+      `the sample click after a manual run left ${manualClickState.count} findings on screen`,
+    );
+    assert(
+      !manualClickState.checksError,
+      'the sample click after a manual run showed a checks error',
+    );
+    const manualClean = await assertContextClean(manual);
+    summary.sampleEmails.manualRunClick = {
+      id: manualCard.id,
+      checksStarted: afterManualClick.starts,
+      checksCompleted: afterManualClick.measures,
+      findingsCount: manualClickState.count,
+      checksError: false,
+      ...manualClean,
+    };
+    await manual.context.close();
 
     // Process lanes: one deep link per rule in the committed file. The drawn
     // nodes and edges must equal the layout function's output for that finding,
@@ -2317,6 +2534,7 @@ async function main() {
       deepLink: summary.deepLink.cspViolations,
       deepLinkInfo: summary.deepLink.info.cspViolations,
       sampleEmails: summary.sampleEmails.cspViolations,
+      sampleEmailsManualRun: summary.sampleEmails.manualRunClick.cspViolations,
       processLanes: processLaneFixtures.map((entry) => entry.clean.cspViolations),
       unknown: summary.unknownFinding.cspViolations,
       malformed: summary.malformedHashes.map((entry) => entry.cspViolations),
@@ -2332,6 +2550,7 @@ async function main() {
       ...deep.pageErrors,
       ...infoDeep.pageErrors,
       ...sample.pageErrors,
+      ...manual.pageErrors,
       ...processLaneFixtures.flatMap((entry) => entry.fixture.pageErrors),
       ...unknown.pageErrors,
       ...summary.malformedHashes.flatMap((entry) => entry.pageErrors),
@@ -2346,6 +2565,7 @@ async function main() {
         ...deepClean.external,
         ...infoDeepClean.external,
         ...sampleClean.external,
+        ...manualClean.external,
         ...processLaneFixtures.flatMap((entry) => entry.clean.external),
         ...unknownClean.external,
         ...summary.malformedHashes.flatMap((entry) => entry.external),

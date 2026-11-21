@@ -227,6 +227,8 @@ export function App() {
   const evidenceRowRefs = useRef<Map<number, HTMLLIElement | null>>(new Map());
 
   const pendingRevealRef = useRef<string | null>(initialFindingId);
+  // The finding id whose hash reveal still owes a scroll of the finding view.
+  const pendingScrollRef = useRef<string | null>(null);
   const sessionRef = useRef<RelateSession | null>(null);
   const sessionPromise = useRef<Promise<RelateSession> | null>(null);
   const trappedRef = useRef(false);
@@ -516,6 +518,9 @@ export function App() {
     if (engine.status !== 'ready' || checksRunningRef.current) return;
     const checkEngine = engine.engine;
     checksRunningRef.current = true;
+    // Any started checks satisfy the deep-link auto-run, so a later
+    // `#finding=` hash change cannot start a second run after a manual one.
+    autoChecksRef.current = true;
     // Checks own `checks`; a preset-question error stays visible in its own box.
     setChecks({ status: 'running' });
 
@@ -593,6 +598,8 @@ export function App() {
   // A well-formed deep link runs the checks once, after the engine is ready.
   // The hash can be present at load or arrive later on the same page: a click
   // on a sample-email link only changes the hash, so both paths land here.
+  // `runChecks` itself latches `autoChecksRef`, so checks that already started
+  // — by this effect or by a manual Run checks — are never started twice.
   // Any other hash does nothing: no session, no request, no error.
   useEffect(() => {
     if (autoChecksRef.current) return;
@@ -627,8 +634,33 @@ export function App() {
     if (id === null || checks.status !== 'ready') return;
     pendingRevealRef.current = null;
     const finding = checks.result.findings.find((candidate) => candidate.id === id);
-    if (finding?.severity === 'info') setShowInfoFindings(true);
+    if (!finding) return;
+    // The view for this finding renders in the same commit; one scroll of it
+    // is owed once the info filter has settled.
+    pendingScrollRef.current = id;
+    if (finding.severity === 'info') setShowInfoFindings(true);
   }, [checks, hashRevealCount]);
+
+  // A hash-revealed finding usually renders below the fold, under the sample
+  // cards, the questions, the check routing panel and the findings list, so
+  // scroll the rendered view into the viewport. An info reveal waits for the
+  // filter the reveal just turned on, so the added rows cannot push the view
+  // out of place, and `prefers-reduced-motion` selects an instant scroll.
+  useEffect(() => {
+    const id = pendingScrollRef.current;
+    if (id === null || checks.status !== 'ready') return;
+    const finding = checks.result.findings.find((candidate) => candidate.id === id);
+    if (!finding) {
+      pendingScrollRef.current = null;
+      return;
+    }
+    if (finding.severity === 'info' && !showInfoFindings) return;
+    pendingScrollRef.current = null;
+    const view = document.querySelector('[data-testid="finding-view"]');
+    if (!(view instanceof HTMLElement)) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    view.scrollIntoView({ block: 'start', behavior: reduced ? 'instant' : 'smooth' });
+  }, [checks, hashRevealCount, showInfoFindings]);
 
   const openFinding = (id: string) => {
     setSelectedFindingId(id);

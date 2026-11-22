@@ -14,8 +14,11 @@ import { CHECK_CATALOG } from '../../src/farmbot/check-catalog.mjs';
 import { parseCheckRouting, prepareCheckProposal } from '../../src/farmbot/check-routing.mjs';
 import { messages } from '../../src/farmbot/i18n.ts';
 import {
+  REJECTION_DEMO_UNEXPECTED_DETAIL,
   REJECTED_ROUTING_DEMO_ID,
   REJECTED_ROUTING_DEMO_TEXT,
+  phaseAfterRejectionDemo,
+  prepareRejectionDemo,
 } from '../../src/farmbot/rejection-demo.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -100,4 +103,63 @@ test('the rejection labels are present in both i18n blocks', () => {
     assert.equal(en[key], enValue, `en.${key}`);
     assert.equal(ja[key], jaValue, `ja.${key}`);
   }
+});
+
+test('pressing the demo while generating restores the ready phase, like selectChip', () => {
+  assert.equal(phaseAfterRejectionDemo('generating'), 'ready');
+  for (const phase of [
+    'checking',
+    'unsupported',
+    'consent',
+    'declined',
+    'loading',
+    'ready',
+    'error',
+  ]) {
+    assert.equal(phaseAfterRejectionDemo(phase), phase, phase);
+  }
+});
+
+test('the demo helper rejects the fixture without incrementing compile attempts', () => {
+  const prepared = prepareRejectionDemo(REJECTED_ROUTING_DEMO_TEXT, {
+    allowedValues,
+    checkIntents,
+    ontology,
+  });
+  assert.equal(prepared.kind, 'validation');
+  assert.ok(prepared.detail.includes('Cypher'), prepared.detail);
+  assert.equal(prepared.sample, REJECTED_ROUTING_DEMO_TEXT);
+  assert.equal(prepared.compileAttemptsDelta, 0);
+});
+
+test('an unexpectedly valid fixture still does not compile or increment compile attempts', () => {
+  const accepted = JSON.stringify({ check: 'R1', parameter: null });
+  const parsed = parseCheckRouting(accepted, allowedValues);
+  assert.equal(parsed.ok, true, 'precondition: R1 with a null parameter must validate');
+
+  let compileCalls = 0;
+  const compiler = {
+    buildCypher() {
+      compileCalls += 1;
+      return 'MATCH (n) RETURN n';
+    },
+  };
+  // The production chip/model path would compile this input.
+  const throughCompiler = prepareCheckProposal(accepted, {
+    allowedValues,
+    checkIntents,
+    compiler,
+    ontology,
+  });
+  assert.equal(throughCompiler.ok, true, throughCompiler.ok ? '' : throughCompiler.errors.join('\n'));
+  assert.ok(compileCalls > 0);
+
+  const callsBeforeDemo = compileCalls;
+  const prepared = prepareRejectionDemo(accepted, { allowedValues, checkIntents, ontology });
+  assert.equal(prepared.kind, 'validation');
+  assert.equal(prepared.detail, REJECTION_DEMO_UNEXPECTED_DETAIL);
+  assert.equal(prepared.sample, accepted);
+  assert.equal(prepared.compileAttemptsDelta, 0);
+  // The helper hard-codes compiler: null, so the spy above is not used again.
+  assert.equal(compileCalls, callsBeforeDemo);
 });

@@ -4,7 +4,11 @@ import { CheckFreeTextPanel, type CheckFreeTextPhase } from './CheckFreeTextPane
 import { CHECK_CATALOG } from './check-catalog.mjs';
 import { prepareCheckProposal } from './check-routing.mjs';
 import { loadCheckRoutingModel, type LoadedCheckModel } from './check-webllm';
-import { REJECTED_ROUTING_DEMO_TEXT } from './rejection-demo.mjs';
+import {
+  REJECTED_ROUTING_DEMO_TEXT,
+  phaseAfterRejectionDemo,
+  prepareRejectionDemo,
+} from './rejection-demo.mjs';
 import { allowedValues, checkIntents, farmbotOntology } from './data';
 import type { MessageKey } from './i18n';
 import type {
@@ -278,40 +282,28 @@ export function CheckRoutingPanel({ engine, disabled, onRun, t }: CheckRoutingPa
     setProposal(prepared.proposal);
   };
 
-  // The fixed sample takes the same validator path as raw model text. Validation
-  // fails before the compiler, so this works even when engine is null; no model
-  // state, consent state or phase is touched.
+  // The fixed sample takes the same validator path as raw model text. The
+  // helper never passes a compiler, so this works when engine is null. If a
+  // generate() call is in flight, restore phase the same way as selectChip.
   const showRejectionDemo = () => {
     generationToken.current += 1;
     runToken.current += 1;
+    const nextPhase = phaseAfterRejectionDemo(phase);
+    if (nextPhase !== phase) setPhase(nextPhase);
     setRunning(false);
     setResult(null);
     setProposal(null);
     setNotice(null);
     setError(null);
-    const prepared = prepareCheckProposal(REJECTED_ROUTING_DEMO_TEXT, {
+    const prepared = prepareRejectionDemo(REJECTED_ROUTING_DEMO_TEXT, {
       allowedValues,
       checkIntents,
-      compiler: engine,
       ontology: farmbotOntology,
-    }) as CheckPreparation;
-    setDebug((current) => ({
-      ...current,
-      compileAttempts:
-        current.compileAttempts + (prepared.ok || prepared.stage === 'compile' ? 1 : 0),
-    }));
-    if (prepared.ok) {
-      setError({
-        kind: 'validation',
-        detail: 'The rejection demonstration fixture was unexpectedly accepted.',
-        sample: REJECTED_ROUTING_DEMO_TEXT,
-      });
-      return;
-    }
+    });
     setError({
       kind: 'validation',
-      detail: prepared.errors.join('\n'),
-      sample: REJECTED_ROUTING_DEMO_TEXT,
+      detail: prepared.detail,
+      sample: prepared.sample,
     });
   };
 

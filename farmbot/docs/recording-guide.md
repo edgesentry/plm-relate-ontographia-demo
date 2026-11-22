@@ -1,9 +1,9 @@
 # FarmBot Genesis B1 Demo Video Recording Guide
 
-A timed, shootable recording guide for filming the live `/farmbot/` screen in one pass against the accepted 7-beat spine. This guide translates the draft narration from `farmbot/docs/demo-script.md` into an operational shot list with exact live URLs, click sequences, on-screen UI requirements (keyed to `src/farmbot/i18n.ts`), English voiceover lines, target durations, and cut points.
+A timed, shootable recording guide for filming the live `/farmbot/` screen in one pass against the accepted 8-beat spine (a Beat 0 opening plus the seven beats). This guide translates the draft narration from `farmbot/docs/demo-script.md` into an operational shot list with exact live URLs, click sequences, on-screen UI requirements (keyed to `src/farmbot/i18n.ts`), English voiceover lines, target durations, and cut points.
 
 Live URL: `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`  
-Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; 7 beats sum to 99 seconds).
+Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; the eight named beats sum to 103 seconds).
 
 ---
 
@@ -40,17 +40,39 @@ Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; 7 beats sum to
 
 ```
 Spine Overview:
-Beat 1 (12s) ──> Beat 2 (18s) ──> Beat 3 (18s) ──> Beat 4 (12s) ──> Beat 5 (15s) ──> Beat 6 (12s) ──> Beat 7 (12s)
-Sample Cards     Deep Link R6     Lanes & Cypher   SBOM Lane R1     BOP & PDF R2/R5   Rejection Button Closing Bound
-                                                                                      (99s Total)
+Beat 0 (12s) ──> Beat 1 (12s) ──> Beat 2 (18s) ──> Beat 3 (18s) ──> Beat 4 (12s) ──> Beat 5 (15s) ──> Beat 6 (9s) ──> Beat 7 (7s)
+Opening        Sample Cards     Deep Link R6     Lanes & Cypher   SBOM Lane R1     BOP & PDF R2/R5   Rejection Button Closing Bound
+                                                                                      (103s Total)
 ```
+
+Named trim, so the opening plus the seven beats stays inside the spoken envelope:
+
+- The 12-second Beat 0 opening is added.
+- Beat 6 is trimmed by 3 seconds (12 to 9 seconds).
+- Beat 7 is trimmed by 5 seconds (12 to 7 seconds), by dropping its first sentence; the closing line stays verbatim.
+- The eight named beats sum to 103 seconds, inside the 90 to 110 second spoken envelope and under 2 minutes.
+
+### Beat 0: Opening (Background, Purpose, and Flow Overview)
+- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Click Sequence:**
+  1. Open the URL in a fresh browser tab and let the first frame settle.
+  2. Do not click, do not scroll, and do not type: this beat is spoken over the landing before any Beat 1 screen operation.
+- **On-Screen Requirements:**
+  - The compact 3-step flow strip above the sample notification cards (`data-testid="flow-strip"`), showing one short line: `flowStepAgent` ("Agent finds the drift"), then `flowStepEmail` ("Email link"), then `flowStepAnalysis` ("Graph analysis in the browser").
+  - The "How it works" disclosure (`data-testid="how-it-works"`, `howItWorksLabel`) stays closed, so the EBOM/MBOM and engine definitions stay off the fold during the take.
+- **English Voiceover Line:**
+  > "Hardware docs drift across BOMs, packing lists, and service pages. An agent spots the broken subgraph, emails a link, and clicking it runs live graph verification right in your browser."
+- **Target Timing:** 12 seconds
+- **Cut Point:** Right after the narrator finishes the spoken line, as the camera settles on the sample notification cards for Beat 1.
+
+---
 
 ### Beat 1: Sample Notification Card
 - **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
 - **Click Sequence:**
   1. Open the URL in a fresh browser tab.
   2. Confirm English UI is active (`data-testid="lang-toggle"` shows English selected).
-  3. Keep the viewport scrolled to the top so the header and "Sample notification emails" section are visible.
+  3. Keep the viewport scrolled to the top (`y = 0`): at `1280x800` the header, the flow strip, and every sample card with its `sampleOpenFinding` link are fully visible, with no link clipped at the bottom edge.
   4. Hover or place cursor near the sample notification cards, specifically the second card citing `R6-power-supply`.
 - **On-Screen Requirements:**
   - Section heading: `sampleHeading` ("Sample notification emails").
@@ -172,7 +194,7 @@ Sample Cards     Deep Link R6     Lanes & Cypher   SBOM Lane R1     BOP & PDF R2
   - Zero compilation or execution attempts triggered.
 - **English Voiceover Line:**
   > "If the routing output contains Cypher or a markdown fence, the screen rejects it. Nothing new is compiled or executed."
-- **Target Timing:** 12 seconds
+- **Target Timing:** 9 seconds
 - **Cut Point:** As the rejection alert banner and validator error string are clearly readable.
 
 ---
@@ -187,10 +209,10 @@ Sample Cards     Deep Link R6     Lanes & Cypher   SBOM Lane R1     BOP & PDF R2
     `"The model never writes Cypher and never detects, explains, or scores a finding. Strict validation precedes Ontographia compilation."`
   - Rule chips (`checkChipListLabel`) and committed artifact digests visible in the background, reinforcing deterministic execution.
 - **English Voiceover Line:**
-  > "The optional local model selects a closed check Intent and the check engine does the work. In short, the model only routes; it never writes Cypher."
-- **Target Timing:** 12 seconds
+  > "In short, the model only routes; it never writes Cypher."
+- **Target Timing:** 7 seconds
 - **Cut Point:** Hold for 1 second of clean pause immediately following the final spoken phrase `"it never writes Cypher."`
-- **Pacing & Trimming Directive:** If the overall take runs long, trim the first sentence of Beat 7 first, followed by shortening Beat 6. The concluding sentence `"In short, the model only routes; it never writes Cypher."` must remain intact as the final spoken statement of the video.
+- **Pacing & Trimming Directive:** The named trim already applies: Beat 7 speaks only its closing line, and Beat 6 is 9 seconds. If a retake still runs long, tighten the pause before the Beat 6 button press first. The concluding sentence `"In short, the model only routes; it never writes Cypher."` must remain intact as the final spoken statement of the video.
 
 ---
 
@@ -224,7 +246,7 @@ The following constraints are quoted verbatim from the repository documentation.
 
 > "Target spoken length: 1 to 2 minutes."
 
-> "Keep the narration within 1 to 2 minutes, about 90 to 110 seconds. If it runs long, cut the decline-path explanation in step 7 first, then shorten step 6."
+> "Keep the narration within 1 to 2 minutes, about 90 to 110 seconds. If it runs long, shorten step 6 first, then step 0; the closing words must stay the final statement."
 
 > "Do not claim that the live deployment already serves a build you have not confirmed."
 

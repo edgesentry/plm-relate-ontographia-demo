@@ -576,6 +576,7 @@ async function main() {
     findings: null,
     deepLink: null,
     sampleEmails: null,
+    landingFold: null,
     processLanes: null,
     unknownFinding: null,
     malformedHashes: [],
@@ -2117,6 +2118,120 @@ async function main() {
     };
     await manual.context.close();
 
+    // Landing fold at the filming viewport (#117): at 1280x800 with scroll
+    // y = 0, the 3-step flow strip is present as one short line, the How it
+    // works disclosure starts closed, and every sample card and every
+    // "Open the finding" link is fully inside the viewport, including the
+    // card that cites R6-power-supply. Checked in English and in Japanese
+    // through the language toggle.
+    const fold = await prepareContext(browser, 'landing-fold-1280x800', {
+      width: 1280,
+      height: 800,
+    });
+    await fold.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await fold.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+    const readFoldState = () =>
+      fold.page.evaluate(() => ({
+        scrollY: window.scrollY,
+        stripSteps: [
+          ...document.querySelectorAll('[data-testid="flow-strip"] [data-testid^="flow-step-"]'),
+        ].map((element) => ({
+          label: (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+          top: element.getBoundingClientRect().top,
+        })),
+        disclosureOpen: document.querySelector('[data-testid="how-it-works"]')?.open ?? null,
+        cards: [...document.querySelectorAll('[data-testid="sample-card"]')].map((element) => {
+          const rect = element.getBoundingClientRect();
+          return { top: rect.top, bottom: rect.bottom };
+        }),
+        links: [...document.querySelectorAll('[data-testid="sample-open-finding"]')].map(
+          (element) => {
+            const rect = element.getBoundingClientRect();
+            return { top: rect.top, bottom: rect.bottom };
+          },
+        ),
+      }));
+    const assertFoldState = (state, label) => {
+      assert(
+        state.scrollY === 0,
+        `${label}: the page scrolled (y = ${state.scrollY}); the fold check must run at y = 0`,
+      );
+      assert(
+        state.disclosureOpen === false,
+        `${label}: the How it works disclosure is open on first render`,
+      );
+      assert(
+        state.stripSteps.length === 3,
+        `${label}: the flow strip shows ${state.stripSteps.length} steps, expected 3`,
+      );
+      assert(
+        state.stripSteps.every((step) => step.label !== ''),
+        `${label}: a flow strip step renders an empty label`,
+      );
+      assert(
+        new Set(state.stripSteps.map((step) => Math.round(step.top))).size === 1,
+        `${label}: the flow strip wrapped onto more than one line`,
+      );
+      assert(
+        state.cards.length === SAMPLE_NOTIFICATIONS.length,
+        `${label}: the landing shows ${state.cards.length} sample cards, expected ` +
+          `${SAMPLE_NOTIFICATIONS.length}`,
+      );
+      assert(
+        state.links.length === SAMPLE_NOTIFICATIONS.length,
+        `${label}: the landing shows ${state.links.length} sample card links, expected ` +
+          `${SAMPLE_NOTIFICATIONS.length}`,
+      );
+      for (const [index, card] of state.cards.entries()) {
+        assert(
+          card.top >= 0 && card.bottom <= 800,
+          `${label}: sample card ${index} is clipped at 1280x800 (top ${card.top}, bottom ${card.bottom})`,
+        );
+      }
+      for (const [index, link] of state.links.entries()) {
+        assert(
+          link.top >= 0 && link.bottom <= 800,
+          `${label}: sample card link ${SAMPLE_NOTIFICATIONS[index]?.id ?? index} is clipped at ` +
+            `1280x800 (top ${link.top}, bottom ${link.bottom})`,
+        );
+      }
+      return state;
+    };
+    const foldEn = assertFoldState(await readFoldState(), 'landing fold en');
+    await fold.page.selectOption('[data-testid="lang-toggle"]', 'ja');
+    await fold.page.waitForFunction(
+      () => /FarmBot Genesis ドキュメントの文書間不一致/.test(document.title),
+      undefined,
+      { timeout: 30000 },
+    );
+    const foldJa = assertFoldState(await readFoldState(), 'landing fold ja');
+    assert(
+      foldJa.stripSteps.every((step, index) => step.label !== foldEn.stripSteps[index].label),
+      'the Japanese flow strip labels copy the English labels',
+    );
+    const r6Card = SAMPLE_NOTIFICATIONS.find((card) => card.rule === 'R6');
+    assert(r6Card, 'the sample catalog cites no R6 card');
+    const r6Index = SAMPLE_NOTIFICATIONS.indexOf(r6Card);
+    const foldClean = await assertContextClean(fold);
+    summary.landingFold = {
+      viewport: { width: 1280, height: 800 },
+      scrollY: foldEn.scrollY,
+      disclosureOpen: foldEn.disclosureOpen,
+      enStrip: foldEn.stripSteps.map((step) => step.label),
+      jaStrip: foldJa.stripSteps.map((step) => step.label),
+      stripOneLine: true,
+      lowestLinkBottom: Math.max(
+        ...foldJa.links.map((link) => link.bottom),
+        ...foldEn.links.map((link) => link.bottom),
+      ),
+      r6CardId: r6Card.id,
+      r6LinkBottomEn: foldEn.links[r6Index].bottom,
+      cardsFullyVisible: true,
+      linksFullyVisible: true,
+      ...foldClean,
+    };
+    await fold.context.close();
+
     // Process lanes: one deep link per rule in the committed file. The drawn
     // nodes and edges must equal the layout function's output for that finding,
     // a node click selects its evidence rows, and a row click selects its node.
@@ -2935,6 +3050,7 @@ async function main() {
         ...infoDeepClean.external,
         ...sampleClean.external,
         ...manualClean.external,
+        ...foldClean.external,
         ...processLaneFixtures.flatMap((entry) => entry.clean.external),
         ...unknownClean.external,
         ...summary.malformedHashes.flatMap((entry) => entry.external),

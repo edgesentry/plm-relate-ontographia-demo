@@ -51,14 +51,52 @@
   margin-top: 1rem;
 }
 
-/* Landing: short explanation under the headline. */
+/* Landing: short explanation under the headline, collapsed into a closed
+   "How it works" disclosure so the first frame stays readable at a glance. */
 
 .farmbot-explain {
   margin: 0.25rem 0 0.75rem;
 }
 
+.farmbot-explain summary {
+  cursor: pointer;
+}
+
+.farmbot-explain[open] summary {
+  margin-bottom: 0.35rem;
+}
+
 .farmbot-explain p {
   margin: 0 0 0.45rem;
+}
+
+/* Landing: one-line 3-step flow strip above the sample notification cards.
+   The three step chips are the whole on-screen text; the arrows are
+   decorative spans, so the strip reads as a single short line. */
+
+.flow-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.6rem 0 0;
+}
+
+.flow-step {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border: 1px solid #b7cdf0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.flow-arrow {
+  color: var(--muted);
+  font-weight: 700;
 }
 
 /* Landing: sample notification-email cards. */

@@ -768,10 +768,11 @@ export function App() {
         </label>
       </header>
 
-      <div className="farmbot-explain" data-testid="farmbot-explain">
+      <details className="farmbot-explain" data-testid="how-it-works">
+        <summary className="muted small">{t('howItWorksLabel')}</summary>
         <p className="muted small">{t('explainSources')}</p>
         <p className="muted small">{t('explainEngine')}</p>
-      </div>
+      </details>
 
       {engine.status === 'loading' && (
         <p role="status" className="muted small">
@@ -801,6 +802,23 @@ export function App() {
       >
         <h2 id="samples-heading">{t('sampleHeading')}</h2>
         <p className="muted small">{t('sampleIntro')}</p>
+        <p className="flow-strip" data-testid="flow-strip">
+          <span className="flow-step" data-testid="flow-step-agent">
+            {t('flowStepAgent')}
+          </span>
+          <span className="flow-arrow" aria-hidden="true">
+            →
+          </span>
+          <span className="flow-step" data-testid="flow-step-email">
+            {t('flowStepEmail')}
+          </span>
+          <span className="flow-arrow" aria-hidden="true">
+            →
+          </span>
+          <span className="flow-step" data-testid="flow-step-analysis">
+            {t('flowStepAnalysis')}
+          </span>
+        </p>
         <ul className="sample-list">
           {SAMPLE_NOTIFICATIONS.map((card) => (
             <li

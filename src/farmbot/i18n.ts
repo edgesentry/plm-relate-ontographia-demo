@@ -14,6 +14,10 @@ const en = {
     'Ontographia compiles committed, ontology-constrained Intents into parameter-bound Cypher. ' +
     'Relate executes that Cypher in this tab against the digest-verified seed (:memory:). ' +
     'No user-typed or model-written Cypher is executed.',
+  howItWorksLabel: 'How it works',
+  flowStepAgent: 'Agent finds the drift',
+  flowStepEmail: 'Email link',
+  flowStepAnalysis: 'Graph analysis in the browser',
   sampleHeading: 'Sample notification emails',
   sampleIntro:
     'Each card is a sample of a notification email, not a sent one. Nothing is sent from this ' +
@@ -248,6 +252,10 @@ const ja: Record<keyof typeof en, string> = {
     'Ontographia は、コミット済みでオントロジーに制約された Intent を、パラメータを束縛した Cypher にコンパイルします。' +
     'Relate はその Cypher を、このタブの中で、ダイジェストを検証したシード（:memory:）に対して実行します。' +
     'ユーザーが入力した Cypher も、モデルが書いた Cypher も実行しません。',
+  howItWorksLabel: '仕組み',
+  flowStepAgent: 'エージェントが不一致を発見',
+  flowStepEmail: 'メールのリンク',
+  flowStepAnalysis: 'ブラウザでグラフを分析',
   sampleHeading: '通知メールのサンプル',
   sampleIntro:
     '各カードは通知メールのサンプルであり、実際に送信したものではありません。このページからは何も送信しません。' +

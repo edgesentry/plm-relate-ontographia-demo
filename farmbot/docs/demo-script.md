@@ -99,8 +99,9 @@ names the source file and, where the source has one, the line."
 
 ### 3. Process-lane diagram and query provenance (about 18 seconds)
 
-Stay on `R6-power-supply` and scroll to the diagram heading
-(`processLanesHeading`).
+Stay on `R6-power-supply`. At the filming viewport the lane pane stays beside
+the evidence rows, so the diagram heading (`processLanesHeading`) and the
+selected node stay in frame without scrolling.
 
 Narration: "The diagram is built only from this finding's evidence rows. The
 highlighted nodes are the problem nodes (`lanesLegendProblem`), and the

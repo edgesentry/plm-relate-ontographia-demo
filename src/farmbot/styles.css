@@ -303,6 +303,107 @@
   font-size: 0.78rem;
 }
 
+/* Finding view at desktop widths: the lane pane and the evidence list share the
+   viewport, so a row selection and its node highlight stay in one frame while
+   the operator reads or films the evidence. Below that width the pane stacks
+   above the evidence list, as before. */
+
+.finding-live-evidence {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .finding-live {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+
+  .finding-live .process-lanes {
+    position: sticky;
+    top: 0.5rem;
+    max-height: calc(100vh - 1rem);
+    overflow-y: auto;
+    margin-top: 0;
+  }
+}
+
+/* In-place liveness: the finding view fades in when a deep link or a finding
+   row opens it, the impacted path draws itself in, and a selection pulses the
+   selected node. Motion never moves evidence or blocks a read: pulses are
+   stroke and color only, and prefers-reduced-motion: reduce turns all of it
+   off. */
+
+@keyframes finding-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.farmbot-finding {
+  animation: finding-view-in 320ms ease-out both;
+}
+
+@keyframes lanes-path-in {
+  from {
+    stroke-width: 0;
+  }
+
+  to {
+    stroke-width: 2.6;
+  }
+}
+
+.process-edge.is-on-path .process-edge-line {
+  animation: lanes-path-in 480ms ease-out 80ms backwards;
+}
+
+.process-node-box {
+  transition: stroke 160ms ease-out, stroke-width 160ms ease-out;
+}
+
+@keyframes lanes-node-pulse {
+  0% {
+    stroke-width: 2.6;
+  }
+
+  45% {
+    stroke-width: 5;
+  }
+
+  100% {
+    stroke-width: 2.6;
+  }
+}
+
+.process-node.is-selected .process-node-box {
+  animation: lanes-node-pulse 480ms ease-out 1;
+}
+
+.evidence-row {
+  transition: background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farmbot-finding,
+  .process-edge.is-on-path .process-edge-line,
+  .process-node.is-selected .process-node-box {
+    animation: none;
+  }
+
+  .process-node-box,
+  .evidence-row {
+    transition: none;
+  }
+}
+
 /* Process-lane diagram: hand-built SVG, classes only (no inline <style>). */
 
 .process-lanes {

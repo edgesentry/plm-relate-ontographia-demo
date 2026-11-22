@@ -1,5 +1,3 @@
-Model: Gemini 4 Hydrogen (Medium)
-
 # Devpost Submission Text: FarmBot B1 (`/farmbot/`)
 
 > Paste-ready sections below are written for `#61` (`Update Devpost submission text for FarmBot B1`) in the **Relate by Neo4j Hackathon**. Reader-facing prose contains no repository file paths, no hardcoded inventory counts, and no restated code tables.
@@ -8,17 +6,61 @@ Model: Gemini 4 Hydrogen (Medium)
 
 ## Project Title
 
+> **Field limit:** Unverified. Official Devpost Help does not state a character limit for the Project / Submission name. A third-party claim of 60 characters is unverified and conflicts with official documentation (which confirms a 140-character tagline). The accepted 76-character title is preserved below, flagging the unverified limit risk.  
+> **Measured length:** 76 characters (11 words).
+
 Cross-Process PLM Graph Audit on FarmBot Genesis with Ontographia and Relate
 
 ---
 
 ## Short Description (Tagline)
 
-In-browser PLM graph checks for FarmBot Genesis on Relate, Neo4j's lightweight graph database: deterministic Intents compile to Cypher to surface cross-document BOM disagreements with full query and evidence provenance.
+> **Field limit:** 140 characters (verified). Source: Devpost Help, "Step 12: How do I set up the Submission Period?", https://help.devpost.com/article/145-how-do-i-set-up-the-submission-period (last updated 2026-11-12).  
+> **Measured length:** 140 characters (17 words). Fits verified limit.
+
+In-browser cross-document BOM checks on Relate, Neo4j's lightweight graph database: deterministic Intents compile to Cypher with provenance.
+
+---
+
+## Built With
+
+> **Field limit:** 25 tags maximum (verified). Source: Devpost Help, "Know Your Submission Steps", https://help.devpost.com/article/126-know-your-submission-steps (last updated 2026-08-12).  
+> **Measured count:** 18 tags (derived strictly from tools named in disclosures; no invented tools).
+
+Relate, Neo4j, Cypher, Ontographia, WebAssembly, React, TypeScript, Vite, WebLLM, WebGPU, Llama 3.2, DuckDB, YAML, Playwright, Cloudflare Workers, Wrangler, Git, Node.js
+
+---
+
+## Try It Out / Links
+
+> **Field requirements:** Verified. Official Rules section 4 (https://relate.devpost.com/rules) requires a link to the public GitHub repository tagged with the topic `relate` and a link to a working demo.
+
+- **Working demo URL:** https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/
+- **Code repository URL:** https://github.com/edgesentry/plm-relate-ontographia-demo
+
+---
+
+## Video Demo Link
+
+> **Field limit:** Public YouTube or Vimeo URL, video of up to 2 minutes (verified). Sources: Devpost Help, "Know Your Submission Steps", article 126; Official Rules section 4 (https://relate.devpost.com/rules).  
+> **Placeholder status:** Explicit placeholder for #60. No URL is invented.
+
+TBD: public YouTube or Vimeo URL after #60
+
+---
+
+## Reference Media and Upload Limits (Non-Paste)
+
+> Reference limits from Devpost Help for media and file attachments:
+> - **Thumbnail:** JPG, PNG, or GIF, 5 MB maximum, 3:2 recommended (verified, Devpost Help article 126).
+> - **File upload:** 35 MB maximum (verified, Devpost Help articles 126 and 145).
 
 ---
 
 ## Long Description
+
+> **Field limit:** Unverified. Devpost Help specifies no official character or word limit for the Project Story / Text Description. (Contest-specific suggestions such as "500 words or less" are not platform limits). Flagged as unverified; no invented caps. Four-idea contrast with `jexp/relate-ideas` preserved.  
+> **Measured length:** 7115 characters (971 words).
 
 ### What it does
 
@@ -55,6 +97,9 @@ This submission is a shipped, inspectable `/farmbot/` demo, not a design sketch.
 
 ## Official Rules Disclosures (Relate by Neo4j Hackathon)
 
+> **Field limit:** Unverified custom form fields. Hackathon-specific custom Additional Info questions and their character limits are not published on the public Relate contest pages; flagged as unverified custom fields.  
+> **Measured length:** 3945 characters (512 words).
+
 ### 1. Product Capabilities Used (Relate)
 
 - **Product:** Relate, Neo4j's lightweight graph database.
@@ -73,7 +118,7 @@ This submission is a shipped, inspectable `/farmbot/` demo, not a design sketch.
   - FarmBot Genesis v1.7 documentation: vendored git submodule (`FarmBot-Docs/farmbot-genesis`) with MIT third-party notice.
   - Ontographia desk-fan fixture provenance: Apache-2.0.
 - **Pre-event vs. Contest Period Work:**
-  - The repository was created prior to the Contest Period start with the Vite/React/TypeScript static scaffold, `@edgesentry/ontographia-wasm`, the desk-fan EOL/ECO screen at `/` (which compiles Intents for audit display without executing Cypher on Relate), Cloudflare Workers static-assets deploy configuration, and the desk-fan WebLLM path.
+  - The repository was created prior to the Contest Period start with the Vite/React/TypeScript scaffold, `@edgesentry/ontographia-wasm`, the desk-fan EOL/ECO screen at `/` (which compiles Intents for audit display without executing Cypher on Relate), Cloudflare Workers static-assets deploy configuration, and the desk-fan WebLLM path.
   - All FarmBot / Relate work submitted for the **Relate by Neo4j Hackathon** was developed during the Contest Period: the FarmBot Genesis v1.7 submodule integration, DuckDB canonical extract, standalone FarmBot ontology, `/farmbot/` screen, committed seed graph, preset questions, cross-process BOM check engine, process-lane diagram with its SBOM (materials) and BOP (instructions) lanes, closed-routing WebLLM check path, deterministic Cypher-output rejection demonstration, and persistent Relate directory store.
 
 ### 3. AI Tools Used in the Shipped Demo

@@ -49,7 +49,8 @@ below open specific findings to show specific lanes.
 
 Spine: sample notification-email card → `#finding=` deep link → process-lane
 diagram with each evidence row's Intent, executed Cypher, and bound parameters
-→ close on closed routing → a short deterministic Cypher-output rejection beat.
+→ a short deterministic Cypher-output rejection beat → close on closed routing
+with the words "the model only routes; it never writes Cypher".
 
 ### 1. Sample notification card (about 12 seconds)
 
@@ -126,12 +127,26 @@ Narration: "A pre-assembly page whose steps are only in a PDF gets this marker.
 It records that the page has no machine-readable component list; it is not a claim
 that the PDF was parsed."
 
-### 6. Closed routing close (about 12 seconds)
+### 6. Cypher-output rejection (about 12 seconds)
 
 Scroll to the free-text heading (`checkFreeTextHeading`). The consent card
 (`checkConsentTitle`) may be visible; declining leaves the rule chips
-available. Point at the always-visible bound (`checkModelNoCypher`). Do not
-claim a particular routing result or model accuracy for a typed sentence.
+available. Use the labelled control (`checkRejectionDemoButton`), not a live
+prompt hoping the model emits Cypher. The button feeds a fixed sample, not a
+live model result (`checkRejectionDemoSampleLabel`, `checkRejectionDemoHint`).
+The fixed sample text is `MATCH (part:Part) RETURN part`. The validator reason
+is `routing output contains Cypher or a markdown fence`. The on-screen
+rejection copy is `checkRoutingRejected` / `checkRoutingRejectedBody`. Nothing
+new is compiled or executed. Do not film a live model roll.
+
+Narration: "If the routing output contains Cypher or a markdown fence, the
+screen rejects it. Nothing new is compiled or executed."
+
+### 7. Closed routing close (about 12 seconds)
+
+Stay on the free-text heading. Point at the always-visible bound
+(`checkModelNoCypher`). Do not claim a particular routing result or model
+accuracy for a typed sentence.
 
 Narration: "The optional local model selects a closed check Intent and the
 check engine does the work. In short, the model only routes; it never writes
@@ -139,25 +154,11 @@ Cypher."
 
 If the take runs long, cut the decline-path explanation here first.
 
-### 7. Cypher-output rejection (about 12 seconds)
-
-Keep this short deterministic beat after the close. Use the labelled control
-(`checkRejectionDemoButton`), not a live prompt hoping the model emits Cypher.
-The button feeds a fixed sample, not a live model result
-(`checkRejectionDemoSampleLabel`, `checkRejectionDemoHint`). The fixed sample
-text is `MATCH (part:Part) RETURN part`. The validator reason is
-`routing output contains Cypher or a markdown fence`. The on-screen rejection
-copy is `checkRoutingRejected` / `checkRoutingRejectedBody`. Nothing new is
-compiled or executed. Do not film a live model roll.
-
-Narration: "If the routing output contains Cypher or a markdown fence, the
-screen rejects it. Nothing new is compiled or executed."
-
 ## Recording notes
 
 - No email is sent and no secret is shown during the take.
 - Keep the narration within 1 to 2 minutes, about 90 to 110 seconds. If it runs
-  long, cut the decline-path explanation in step 6 first, then shorten step 7.
+  long, cut the decline-path explanation in step 7 first, then shorten step 6.
 - Do not claim that the live deployment already serves a build you have not
   confirmed.
 - The desk-fan screen at `/` is a different graph; do not film or describe its

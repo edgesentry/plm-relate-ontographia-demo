@@ -1335,6 +1335,8 @@
         {
           "facts": {
             "displayName": "Barb",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 14,
@@ -1344,6 +1346,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "UTM Pre-Assembly"
           },
@@ -1557,6 +1561,8 @@
         {
           "facts": {
             "displayName": "Luer Lock Needle w/ cover (16 Gauge)",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 21,
@@ -1631,6 +1637,8 @@
         {
           "facts": {
             "displayName": "Luer Lock Needle w/ cover (19 Gauge)",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 22,
@@ -1705,6 +1713,8 @@
         {
           "facts": {
             "displayName": "M5 to Luer Lock Adapter",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 9,
@@ -1714,6 +1724,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "Seeder"
           },
@@ -1779,6 +1791,8 @@
         {
           "facts": {
             "displayName": "Magnets",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 10,
@@ -1789,6 +1803,8 @@
         {
           "facts": {
             "displayName": "Magnets",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 10,
@@ -1799,6 +1815,8 @@
         {
           "facts": {
             "displayName": "Magnets",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 10,
@@ -1808,6 +1826,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "Seeder"
           },
@@ -1818,6 +1838,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "Soil Sensor"
           },
@@ -1828,6 +1850,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "Watering Nozzle"
           },
@@ -1967,6 +1991,8 @@
         {
           "facts": {
             "displayName": "Ring Magnet",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 12,
@@ -1976,6 +2002,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "UTM Pre-Assembly"
           },
@@ -2323,6 +2351,8 @@
         {
           "facts": {
             "displayName": "X-Profile O-Ring",
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "matchMethod": "unmatched"
           },
           "line": 15,
@@ -2332,6 +2362,8 @@
         },
         {
           "facts": {
+            "machineReadable": true,
+            "machineReadableReason": "markdown component list; assembly steps are PDF-only",
             "structureKind": "manufacturing",
             "title": "UTM Pre-Assembly"
           },

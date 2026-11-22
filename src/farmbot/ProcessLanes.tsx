@@ -32,6 +32,7 @@ interface DiagramNode {
   label: string;
   meta: string;
   problem: boolean;
+  pdfOnly: boolean;
   quantities: DiagramQuantity[];
   x: number;
   y: number;
@@ -109,6 +110,7 @@ export function ProcessLanes({
       `${laneName(node.lane)}: ${node.label}`,
       t(node.problem ? 'lanesNodeProblem' : 'lanesNodeNoProblem'),
     ];
+    if (node.pdfOnly) parts.push(t('lanesNodePdfOnly'));
     for (const quantity of node.quantities) {
       const variant =
         quantity.version === ''
@@ -253,7 +255,9 @@ export function ProcessLanes({
                   }
                 }}
               >
-                <title>{`${node.label} — ${node.id}`}</title>
+                <title>
+                  {`${node.label} (${node.id})${node.pdfOnly ? `; ${t('lanesNodePdfOnly')}` : ''}`}
+                </title>
                 <rect
                   className="process-node-box"
                   x={node.x}
@@ -272,6 +276,16 @@ export function ProcessLanes({
                 <text className="process-node-meta" x={node.x + 8} y={node.y + 29}>
                   {clip(node.meta, node.width, META_SIZE)}
                 </text>
+                {node.pdfOnly && node.quantities.length === 0 && (
+                  <text
+                    className="process-node-meta"
+                    x={node.x + 8}
+                    y={node.y + 42}
+                    data-testid="process-node-pdf-only"
+                  >
+                    {clip(t('lanesNodePdfOnly'), node.width, META_SIZE)}
+                  </text>
+                )}
                 {node.quantities.map((quantity, index) => (
                   <text
                     key={`${quantity.version}-${index}`}

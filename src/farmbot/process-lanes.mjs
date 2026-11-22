@@ -10,12 +10,20 @@
 
 import { evidenceRows } from './findings-view.mjs';
 
-/** Lane order. Lanes are always laid out left to right in this order. */
+/**
+ * Lane order. Lanes are always laid out left to right in this order.
+ *
+ * The `bop` lane replaces the earlier `assembly` lane for the same evidence:
+ * a node has one lane, so the documented instruction structures (assembly
+ * chapters, pre-assembly pages and their usage lines) moved onto it instead
+ * of being duplicated. The lane is a constructed view of the documented
+ * instruction structure, not FarmBot's factory routing.
+ */
 export const LANES = Object.freeze([
   { id: 'design-change', labelKey: 'laneDesignChange' },
   { id: 'ebom-part', labelKey: 'laneEbomPart' },
   { id: 'sbom', labelKey: 'laneSbom' },
-  { id: 'assembly', labelKey: 'laneAssembly' },
+  { id: 'bop', labelKey: 'laneBop' },
   { id: 'packing', labelKey: 'lanePacking' },
   { id: 'service', labelKey: 'laneService' },
 ]);
@@ -44,16 +52,16 @@ const MISSING_LENGTH = 14;
 const MISSING_SPREAD = 16;
 
 const STRUCTURE_LANES = Object.freeze({
-  chapter: 'assembly',
-  preassembly: 'assembly',
+  chapter: 'bop',
+  preassembly: 'bop',
   container: 'packing',
   bag: 'packing',
   service: 'service',
 });
 
 const USAGE_LANES = Object.freeze({
-  assembly: 'assembly',
-  preassembly: 'assembly',
+  assembly: 'bop',
+  preassembly: 'bop',
   packing: 'packing',
   service: 'service',
 });
@@ -88,13 +96,17 @@ function usageKindOf(nodeId) {
  * lane right after the parts it is documented on. A `structure` row is placed
  * by its node id prefix (`chapter:`, `preassembly:`, `container:`, `bag:`) and
  * a `reference` row by its usage kind (`usage:assembly:`,
- * `usage:preassembly:`, `usage:packing:`). A quantity comparison is a packing
- * list row checked against the part page, so it sits in the packing lane.
- * Roles defined by later rules (`design-change`, `service`) map to their own
- * lanes. Anything else throws rather than guessing.
+ * `usage:preassembly:`, `usage:packing:`). The chapter, pre-assembly and
+ * pre-assembly-page rows land in the BOP lane, the constructed view of the
+ * documented instruction structure: each assembly chapter or pre-assembly page
+ * is a process-step container there, not a factory routing stage. A quantity
+ * comparison is a packing list row checked against the part page, so it sits
+ * in the packing lane. Roles defined by later rules (`design-change`,
+ * `service`) map to their own lanes. Anything else throws rather than
+ * guessing.
  *
  * @param {{ role: string, nodeId: string }} row
- * @returns {'design-change' | 'ebom-part' | 'sbom' | 'assembly' | 'packing' | 'service'}
+ * @returns {'design-change' | 'ebom-part' | 'sbom' | 'bop' | 'packing' | 'service'}
  */
 export function laneForEvidence(row) {
   if (!row || typeof row !== 'object') throw new Error('laneForEvidence needs an evidence row');
@@ -108,7 +120,7 @@ export function laneForEvidence(row) {
     case 'packing-structure':
       return 'packing';
     case 'pre-assembly-page':
-      return 'assembly';
+      return 'bop';
     case 'design-change':
       return 'design-change';
     case 'service':
@@ -197,9 +209,9 @@ export function orderEvidenceRows(finding) {
  *   plus a missing edge from the reference to the EBOM lane because it resolves
  *   to no part. A reference with no structure from the same source file gets
  *   only its missing edge.
- * - R3: a missing edge from the part to the assembly and packing lanes.
+ * - R3: a missing edge from the part to the BOP and packing lanes.
  * - R4: the part → every packing line → the packing structure, plus a missing
- *   edge from the part to the assembly lane.
+ *   edge from the part to the BOP lane.
  * - R5: no edges; the page node stands alone.
  * - R6: the design change → the part (fact) or → the matching downstream rows
  *   (inferred); the part → each packing line and service reference that
@@ -207,10 +219,10 @@ export function orderEvidenceRows(finding) {
  *   packing line → its packing structure, joined by the shared source file; a
  *   service reference → its service page, joined by the shared source file.
  * - R7: the design change → the part, plus a missing edge from the part to the
- *   assembly, packing and service lanes.
+ *   BOP, packing and service lanes.
  * - R8: the part → each service reference → its service page and → each
  *   packing line → its packing structure, joined by the shared source file,
- *   plus a missing edge from the part to the assembly lane.
+ *   plus a missing edge from the part to the BOP lane.
  * - R9: the service page → its unresolved reference (shared source file), the
  *   reference → each candidate part the extract recorded, plus a missing edge
  *   from the reference to the EBOM lane.
@@ -269,7 +281,7 @@ export function edgesForFinding(finding) {
     }
   } else if (rule === 'R3') {
     for (const part of parts) {
-      add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+      add(part, `${PLACEHOLDER_PREFIX}bop`, 'missing');
       add(part, `${PLACEHOLDER_PREFIX}packing`, 'missing');
     }
   } else if (rule === 'R4') {
@@ -287,7 +299,7 @@ export function edgesForFinding(finding) {
         }
       }
     }
-    for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+    for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}bop`, 'missing');
   } else if (rule === 'R6' || rule === 'R8') {
     const changes = uniqueNodeIds(rows, 'design-change');
     const lines = uniqueNodeIds(rows, 'packing-line');
@@ -335,7 +347,7 @@ export function edgesForFinding(finding) {
       else for (const change of changes) add(change, row);
     }
     if (rule === 'R8') {
-      for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+      for (const part of parts) add(part, `${PLACEHOLDER_PREFIX}bop`, 'missing');
     }
     for (const line of lines) {
       for (const structure of structures) {
@@ -357,7 +369,7 @@ export function edgesForFinding(finding) {
       for (const part of parts) add(change, part);
     }
     for (const part of parts) {
-      add(part, `${PLACEHOLDER_PREFIX}assembly`, 'missing');
+      add(part, `${PLACEHOLDER_PREFIX}bop`, 'missing');
       add(part, `${PLACEHOLDER_PREFIX}packing`, 'missing');
       add(part, `${PLACEHOLDER_PREFIX}service`, 'missing');
     }
@@ -464,6 +476,23 @@ function isProblemRow(row, subjectNodeId) {
   return subjectNodeId !== null && row.nodeId === subjectNodeId;
 }
 
+/**
+ * A row records a PDF-only pre-assembly page when the extract wrote that reason
+ * on the page: the value compared here is the recorded `machine_readable_reason`
+ * (`pdf-only`) that the R5 evidence carries as `machineReadableReason` and that
+ * the shared agent path copies onto cited pre-assembly structure and reference
+ * rows. Nothing is guessed here, so a page whose recorded limit is another
+ * reason (an index page with no component list) draws no marker and invents
+ * nothing; its own evidence row still carries the recorded reason.
+ *
+ * @param {{ role: string, nodeId: string, facts?: Record<string, any> }} row
+ * @returns {boolean}
+ */
+function isPdfOnlyRow(row) {
+  const facts = row.facts && typeof row.facts === 'object' ? row.facts : {};
+  return facts.machineReadableReason === 'pdf-only';
+}
+
 function clamp(value, low, high) {
   return Math.min(Math.max(value, low), high);
 }
@@ -475,6 +504,10 @@ function clamp(value, low, high) {
  * lane order, then role, then node id (plain code-unit comparison), and
  * truncated to `nodeCap`. The remainder is reported in `overflow`. Visible
  * lanes are those with at least one node; hidden lanes have no nodes.
+ *
+ * A node whose evidence rows record a PDF-only pre-assembly page carries
+ * `pdfOnly: true`, so the view can mark the recorded limit on the node instead
+ * of hiding it; the value comes from the recorded reason and is never guessed.
  *
  * @param {Record<string, any>} finding
  * @param {{ width?: number, nodeCap?: number }} [options]
@@ -531,6 +564,7 @@ export function layoutFinding(finding, options = {}) {
       label: labelOf(primary.row),
       meta: metaOf(primary.row),
       problem: group.items.some((item) => isProblemRow(item.row, subjectNodeId)),
+      pdfOnly: group.items.some((item) => isPdfOnlyRow(item.row)),
       quantities,
     };
   });

@@ -86,6 +86,16 @@ constructs from the documentation. "EBOM" and "MBOM" are our shorthand. They
 are not official FarmBot labels, and the model does not claim to reproduce
 how FarmBot organises or builds its product.
 
+The BOP lane of the `/farmbot/` process-lane diagram is the same kind of
+constructed view, and it replaces the earlier Assembly / pre-assembly lane: a
+node has one lane, so the assembly-chapter, pre-assembly and
+pre-assembly-page evidence of a finding moved onto the `bop` lane instead of
+being duplicated into a second lane. Each `AssemblyChapter` and `PreAssembly`
+node is drawn there as a process-step container of documented instructions.
+It is not FarmBot's factory routing: `farmbot/ontology/farmbot.native.yaml`
+declares no `WorkCenter` class and no `Operation` class, and no work centre
+or routing stage is invented for the diagram.
+
 ## Relationships
 
 Every relationship is declared exactly once and points outward

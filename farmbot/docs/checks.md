@@ -179,11 +179,40 @@ part node to its material node after the rule-specific edges.
 A material node appears only when the finding already cites a part that
 documents a material: `src/farmbot/agent/index.mjs` attaches one `material`
 evidence row per cited part row on the shared path, so every material node in
-the diagram is cited by an evidence row, and the lane stays hidden — like every
-unused lane — when no cited part documents a material. Material counts are not
+the diagram is cited by an evidence row, and the lane stays hidden, like every
+unused lane, when no cited part documents a material. Material counts are not
 stated here; they come from the `part` table of the extract built by
 `farmbot/scripts/extract.mjs` and from the seed at
 `farmbot/dist/farmbot.seed.json`.
+
+The BOP lane (`bop`, labeled `laneBop`) is a constructed view of the documented
+instruction structure, not FarmBot's factory routing: each `AssemblyChapter`
+and `PreAssembly` node already in the seed is drawn there as a process-step
+container. A node has one lane, so the lane replaces the earlier Assembly /
+pre-assembly lane for the same evidence roles and the same seed node ids
+(`chapter:` and `preassembly:` structures, `usage:assembly:` and
+`usage:preassembly:` references, and the `pre-assembly-page` role map to `bop`
+in `src/farmbot/process-lanes.mjs`) rather than duplicating those nodes into a
+second lane; no `WorkCenter` or `Operation` class exists in
+`farmbot/ontology/farmbot.native.yaml` and none is invented. Like the SBOM
+lane, the BOP lane is drawn only when the opened finding already cites
+assembly-chapter, pre-assembly or their usage/reference evidence, it stays
+hidden when no such evidence is present, and it adds no node the evidence
+table does not cite. A missing link toward it ends at the `lane:bop`
+placeholder, never at an invented node.
+
+Coverage honesty for pre-assembly pages travels with the evidence. R5 findings
+store the recorded limit as `machineReadableReason` and `pdfCount` facts on the
+`pre-assembly-page` row, and `src/farmbot/agent/index.mjs` copies the
+`machine_readable` and `machine_readable_reason` properties an executed check
+Intent already loaded onto every cited `preassembly:` structure row and
+`usage:preassembly:` reference row, before dedupe and sort, on the shared Node
+and browser path. A node whose recorded reason is `pdf-only` carries
+`pdfOnly` and shows the `lanesNodePdfOnly` marker
+(`src/farmbot/ProcessLanes.tsx`), so a page whose steps are only in PDFs is
+marked as such on the diagram. A page whose recorded limit is another reason,
+an index page with no component list, draws no marker: its own evidence row
+still carries the recorded reason and count, and no reason is invented.
 
 ## Deep link
 

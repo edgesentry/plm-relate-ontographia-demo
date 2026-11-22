@@ -918,3 +918,368 @@ test('a finding without evidence renders an empty diagram', () => {
   assert.equal(layout.overflow.count, 0);
   assert.equal(layout.height, 24);
 });
+
+test('assembly and pre-assembly evidence maps onto the BOP lane', () => {
+  assert.deepEqual(
+    LANES.map((lane) => lane.id),
+    ['design-change', 'ebom-part', 'sbom', 'bop', 'packing', 'service'],
+    'the lane order changed',
+  );
+  assert.deepEqual(
+    LANES.map((lane) => lane.labelKey),
+    [
+      'laneDesignChange',
+      'laneEbomPart',
+      'laneSbom',
+      'laneBop',
+      'lanePacking',
+      'laneService',
+    ],
+    'the lane label keys changed',
+  );
+
+  // The BOP lane owns the documented instruction evidence: the structure rows,
+  // their usage rows and the R5 page rows. It replaces the earlier assembly
+  // lane for those roles; no node sits in two lanes.
+  assert.equal(laneForEvidence({ role: 'structure', nodeId: 'chapter:x.md' }), 'bop');
+  assert.equal(laneForEvidence({ role: 'structure', nodeId: 'preassembly:x.md' }), 'bop');
+  assert.equal(laneForEvidence({ role: 'reference', nodeId: 'usage:assembly:x.md@1' }), 'bop');
+  assert.equal(laneForEvidence({ role: 'reference', nodeId: 'usage:preassembly:x.md@1' }), 'bop');
+  assert.equal(laneForEvidence({ role: 'pre-assembly-page', nodeId: 'preassembly:x.md' }), 'bop');
+
+  // The other mappings stay as they were.
+  assert.equal(laneForEvidence({ role: 'part', nodeId: 'part:X' }), 'ebom-part');
+  assert.equal(laneForEvidence({ role: 'material', nodeId: 'material:x' }), 'sbom');
+  assert.equal(laneForEvidence({ role: 'quantity-difference', nodeId: 'comparison:x' }), 'packing');
+  assert.equal(
+    laneForEvidence({ role: 'packing-line', nodeId: 'usage:packing:x.md@1' }),
+    'packing',
+  );
+  assert.equal(laneForEvidence({ role: 'packing-structure', nodeId: 'container:x.md' }), 'packing');
+  assert.equal(laneForEvidence({ role: 'structure', nodeId: 'bag:pack:x.md' }), 'packing');
+  assert.equal(laneForEvidence({ role: 'reference', nodeId: 'usage:service:x.md@1' }), 'service');
+  assert.equal(laneForEvidence({ role: 'design-change', nodeId: 'change:x' }), 'design-change');
+  assert.equal(laneForEvidence({ role: 'service', nodeId: 'service:x.md' }), 'service');
+
+  // The committed findings draw the BOP lane exactly when they cite it, and a
+  // drawn BOP node is always cited by a BOP-lane evidence row.
+  let withBop = 0;
+  let withoutBop = 0;
+  for (const finding of findings) {
+    const citesBop = finding.evidence.some((row) => laneForEvidence(row) === 'bop');
+    const layout = layoutFinding(finding);
+    const lane = layout.lanes.find((entry) => entry.id === 'bop');
+    const laneNodes = layout.nodes.filter((node) => node.lane === 'bop');
+    if (citesBop) {
+      withBop += 1;
+      assert.ok(lane, `${finding.id} hides the BOP lane although its evidence cites it`);
+      assert.ok(laneNodes.length > 0, `${finding.id} draws an empty BOP lane`);
+      for (const node of laneNodes) {
+        assert.ok(
+          finding.evidence.some((row) => row.nodeId === node.id && laneForEvidence(row) === 'bop'),
+          `${finding.id} draws uncited BOP node ${node.id}`,
+        );
+      }
+    } else {
+      withoutBop += 1;
+      assert.ok(!lane, `${finding.id} draws the BOP lane without cited evidence`);
+      assert.equal(laneNodes.length, 0, `${finding.id} draws a node in the hidden BOP lane`);
+    }
+  }
+  assert.ok(withBop > 0, 'no committed finding cites BOP evidence');
+  assert.ok(withoutBop > 0, 'every committed finding cites BOP evidence');
+
+  // A finding citing a part, a material and an assembly chapter draws the
+  // BOP lane right after the SBOM lane, its LANES position.
+  const synthetic = {
+    id: 'R3-bop-order',
+    rule: 'R3',
+    subject: { key: 'Tee Nuts', kind: 'part', label: 'Tee Nuts', nodeId: 'part:Tee Nuts' },
+    evidence: [
+      {
+        role: 'part',
+        nodeId: 'part:Tee Nuts',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: { name: 'Tee Nuts' },
+      },
+      {
+        role: 'material',
+        nodeId: 'material:stainless steel',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: {
+          displayName: 'Stainless Steel',
+          material: 'Stainless Steel',
+          partNodeId: 'part:Tee Nuts',
+        },
+      },
+      {
+        role: 'structure',
+        nodeId: 'chapter:v1.7/assembly/example.md',
+        sourceFile: 'v1.7/assembly/example.md',
+        line: null,
+        facts: { title: 'Example' },
+      },
+    ],
+    queries: [],
+  };
+  assert.deepEqual(layoutFinding(synthetic).lanes.map((lane) => lane.id), [
+    'ebom-part',
+    'sbom',
+    'bop',
+  ]);
+});
+
+test('missing links toward the process lanes end at the lane:bop placeholder', () => {
+  const placeholder = (laneId) => `${PLACEHOLDER_PREFIX}${laneId}`;
+
+  // No edge of any committed finding targets the removed assembly lane.
+  for (const finding of findings) {
+    for (const edge of edgesForFinding(finding)) {
+      assert.ok(
+        edge.to !== placeholder('assembly'),
+        `${finding.id}: an edge still targets the removed ${placeholder('assembly')}`,
+      );
+    }
+  }
+
+  // The absence rules point a missing edge from every part at the BOP lane.
+  const absenceFindings = findings.filter((finding) =>
+    ['R3', 'R4', 'R7', 'R8'].includes(finding.rule),
+  );
+  assert.ok(absenceFindings.length > 0, 'the committed file has no absence-rule finding');
+  for (const finding of absenceFindings) {
+    const edges = edgesForFinding(finding);
+    for (const part of roleNodeIds(finding, 'part')) {
+      assert.ok(
+        edges.some(
+          (edge) =>
+            edge.from === part && edge.to === placeholder('bop') && edge.kind === 'missing',
+        ),
+        `${finding.id}: ${part} has no missing edge toward ${placeholder('bop')}`,
+      );
+    }
+  }
+
+  // A synthetic absence finding names exactly the BOP and packing lanes, and
+  // the diagram keeps both missing links although neither lane is drawn.
+  const synthetic = {
+    id: 'R3-bop-placeholder',
+    rule: 'R3',
+    subject: { key: 'Tee Nuts', kind: 'part', label: 'Tee Nuts', nodeId: 'part:Tee Nuts' },
+    evidence: [
+      {
+        role: 'part',
+        nodeId: 'part:Tee Nuts',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: { name: 'Tee Nuts' },
+      },
+    ],
+    queries: [],
+  };
+  const missing = edgesForFinding(synthetic).filter((edge) => edge.kind === 'missing');
+  assert.deepEqual(
+    missing.map((edge) => edge.to).sort(),
+    [placeholder('bop'), placeholder('packing')].sort(),
+    'the R3 placeholders are not the BOP and packing lanes',
+  );
+  const layout = layoutFinding(synthetic);
+  assert.deepEqual(
+    layout.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+    [
+      `part:Tee Nuts\u0000${placeholder('bop')}\u0000missing`,
+      `part:Tee Nuts\u0000${placeholder('packing')}\u0000missing`,
+    ].sort(),
+    'the drawn missing links do not end at the lane placeholders',
+  );
+});
+
+test('cited pre-assembly rows carry the recorded machine-readable facts', () => {
+  // The shared agent path copies the extract's `machine_readable` and
+  // `machine_readable_reason` onto every cited pre-assembly structure and
+  // reference row, and onto no chapter or assembly-reference row.
+  let preassemblyRows = 0;
+  for (const finding of findings) {
+    for (const row of finding.evidence) {
+      const id = String(row.nodeId ?? '');
+      if (row.role === 'structure' && id.startsWith('preassembly:')) {
+        preassemblyRows += 1;
+        assert.equal(
+          typeof row.facts.machineReadable,
+          'boolean',
+          `${finding.id}: ${id} has no recorded machineReadable fact`,
+        );
+        assert.equal(
+          typeof row.facts.machineReadableReason,
+          'string',
+          `${finding.id}: ${id} has no recorded machineReadableReason fact`,
+        );
+      } else if (row.role === 'structure' && id.startsWith('chapter:')) {
+        assert.ok(
+          !('machineReadable' in row.facts),
+          `${finding.id}: ${id} invented machine-readable facts`,
+        );
+      }
+      if (row.role === 'reference' && id.startsWith('usage:preassembly:')) {
+        preassemblyRows += 1;
+        assert.equal(
+          typeof row.facts.machineReadable,
+          'boolean',
+          `${finding.id}: ${id} has no recorded machineReadable fact`,
+        );
+        assert.equal(
+          typeof row.facts.machineReadableReason,
+          'string',
+          `${finding.id}: ${id} has no recorded machineReadableReason fact`,
+        );
+      } else if (row.role === 'reference' && id.startsWith('usage:assembly:')) {
+        assert.ok(
+          !('machineReadable' in row.facts),
+          `${finding.id}: ${id} invented machine-readable facts`,
+        );
+      }
+    }
+  }
+  assert.ok(preassemblyRows > 0, 'the committed file cites no pre-assembly row');
+
+  // R5 keeps its own recorded facts on the page row.
+  const r5 = findings.filter((finding) => finding.rule === 'R5');
+  assert.ok(r5.length > 0, 'the committed file has no R5 finding');
+  for (const finding of r5) {
+    const page = finding.evidence.find((row) => row.role === 'pre-assembly-page');
+    assert.ok(page, `${finding.id} has no pre-assembly-page row`);
+    assert.equal(typeof page.facts.machineReadableReason, 'string');
+    assert.equal(typeof page.facts.pdfCount, 'number');
+  }
+});
+
+test('a PDF-only pre-assembly page surfaces the recorded limit on its node', () => {
+  // A page whose recorded reason is pdf-only is marked on its node.
+  const pdfOnly = findings.filter((finding) =>
+    finding.evidence.some((row) => row.facts && row.facts.machineReadableReason === 'pdf-only'),
+  );
+  assert.ok(pdfOnly.length > 0, 'the committed file cites no PDF-only pre-assembly page');
+  for (const finding of pdfOnly) {
+    const layout = layoutFinding(finding);
+    const marked = layout.nodes.filter((node) => node.pdfOnly === true);
+    assert.equal(marked.length, 1, `${finding.id}: expected one marked node`);
+    const page = finding.evidence.find((row) => row.role === 'pre-assembly-page');
+    assert.ok(page, `${finding.id} has no pre-assembly-page row`);
+    assert.equal(marked[0].id, page.nodeId, `${finding.id}: the marked node is not the page node`);
+    assert.equal(marked[0].lane, 'bop', `${finding.id}: the page node left the BOP lane`);
+    assert.equal(page.facts.machineReadableReason, 'pdf-only');
+    assert.equal(typeof page.facts.pdfCount, 'number');
+  }
+
+  // A page whose recorded limit is another reason invents nothing: no marker
+  // claims pdf-only, and the evidence row keeps the recorded reason and count.
+  const otherLimit = findings.filter((finding) =>
+    finding.evidence.some(
+      (row) =>
+        row.role === 'pre-assembly-page' &&
+        row.facts &&
+        typeof row.facts.machineReadableReason === 'string' &&
+        row.facts.machineReadableReason !== 'pdf-only',
+    ),
+  );
+  assert.ok(
+    otherLimit.length > 0,
+    'the committed file has no unreadable page with another recorded reason',
+  );
+  for (const finding of otherLimit) {
+    const layout = layoutFinding(finding);
+    assert.ok(
+      layout.nodes.every((node) => node.pdfOnly === false),
+      `${finding.id}: a node claims a PDF-only limit the evidence does not record`,
+    );
+    const page = finding.evidence.find((row) => row.role === 'pre-assembly-page');
+    assert.ok(
+      typeof page.facts.machineReadableReason === 'string' && page.facts.machineReadableReason !== '',
+      `${finding.id}: the recorded reason is missing from the evidence`,
+    );
+    assert.equal(typeof page.facts.pdfCount, 'number');
+  }
+
+  // A cited pre-assembly structure or reference row whose recorded reason is
+  // pdf-only marks its node, in the committed-fact shape the agent writes.
+  const pdfPage = 'v1.7/manufacturing/pre-assembly/cable-carrier.md';
+  const pdfOnlyFinding = {
+    id: 'R2-cable-ties',
+    rule: 'R2',
+    subject: { key: 'Cable Ties', kind: 'unresolved-name', label: 'Cable Ties', nodeId: null },
+    evidence: [
+      {
+        role: 'structure',
+        nodeId: `preassembly:${pdfPage}`,
+        sourceFile: pdfPage,
+        line: null,
+        facts: {
+          machineReadable: false,
+          machineReadableReason: 'pdf-only',
+          structureKind: 'manufacturing',
+          title: 'Cable Carrier Pre-Assembly',
+        },
+      },
+      {
+        role: 'reference',
+        nodeId: `usage:preassembly:${pdfPage}@3`,
+        sourceFile: pdfPage,
+        line: 3,
+        facts: {
+          displayName: 'Cable Ties',
+          machineReadable: false,
+          machineReadableReason: 'pdf-only',
+          matchMethod: 'unmatched',
+        },
+      },
+    ],
+    queries: [],
+  };
+  const pdfLayout = layoutFinding(pdfOnlyFinding);
+  assert.deepEqual(pdfLayout.lanes.map((lane) => lane.id), ['bop']);
+  assert.equal(pdfLayout.nodes.length, 2);
+  for (const node of pdfLayout.nodes) {
+    assert.equal(node.pdfOnly, true, `${node.id} is not marked as PDF only`);
+  }
+
+  // A machine-readable page keeps its recorded facts and draws no marker.
+  const readablePage = 'v1.7/manufacturing/pre-assembly/tools/utm.md';
+  const readable = {
+    ...pdfOnlyFinding,
+    id: 'R2-utm-cable-ties',
+    evidence: [
+      {
+        role: 'structure',
+        nodeId: `preassembly:${readablePage}`,
+        sourceFile: readablePage,
+        line: null,
+        facts: {
+          machineReadable: true,
+          machineReadableReason: 'markdown component list; assembly steps are PDF-only',
+          structureKind: 'manufacturing',
+          title: 'UTM Pre-Assembly',
+        },
+      },
+      {
+        role: 'reference',
+        nodeId: `usage:preassembly:${readablePage}@14`,
+        sourceFile: readablePage,
+        line: 14,
+        facts: {
+          displayName: 'Cable Ties',
+          machineReadable: true,
+          machineReadableReason: 'markdown component list; assembly steps are PDF-only',
+          matchMethod: 'unmatched',
+        },
+      },
+    ],
+  };
+  const readableLayout = layoutFinding(readable);
+  assert.deepEqual(readableLayout.lanes.map((lane) => lane.id), ['bop']);
+  assert.ok(
+    readableLayout.nodes.every((node) => node.pdfOnly === false),
+    'a machine-readable page is marked as PDF only',
+  );
+});

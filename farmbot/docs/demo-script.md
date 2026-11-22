@@ -18,19 +18,23 @@ rather than quoting the strings, so the labels stay in one place.
 - Do not call `/api/notify/test`, set secrets, or show destination addresses or
   tokens.
 
-### To be implemented in `/farmbot/` before recording
+### The BOP lane on `/farmbot/`
 
-- BOP lane(s) on the `/farmbot/` process-lane diagram are **not shipped
-  today**. Do not film a BOP lane, and do not claim it already exists, until it
-  is on the frozen `/farmbot/` screen. The desk-fan screen at `/` already has
+- The BOP lane is on the `/farmbot/` process-lane diagram. Look at the
+  process-lane diagram on a finding whose evidence reaches an assembly chapter
+  or a pre-assembly, and point at `BOP (instructions)` (`laneBop`). It stays
+  hidden when the opened finding cites no such evidence, so name it only on a
+  take where it is visible. The desk-fan screen at `/` has its own
   EBOM / MBOM / SBOM / BOP swimlanes; that is a different screen and a
-  different graph.
+  different (fictional) graph.
 
-`/farmbot/` already shows Design change, EBOM part, SBOM (materials), Assembly
-/ pre-assembly, Packing, and Service (`laneDesignChange`, `laneEbomPart`,
-`laneSbom`, `laneAssembly`, `lanePacking`, `laneService`). The SBOM
+`/farmbot/` already shows Design change, EBOM part, SBOM (materials), BOP
+(instructions), Packing, and Service (`laneDesignChange`, `laneEbomPart`,
+`laneSbom`, `laneBop`, `lanePacking`, `laneService`). The SBOM
 (materials) lane appears only when the opened finding cites a part whose page
-documents `specs.material`. The Cypher-output rejection beat uses the labelled
+documents `specs.material`. The BOP (instructions) lane appears only when the
+opened finding cites an assembly chapter, a pre-assembly or their
+usage/reference evidence. The Cypher-output rejection beat uses the labelled
 control (`checkRejectionDemoButton`): a fixed sample through the closed
 routing parser, not a live model roll.
 
@@ -39,9 +43,10 @@ routing parser, not a live model roll.
 Spine: sample notification-email card → `#finding=` deep link → process-lane
 diagram plus Intent, executed Cypher, and bound parameters → close on closed
 routing. The SBOM (materials) lane is on the diagram whenever the opened
-finding cites a part with a documented material. The rejection beat uses the
-labelled control (`checkRejectionDemoButton`). Add BOP lane visibility only
-after that feature ships on `/farmbot/`.
+finding cites a part with a documented material. The BOP (instructions) lane
+is on the diagram whenever the opened finding cites an assembly chapter, a
+pre-assembly or their usage/reference evidence, and it is hidden otherwise.
+The rejection beat uses the labelled control (`checkRejectionDemoButton`).
 
 ### 1. Sample notification card (about 15 seconds)
 
@@ -83,11 +88,14 @@ Point at the evidence query block (`evidenceQueriesLabel`,
 Narration: "Every evidence row carries the Intent, the executed Cypher, and the
 bound parameters that produced it."
 
-If the finding shows the SBOM (materials) lane (`laneSbom`) — it does whenever
-the finding cites a part whose page documents `specs.material` — name it as the
-materials the cited part pages record, next to the EBOM part lane. It stays
-hidden when no cited part documents a material, so name it only when it is
-visible on that take. Do not name a BOP lane; it is not yet implemented.
+If the finding shows the SBOM (materials) lane (`laneSbom`), which it does
+whenever the finding cites a part whose page documents `specs.material`, name
+it as the materials the cited part pages record, next to the EBOM part lane.
+It stays hidden when no cited part documents a material, so name it only when
+it is visible on that take. If the finding reaches an assembly chapter or a
+pre-assembly, name the BOP (instructions) lane (`laneBop`) as the documented
+instruction structure the evidence cites; it stays hidden when the finding
+cites no such evidence, so name it only when it is visible on that take.
 
 ### 4. Closed routing (about 15 seconds)
 
@@ -117,7 +125,9 @@ Narration: "If the routing output contains Cypher, the screen rejects it
   confirmed.
 - Name the SBOM (materials) lane only when it is visible on the take: it
   appears when the opened finding cites a part whose page documents
-  `specs.material`, and stays hidden otherwise. Do not claim that `/farmbot/`
-  already has a BOP lane.
+  `specs.material`, and stays hidden otherwise. Name the BOP (instructions)
+  lane (`laneBop`) only when it is visible on the take: it appears when the
+  opened finding cites an assembly chapter, a pre-assembly or their
+  usage/reference evidence, and stays hidden otherwise.
 - Keep the narration within 1–2 minutes. If it runs long, cut the decline path
   in step 4 first, then shorten step 5.

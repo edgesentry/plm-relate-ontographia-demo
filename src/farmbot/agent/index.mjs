@@ -235,6 +235,68 @@ function attachMaterialEvidence(evidence, materialOfPart) {
 }
 
 /**
+ * The machine-readable facts of the PreAssembly pages the executed check
+ * Intents already loaded, keyed by page path. The values are the
+ * `machine_readable` and `machine_readable_reason` properties the extract
+ * wrote on the page, read verbatim from the Intent rows; nothing is derived
+ * here and no new Intent runs, so a page no Intent row carries has no entry
+ * and its evidence rows get no such facts rather than a guess. R5 evidence
+ * already stores the same meaning as `machineReadableReason` and `pdfCount`.
+ *
+ * @param {Map<string, Array<Record<string, unknown>>>} rowsByName Intent rows.
+ * @returns {Map<string, { machineReadable: boolean, machineReadableReason: unknown }>}
+ */
+function preAssemblyFactsByPath(rowsByName) {
+  /** @type {Map<string, { machineReadable: boolean, machineReadableReason: unknown }>} */
+  const pages = new Map();
+  for (const intentRows of rowsByName.values()) {
+    for (const row of intentRows) {
+      for (const value of Object.values(row)) {
+        if (value === null || typeof value !== 'object') continue;
+        const properties = value.properties;
+        if (properties === null || typeof properties !== 'object') continue;
+        if (typeof properties.machine_readable !== 'boolean') continue;
+        const path = properties.path;
+        if (typeof path !== 'string' || path === '') continue;
+        if (pages.has(path)) continue;
+        pages.set(path, {
+          machineReadable: properties.machine_readable,
+          machineReadableReason: valueOrNull(properties.machine_readable_reason),
+        });
+      }
+    }
+  }
+  return pages;
+}
+
+/**
+ * The PreAssembly machine-readable facts of one R2 evidence row, or an empty
+ * object. Only a `preassembly:` structure row or a `usage:preassembly:`
+ * reference row carries them, and only when an executed Intent row loaded the
+ * page they sit on, so a chapter, kit, bag or carton row is left unchanged.
+ * The Accessory bag BOM section of a pre-assembly page cites the bag node as
+ * its structure, so the reference row is matched through the shared page
+ * path rather than through the structure node id.
+ *
+ * @param {string} nodeId The evidence row's seed node id.
+ * @param {{ structure: Record<string, unknown>, usage: Record<string, unknown> }} entry
+ * @param {Map<string, { machineReadable: boolean, machineReadableReason: unknown }>} factsByPath
+ * @returns {Record<string, unknown>}
+ */
+function preAssemblyEvidenceFacts(nodeId, entry, factsByPath) {
+  const isPreAssemblyRow =
+    nodeId.startsWith('preassembly:') || nodeId.startsWith('usage:preassembly:');
+  if (!isPreAssemblyRow) return {};
+  const path = entry.structure.path;
+  const page = typeof path === 'string' ? factsByPath.get(path) : undefined;
+  if (!page) return {};
+  return {
+    machineReadable: page.machineReadable,
+    machineReadableReason: page.machineReadableReason,
+  };
+}
+
+/**
  * @param {Record<string, unknown>} part
  * @returns {number}
  */
@@ -333,6 +395,11 @@ export function collectFindings(options) {
   // The SBOM evidence is attached on the shared path below, so every rule gets
   // it the same way in Node and in the browser.
   const materialOfPart = materialsByPartId(rows);
+
+  // The PreAssembly machine-readable facts are read the same way: the values
+  // come from the Intent rows the run already executed, so Node and the
+  // browser attach identical facts before dedupe and sort.
+  const preAssemblyFacts = preAssemblyFactsByPath(rows);
 
   /**
    * Every finding's evidence passes through here: the material rows are
@@ -596,7 +663,11 @@ export function collectFindings(options) {
         role: 'structure',
         sourceFile: entry.structure.path ?? null,
         line: null,
-        facts: { structureKind: entry.kind, title: valueOrNull(entry.structure.title) },
+        facts: {
+          ...preAssemblyEvidenceFacts(String(entry.structure.id ?? ''), entry, preAssemblyFacts),
+          structureKind: entry.kind,
+          title: valueOrNull(entry.structure.title),
+        },
       });
       evidence.push({
         nodeId: entry.usage.id,
@@ -605,6 +676,7 @@ export function collectFindings(options) {
         line: valueOrNull(entry.usage.line_number),
         facts: {
           displayName,
+          ...preAssemblyEvidenceFacts(String(entry.usage.id ?? ''), entry, preAssemblyFacts),
           matchMethod: valueOrNull(entry.usage.match_method),
         },
       });

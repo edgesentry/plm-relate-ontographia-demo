@@ -13,6 +13,12 @@
 # and this model does not claim to reproduce how FarmBot organises or builds
 # its product.
 #
+# The BOP lane of the /farmbot/ process-lane diagram is the same kind of
+# constructed view: each AssemblyChapter and PreAssembly node is drawn as a
+# process-step container of documented instructions. It is a view of the
+# documentation, not FarmBot's factory routing, so this ontology declares no
+# WorkCenter class and no Operation class.
+#
 # The native format has no relationship properties, so per-link facts such as
 # quantities live on the Usage node instead of on the relationship.
 
@@ -50,7 +56,9 @@ classes:
     description: >-
       One assembly instruction page, one row of the `assembly_page` table.
       Used here as a constructed EBOM grouping, which is our label rather
-      than an official FarmBot term.
+      than an official FarmBot term. In the BOP lane of the process-lane
+      diagram each AssemblyChapter is a process-step container of documented
+      instructions, a constructed view rather than FarmBot's factory routing.
   - name: ServiceProcedure
     super_classes: [Structure]
     description: >-
@@ -69,7 +77,11 @@ classes:
     description: >-
       A pre-assembly page, one row of the `preassembly_page` table. Some of
       these pages have no machine-readable component list and therefore no
-      usage lines.
+      usage lines. In the BOP lane of the process-lane diagram each
+      PreAssembly is a process-step container of documented instructions, a
+      constructed view rather than FarmBot's factory routing, and the
+      machine-readable limit of a page is its recorded `machine_readable` and
+      `machine_readable_reason`, never a guessed routing stage.
   - name: Kit
     super_classes: [ManufacturingContainer]
     description: >-

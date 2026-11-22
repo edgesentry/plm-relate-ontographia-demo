@@ -2134,6 +2134,7 @@ async function main() {
       r2ManyStructures: null,
       r6Inferred: null,
       sbomLane: null,
+      bopLane: null,
       phone: null,
     };
 
@@ -2683,6 +2684,157 @@ async function main() {
         nodes: noMaterialDiagram.nodes.length,
         ...noMaterialClean,
       },
+    };
+
+    // BOP lane: a finding whose evidence reaches an assembly chapter or a
+    // pre-assembly must show the BOP (instructions) lane with its English
+    // label, and a finding whose evidence reaches no such node must hide the
+    // lane. Both findings come from the committed document only; the lane is
+    // identified by the same data-testid the other lanes use.
+    const citesBopEvidence = (finding) =>
+      finding.evidence.some((row) => {
+        const nodeId = String(row.nodeId ?? '');
+        return (
+          row.role === 'pre-assembly-page' ||
+          nodeId.startsWith('chapter:') ||
+          nodeId.startsWith('preassembly:') ||
+          nodeId.startsWith('usage:assembly:') ||
+          nodeId.startsWith('usage:preassembly:')
+        );
+      });
+    const bopFinding = [...findings]
+      .filter(citesBopEvidence)
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(bopFinding, 'the committed findings reach no assembly or pre-assembly evidence');
+    const bopExpected = expectedDiagram(bopFinding);
+    const bopFixture = await prepareContext(browser, 'process-lanes-bop');
+    await bopFixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(bopFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await bopFixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    await bopFixture.page.waitForSelector(`[data-testid="finding-row-${bopFinding.id}"]`, {
+      timeout: 30000,
+    });
+    const bopDiagram = await readDiagram(bopFixture.page);
+    assert(bopDiagram.present, 'the BOP process-lane diagram is missing');
+    assert(
+      (await bopFixture.page.locator('[data-testid="process-lane-bop"]').count()) === 1,
+      'the BOP lane is not drawn for a finding with assembly or pre-assembly evidence',
+    );
+    const bopEvidenceState = await bopFixture.page.evaluate(() => ({
+      laneLabel:
+        document.querySelector('[data-testid="process-lane-bop"]')?.textContent?.trim() ?? '',
+    }));
+    assert(
+      bopEvidenceState.laneLabel === 'BOP (instructions)',
+      `the BOP lane label is ${JSON.stringify(bopEvidenceState.laneLabel)}`,
+    );
+    const bopNodes = bopDiagram.nodes.filter((node) => node.lane === 'bop');
+    assert(bopNodes.length > 0, 'the BOP lane is drawn without a node');
+    for (const node of bopNodes) {
+      assert(
+        node.id.startsWith('chapter:') ||
+          node.id.startsWith('preassembly:') ||
+          node.id.startsWith('usage:assembly:') ||
+          node.id.startsWith('usage:preassembly:'),
+        `the BOP lane holds a non-instruction node ${node.id}`,
+      );
+    }
+    assert(
+      JSON.stringify(bopDiagram.nodes.map((node) => node.id).sort()) ===
+        JSON.stringify(bopExpected.nodeIds),
+      `the BOP finding draws different nodes from the layout: ` +
+        `${JSON.stringify(bopDiagram.nodes.map((node) => node.id).sort())} != ` +
+        `${JSON.stringify(bopExpected.nodeIds)}`,
+    );
+    assert(
+      JSON.stringify(
+        bopDiagram.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+      ) === JSON.stringify(bopExpected.edges),
+      'the BOP finding draws different edges from the layout',
+    );
+    const bopClean = await assertContextClean(bopFixture);
+    processLaneFixtures.push({ fixture: bopFixture, clean: bopClean });
+
+    // The same committed document names a finding with no such evidence.
+    const noBopFinding = [...findings]
+      .filter((finding) => !citesBopEvidence(finding))
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(noBopFinding, 'every committed finding reaches assembly or pre-assembly evidence');
+    const noBopFixture = await prepareContext(browser, 'process-lanes-bop-hidden');
+    await noBopFixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(noBopFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await noBopFixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const noBopDiagram = await readDiagram(noBopFixture.page);
+    assert(
+      (await noBopFixture.page.locator('[data-testid="process-lane-bop"]').count()) === 0,
+      'the BOP lane is drawn for a finding with no assembly or pre-assembly evidence',
+    );
+    assert(
+      noBopDiagram.nodes.every((node) => node.lane !== 'bop'),
+      'an assembly or pre-assembly node is drawn outside the BOP lane',
+    );
+    const noBopClean = await assertContextClean(noBopFixture);
+    processLaneFixtures.push({ fixture: noBopFixture, clean: noBopClean });
+    summary.processLanes.bopLane = {
+      withBopEvidence: {
+        id: bopFinding.id,
+        laneLabel: bopEvidenceState.laneLabel,
+        nodes: bopNodes.map((node) => node.id),
+        edges: bopDiagram.edges.length,
+        ...bopClean,
+      },
+      withoutBopEvidence: {
+        id: noBopFinding.id,
+        laneVisible: false,
+        nodes: noBopDiagram.nodes.length,
+        ...noBopClean,
+      },
+    };
+
+    // A finding that cites a pre-assembly page recorded as pdf-only must
+    // show the PDF-only marker in the diagram DOM. The finding is taken
+    // from the committed document only (currently the first in sort order
+    // is R5-v1-7-manufacturing-pre-assembly-cable-carrier-md).
+    const pdfOnlyFinding = [...findings]
+      .filter((finding) =>
+        finding.evidence.some(
+          (row) => row.facts && row.facts.machineReadableReason === 'pdf-only',
+        ),
+      )
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(pdfOnlyFinding, 'the committed findings cite no PDF-only pre-assembly page');
+    const pdfOnlyFixture = await prepareContext(browser, 'process-lanes-bop-pdf-only');
+    await pdfOnlyFixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(pdfOnlyFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await pdfOnlyFixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    await pdfOnlyFixture.page.waitForSelector(`[data-testid="finding-row-${pdfOnlyFinding.id}"]`, {
+      timeout: 30000,
+    });
+    const pdfOnlyMarkerCount = await pdfOnlyFixture.page.locator(
+      '[data-testid="process-node-pdf-only"]',
+    ).count();
+    assert(
+      pdfOnlyMarkerCount >= 1,
+      'the PDF-only marker is missing from the diagram for a finding that cites a pdf-only pre-assembly page',
+    );
+    const pdfOnlyClean = await assertContextClean(pdfOnlyFixture);
+    processLaneFixtures.push({ fixture: pdfOnlyFixture, clean: pdfOnlyClean });
+    summary.processLanes.bopLane.pdfOnlyMarker = {
+      id: pdfOnlyFinding.id,
+      markerCount: pdfOnlyMarkerCount,
+      ...pdfOnlyClean,
     };
 
     // A well-formed but unknown id may run the checks; it opens nothing and

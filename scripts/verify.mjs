@@ -602,18 +602,124 @@ if (!packageSource.includes('ontographia-webllm-package-v1')) {
   fail('webllm-package must expose the build tag used by the smoke test');
 }
 
+// The application pins its own appConfig (`INTENT_APP_CONFIG`) instead of
+// relying on WebLLM's `prebuiltAppConfig`, whose URLs track the moving `main`
+// branch and which carries no application-level digest. Both `/` and
+// `/farmbot/` construct their engine through this one exported config, so the
+// assertions below are the single download channel's guardrail. Nothing here
+// fetches the wasm or the weights; only the committed constants are checked.
+const webllmPackage = await loadTsModule('src/lib/webllm-package.ts');
+const PINNED_WEIGHTS_SHA = '2a37b0a5ecb622d51ddc2fac74de0b95872affd7';
+const PINNED_MODEL_LIB_SHA = '146ed9cd4b4062e967b017fd2291f7106b50599f';
+const PINNED_MODEL_URL =
+  `https://huggingface.co/mlc-ai/Llama-3.2-1B-Instruct-q4f16_1-MLC/resolve/${PINNED_WEIGHTS_SHA}/`;
+const PINNED_MODEL_LIB_URL =
+  `https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/${PINNED_MODEL_LIB_SHA}` +
+  '/web-llm-models/v0_2_87/base/Llama-3.2-1B-Instruct-q4f16_1_cs1k-webgpu.wasm';
+const PINNED_MODEL_LIB_SRI = 'sha256-jb1+gdOSkfJmYXa4RvNtkkpgPpSAusc57l/A0i90sf0=';
+const PINNED_CHAT_CONFIG_SRI = 'sha256-DsUTtUtBmtRxAGQwaGvc/6rnECtB97Akb7/N4lF6zH8=';
+
+const rootPackageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+const webllmSpec = rootPackageJson.dependencies['@mlc-ai/web-llm'];
+if (webllmSpec !== '0.2.88') {
+  fail(
+    `@mlc-ai/web-llm must be exact-pinned "0.2.88" in package.json (no caret or range), got "${String(webllmSpec)}"`,
+  );
+}
+
+const pinnedRecords = webllmPackage.INTENT_APP_CONFIG.model_list;
+if (pinnedRecords.length !== 1) {
+  fail(`the pinned appConfig must list only INTENT_MODEL_ID, got ${pinnedRecords.length} records`);
+}
+const pinnedRecord = pinnedRecords[0];
+if (pinnedRecord.model_id !== webllm.INTENT_MODEL_ID) {
+  fail(`pinned record is ${String(pinnedRecord.model_id)}, not ${webllm.INTENT_MODEL_ID}`);
+}
+if (pinnedRecord.vram_required_MB !== webllm.INTENT_MODEL_VRAM_MB) {
+  fail(
+    `pinned VRAM ${String(pinnedRecord.vram_required_MB)} != UI VRAM ${String(webllm.INTENT_MODEL_VRAM_MB)}`,
+  );
+}
+if (pinnedRecord.low_resource_required !== true) {
+  fail('the pinned record must keep the prebuilt low_resource_required: true');
+}
+if (pinnedRecord.overrides?.context_window_size !== 4096) {
+  fail(
+    `the pinned record must keep the prebuilt 4096 context window, got ${String(pinnedRecord.overrides?.context_window_size)}`,
+  );
+}
+if (webllmPackage.INTENT_MODEL_WEIGHTS_SHA !== PINNED_WEIGHTS_SHA) {
+  fail(`INTENT_MODEL_WEIGHTS_SHA must stay the verified commit ${PINNED_WEIGHTS_SHA}`);
+}
+if (webllmPackage.INTENT_MODEL_LIB_SHA !== PINNED_MODEL_LIB_SHA) {
+  fail(`INTENT_MODEL_LIB_SHA must stay the verified commit ${PINNED_MODEL_LIB_SHA}`);
+}
+if (pinnedRecord.model !== PINNED_MODEL_URL) {
+  fail(`pinned weights URL must be ${PINNED_MODEL_URL}, got ${String(pinnedRecord.model)}`);
+}
+if (pinnedRecord.model_lib !== PINNED_MODEL_LIB_URL) {
+  fail(`pinned model_lib URL must be ${PINNED_MODEL_LIB_URL}, got ${String(pinnedRecord.model_lib)}`);
+}
+// The `/resolve/<sha>/` form with a trailing slash makes WebLLM's
+// cleanModelUrl keep the URL verbatim instead of appending `resolve/main/`.
+if (!/\/resolve\/[0-9a-f]{40}\/$/.test(pinnedRecord.model)) {
+  fail(`the weights URL must end in /resolve/<commit sha>/: ${String(pinnedRecord.model)}`);
+}
+for (const [label, url] of [
+  ['model', pinnedRecord.model],
+  ['model_lib', pinnedRecord.model_lib],
+]) {
+  if (url.includes('/main/')) {
+    fail(`the pinned ${label} URL must not track a moving branch: ${url}`);
+  }
+}
+if (pinnedRecord.integrity?.onFailure !== 'error') {
+  fail('the pinned record must fail closed on an integrity mismatch (onFailure: "error")');
+}
+if (pinnedRecord.integrity?.model_lib !== PINNED_MODEL_LIB_SRI) {
+  fail(`pinned model_lib SRI must be ${PINNED_MODEL_LIB_SRI}`);
+}
+if (pinnedRecord.integrity?.config !== PINNED_CHAT_CONFIG_SRI) {
+  fail(`pinned mlc-chat-config SRI must be ${PINNED_CHAT_CONFIG_SRI}`);
+}
+
+const modelHost = new URL(pinnedRecord.model).hostname;
+const modelLibHost = new URL(pinnedRecord.model_lib).hostname;
+if (modelHost !== 'huggingface.co') fail(`unexpected pinned model host ${modelHost}`);
+if (modelLibHost !== 'raw.githubusercontent.com') fail(`unexpected pinned model_lib host ${modelLibHost}`);
+
+// Parity with the npm package: the pinned record must serve the exact
+// artifacts the installed WebLLM's prebuilt record names — only at immutable
+// revisions. A package bump that moves either artifact fails here.
 const { prebuiltAppConfig } = await import('@mlc-ai/web-llm');
-const modelRecord = prebuiltAppConfig.model_list.find(
+const prebuiltRecord = prebuiltAppConfig.model_list.find(
   (record) => record.model_id === webllm.INTENT_MODEL_ID,
 );
-if (!modelRecord) fail(`WebLLM prebuiltAppConfig is missing ${webllm.INTENT_MODEL_ID}`);
-if (modelRecord.vram_required_MB !== webllm.INTENT_MODEL_VRAM_MB) {
-  fail(`prebuiltAppConfig VRAM ${modelRecord.vram_required_MB} != UI VRAM ${webllm.INTENT_MODEL_VRAM_MB}`);
+if (!prebuiltRecord) fail(`WebLLM prebuiltAppConfig is missing ${webllm.INTENT_MODEL_ID}`);
+if (prebuiltRecord.vram_required_MB !== webllm.INTENT_MODEL_VRAM_MB) {
+  fail(`prebuiltAppConfig VRAM ${prebuiltRecord.vram_required_MB} != UI VRAM ${webllm.INTENT_MODEL_VRAM_MB}`);
 }
-const modelHost = new URL(modelRecord.model).hostname;
-const modelLibHost = new URL(modelRecord.model_lib).hostname;
-if (modelHost !== 'huggingface.co') fail(`unexpected model host ${modelHost}`);
-if (modelLibHost !== 'raw.githubusercontent.com') fail(`unexpected model_lib host ${modelLibHost}`);
+if (prebuiltRecord.low_resource_required !== pinnedRecord.low_resource_required) {
+  fail('the pinned record must keep the prebuilt low_resource_required');
+}
+if (
+  JSON.stringify(prebuiltRecord.required_features ?? null) !==
+  JSON.stringify(pinnedRecord.required_features ?? null)
+) {
+  fail('the pinned record must keep the prebuilt required_features');
+}
+if (
+  (prebuiltRecord.overrides?.context_window_size ?? null) !==
+  (pinnedRecord.overrides?.context_window_size ?? null)
+) {
+  fail('the pinned record must keep the prebuilt context window override');
+}
+if (pinnedRecord.model !== `${prebuiltRecord.model}/resolve/${PINNED_WEIGHTS_SHA}/`) {
+  fail('the pinned weights URL must be the prebuilt repo at the pinned commit');
+}
+if (pinnedRecord.model_lib !== prebuiltRecord.model_lib.replace('/main/', `/${PINNED_MODEL_LIB_SHA}/`)) {
+  fail('the pinned model_lib must be the prebuilt model_lib with main replaced by the pinned commit');
+}
 
 section('FarmBot artifacts');
 const farmbotSeedGuard = await import('../src/farmbot/seed-digest.mjs');
@@ -922,8 +1028,15 @@ console.log(
           ),
         },
         lazyChunk,
-        prebuiltModelHost: modelHost,
-        prebuiltModelLibHost: modelLibHost,
+        pinnedPackage: {
+          spec: webllmSpec,
+          modelId: pinnedRecord.model_id,
+          modelUrl: pinnedRecord.model,
+          modelHost,
+          modelLibUrl: pinnedRecord.model_lib,
+          modelLibHost,
+          integrityOnFailure: pinnedRecord.integrity.onFailure,
+        },
       },
     },
     null,

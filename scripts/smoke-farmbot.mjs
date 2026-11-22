@@ -2799,6 +2799,44 @@ async function main() {
       },
     };
 
+    // A finding that cites a pre-assembly page recorded as pdf-only must
+    // show the PDF-only marker in the diagram DOM. The finding is taken
+    // from the committed document only (currently the first in sort order
+    // is R5-v1-7-manufacturing-pre-assembly-cable-carrier-md).
+    const pdfOnlyFinding = [...findings]
+      .filter((finding) =>
+        finding.evidence.some(
+          (row) => row.facts && row.facts.machineReadableReason === 'pdf-only',
+        ),
+      )
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(pdfOnlyFinding, 'the committed findings cite no PDF-only pre-assembly page');
+    const pdfOnlyFixture = await prepareContext(browser, 'process-lanes-bop-pdf-only');
+    await pdfOnlyFixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(pdfOnlyFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await pdfOnlyFixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    await pdfOnlyFixture.page.waitForSelector(`[data-testid="finding-row-${pdfOnlyFinding.id}"]`, {
+      timeout: 30000,
+    });
+    const pdfOnlyMarkerCount = await pdfOnlyFixture.page.locator(
+      '[data-testid="process-node-pdf-only"]',
+    ).count();
+    assert(
+      pdfOnlyMarkerCount >= 1,
+      'the PDF-only marker is missing from the diagram for a finding that cites a pdf-only pre-assembly page',
+    );
+    const pdfOnlyClean = await assertContextClean(pdfOnlyFixture);
+    processLaneFixtures.push({ fixture: pdfOnlyFixture, clean: pdfOnlyClean });
+    summary.processLanes.bopLane.pdfOnlyMarker = {
+      id: pdfOnlyFinding.id,
+      markerCount: pdfOnlyMarkerCount,
+      ...pdfOnlyClean,
+    };
+
     // A well-formed but unknown id may run the checks; it opens nothing and
     // shows no error.
     const unknown = await prepareContext(browser, 'unknown-finding');

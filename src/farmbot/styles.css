@@ -581,6 +581,16 @@
   font-weight: 700;
 }
 
+.evidence-query-primary {
+  border-left: 3px solid var(--line);
+  padding-left: 0.5rem;
+}
+
+.evidence-queries-rest summary {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .evidence-query pre {
   max-height: 18rem;
   overflow: auto;

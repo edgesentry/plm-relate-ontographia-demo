@@ -394,6 +394,120 @@ export function evidenceRows(finding) {
   return rows;
 }
 
+// Recorded rule for one evidence row's primary query (issue #119). The first
+// expand of `details.evidence-queries` shows the primary Intent, its executed
+// Cypher and its bound parameters; every additional Intent of that row waits
+// behind the row's show-all control, and the count on that control is derived
+// from the row's own queries, never hardcoded.
+//
+// The rule, in order:
+//
+// 1. A row that already marks its primary query keeps that mark. The
+//    committed findings record no mark, so this serves a findings document
+//    that starts carrying one; the marked intent must be in the row's list.
+// 2. Otherwise the query that produced the row's evidence role wins. The
+//    derivation reads only names already recorded in this repository:
+//    - A packing row (`packing-structure`, `packing-line`) cites a packing
+//      page, and the extract classifies packing pages by path
+//      (`packingPageClass` in `farmbot/scripts/graph.mjs`, recorded in
+//      `farmbot/docs/ontology.md`): the main carton page is the Carton, every
+//      other packing page is a Kit. The row therefore prefers the packing
+//      reference Intent for its page class, `refs-carton.json` for a
+//      `main-carton.md` page and `refs-kit.json` otherwise; both are the
+//      packing reference Intents that `farmbot/docs/checks.md` records as
+//      supplying the packing evidence. A packing usage that did not resolve
+//      (`matchMethod: 'unmatched'`) instead prefers
+//      `r2-manufacturing-unmatched.json`, the Intent that lists unresolved
+//      manufacturing usages; the packing reference Intents return resolved
+//      usages only.
+//    - A `service` row, or a `reference` row whose facts record
+//      `sourceKind: 'service'`, prefers `refs-service.json`, the service
+//      reference Intent. An unresolved service usage
+//      (`matchMethod: 'unmatched'`) instead prefers
+//      `r9-service-unmatched.json`, the Intent that lists those usages.
+//    - Every other role (a design change, a part, a quantity comparison, a
+//      structure, a material, a pre-assembly page) has no per-role Intent and
+//      keeps the fallback below.
+// 3. Otherwise the first query in the row's list is the primary. The list is
+//    sorted by intent file name when the collector builds it, so the pick
+//    depends only on the committed queries.
+
+/** A finding query as the committed findings document records it. */
+/** @typedef {import('./types').FindingQuery} FindingQuery */
+
+/** Page path of the carton, the one packing page that is not a Kit. */
+const CARTON_PAGE_SUFFIX = '/main-carton.md';
+
+/** Existing check Intent files under `farmbot/checks/`, not a new catalog. */
+const PACKING_CARTON_INTENT = 'refs-carton.json';
+const PACKING_KIT_INTENT = 'refs-kit.json';
+const MANUFACTURING_UNMATCHED_INTENT = 'r2-manufacturing-unmatched.json';
+const SERVICE_REFERENCE_INTENT = 'refs-service.json';
+const SERVICE_UNMATCHED_INTENT = 'r9-service-unmatched.json';
+
+/**
+ * @param {FindingQuery[]} queries
+ * @param {string} name Intent file name, bare or as a repository path.
+ * @returns {FindingQuery | null}
+ */
+function queryByIntentName(queries, name) {
+  return (
+    queries.find(
+      (query) => query && (query.intent === name || String(query.intent).endsWith(`/${name}`)),
+    ) ?? null
+  );
+}
+
+/**
+ * The Intent file that produced one evidence row's citation, or `null` when no
+ * recorded rule names one. The rule is recorded in the comment above.
+ *
+ * @param {Record<string, any>} row
+ * @returns {string | null}
+ */
+function producingIntentForRow(row) {
+  const role = text(row.role);
+  if (role === 'packing-structure' || role === 'packing-line') {
+    if (text(fact(row, 'matchMethod')) === 'unmatched') return MANUFACTURING_UNMATCHED_INTENT;
+    const page = text(row.sourceFile) || text(row.nodeId);
+    return page.endsWith(CARTON_PAGE_SUFFIX) ? PACKING_CARTON_INTENT : PACKING_KIT_INTENT;
+  }
+  const isServiceRow =
+    role === 'service' || (role === 'reference' && text(fact(row, 'sourceKind')) === 'service');
+  if (!isServiceRow) return null;
+  return text(fact(row, 'matchMethod')) === 'unmatched'
+    ? SERVICE_UNMATCHED_INTENT
+    : SERVICE_REFERENCE_INTENT;
+}
+
+/**
+ * One evidence row's primary query and the queries that stay behind the row's
+ * show-all control, following the recorded rule above. `primary` is `null`
+ * only when the row has no queries; `rest` holds every other query of the
+ * row, so a count shown on the control comes from `rest.length`.
+ *
+ * @param {Record<string, any>} row
+ * @param {FindingQuery[]} queries The row's queries, as `evidenceRows`
+ *   attaches them.
+ * @returns {{ primary: FindingQuery | null, rest: FindingQuery[] }}
+ */
+export function splitEvidenceQueries(row, queries) {
+  if (!row || typeof row !== 'object') {
+    throw new Error('splitEvidenceQueries needs an evidence row');
+  }
+  if (!Array.isArray(queries)) throw new Error('splitEvidenceQueries needs a queries array');
+  if (queries.length === 0) return { primary: null, rest: [] };
+  const marked = typeof row.primaryQuery === 'string' ? row.primaryQuery : null;
+  const producing = producingIntentForRow(row);
+  const primary =
+    (marked !== null ? queryByIntentName(queries, marked) : null) ??
+    (producing !== null ? queryByIntentName(queries, producing) : null) ??
+    queries[0];
+  const primaryIndex = queries.indexOf(primary);
+  const rest = queries.filter((query, index) => index !== primaryIndex);
+  return { primary, rest };
+}
+
 /**
  * @param {unknown} left
  * @param {unknown} right

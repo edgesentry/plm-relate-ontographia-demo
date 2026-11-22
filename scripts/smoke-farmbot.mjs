@@ -20,6 +20,7 @@ import { chromium } from 'playwright';
 import { CHECK_CATALOG } from '../src/farmbot/check-catalog.mjs';
 import {
   orderFindings,
+  splitEvidenceQueries,
   summaryLine,
 } from '../src/farmbot/findings-view.mjs';
 import { layoutFinding, orderEvidenceRows } from '../src/farmbot/process-lanes.mjs';
@@ -2457,7 +2458,10 @@ async function main() {
         .locator('[data-testid="evidence-row"]')
         .nth(keyboardRow.index)
         .locator('details.evidence-queries');
-      const summaryElement = details.locator('summary');
+      // The row's query details may contain a second, nested summary for the
+      // show-all control, so the toggle target is the first summary in the
+      // details element: the row's own Intent, Cypher and parameters heading.
+      const summaryElement = details.locator('summary').first();
       const selectedBeforeToggle = (await readDiagram(fixture.page)).rows
         .filter((row) => row.selected === 'true')
         .map((row) => row.index)
@@ -2737,7 +2741,7 @@ async function main() {
     );
     await r6Live.page
       .locator(
-        `[data-testid="evidence-row"][data-evidence-index="${r6LiveRow}"] details.evidence-queries summary`,
+        `[data-testid="evidence-row"][data-evidence-index="${r6LiveRow}"] details.evidence-queries > summary`,
       )
       .click();
     const r6LiveState = await r6Live.page.evaluate((rowIndex) => {
@@ -2748,6 +2752,8 @@ async function main() {
       const node = pane?.querySelector('.process-node.is-selected');
       const box = node?.querySelector('.process-node-box') ?? null;
       const details = row?.querySelector('details.evidence-queries');
+      const primaryBlock = row?.querySelector('[data-testid="evidence-query-primary"]') ?? null;
+      const restDetails = row?.querySelector('details[data-testid="evidence-queries-rest"]') ?? null;
       const paneRect = pane?.getBoundingClientRect() ?? null;
       const nodeRect = node?.getBoundingClientRect() ?? null;
       const rowRect = row?.getBoundingClientRect() ?? null;
@@ -2776,6 +2782,26 @@ async function main() {
               top: rowRect.top,
               bottom: rowRect.bottom,
               left: rowRect.left,
+            }
+          : null,
+        primary: primaryBlock
+          ? {
+              intent: primaryBlock.querySelector('p code')?.textContent ?? '',
+              // Chromium lays out the contents of a closed details, so a
+              // client-rect probe cannot see the difference; checkVisibility
+              // reports the details-content hiding rule.
+              cypherVisible: primaryBlock.querySelector('pre')?.checkVisibility() === true,
+              paramsVisible:
+                primaryBlock.querySelectorAll('pre')[1]?.checkVisibility() === true,
+            }
+          : null,
+        rest: restDetails
+          ? {
+              open: restDetails.open,
+              queries: restDetails.querySelectorAll('.evidence-query').length,
+              visiblePres: [...restDetails.querySelectorAll('pre')].filter(
+                (pre) => pre.checkVisibility(),
+              ).length,
             }
           : null,
         scrollY: window.scrollY,
@@ -2813,6 +2839,39 @@ async function main() {
       r6LiveState.pane.right <= r6LiveState.row.left,
       'the lane pane overlaps the evidence column',
     );
+    // The expanded query block must show one primary Intent, Cypher and
+    // parameters first, with the row's other queries hidden behind the
+    // show-all control until that control is used. The expected split comes
+    // from the same committed row the page renders, so no count is hardcoded.
+    const r6LiveSplit = splitEvidenceQueries(r6LiveRows[r6LiveRow], r6LiveFinding.queries);
+    assert(
+      r6LiveState.primary !== null && r6LiveState.primary.cypherVisible,
+      'the packing row does not show the primary Cypher on first expand',
+    );
+    assert(
+      r6LiveState.primary.paramsVisible,
+      'the packing row does not show the primary bound parameters on first expand',
+    );
+    assert(
+      r6LiveState.primary.intent === r6LiveSplit.primary.intent,
+      `the packing row shows primary Intent ${JSON.stringify(
+        r6LiveState.primary?.intent,
+      )}, expected ${JSON.stringify(r6LiveSplit.primary.intent)}`,
+    );
+    assert(
+      r6LiveState.rest !== null && r6LiveState.rest.open === false,
+      'the packing row expanded every Intent instead of hiding the rest',
+    );
+    assert(
+      r6LiveState.rest.queries === r6LiveSplit.rest.length,
+      `the packing row hides ${r6LiveState.rest?.queries} extra Intent blocks, expected ${
+        r6LiveSplit.rest.length
+      }`,
+    );
+    assert(
+      r6LiveState.rest.visiblePres === 0,
+      'the packing row shows extra Cypher blocks before the control is used',
+    );
     // Scrolling the evidence list must not drop the pane or the selected node
     // out of the frame: the sticky pane keeps the highlight in view.
     await r6Live.page.evaluate(() => window.scrollBy(0, 600));
@@ -2847,6 +2906,8 @@ async function main() {
       viewport: '1280x800',
       selectedRow: r6LiveRow,
       selectedNode: r6LiveState.node.id,
+      primaryIntent: r6LiveState.primary?.intent ?? null,
+      hiddenIntents: r6LiveState.rest?.queries ?? null,
       paneBottom: Number(r6LiveState.pane.bottom.toFixed(2)),
       rowTop: Number(r6LiveState.row.top.toFixed(2)),
       scrolledPaneTop: Number(r6LiveScrolled.pane.top.toFixed(2)),

@@ -206,6 +206,10 @@ const en = {
   checkRoutingRejected: 'The routing output was rejected.',
   checkRoutingRejectedBody:
     'Nothing new was compiled or executed. Use plain text or choose a rule chip instead.',
+  checkRejectionDemoButton: 'Show a rejected routing output',
+  checkRejectionDemoHint:
+    'Fixed sample, not a model result: this feeds a Cypher-like text through the same validator that checks model output. Nothing is compiled or executed.',
+  checkRejectionDemoSampleLabel: 'Fixed sample input (not a model result)',
   checkRoutingCompileFailed: 'Ontographia could not compile the expanded Intents.',
   checkRoutingExecuteFailed: 'Relate could not execute the confirmed Intents.',
   checkInputLabel: 'One FarmBot check question',
@@ -435,6 +439,10 @@ const ja: Record<keyof typeof en, string> = {
   checkRoutingRejected: 'ルーティング出力を拒否しました。',
   checkRoutingRejectedBody:
     '新たなコンパイルと実行は行われていません。文章を修正するか、ルールのチップを選んでください。',
+  checkRejectionDemoButton: '拒否されるルーティング出力を表示',
+  checkRejectionDemoHint:
+    '固定のサンプルであり、モデルの出力ではありません。Cypher に見えるテキストを、モデル出力と同じ検証に通します。コンパイルも実行もしません。',
+  checkRejectionDemoSampleLabel: '固定のサンプル入力（モデルの出力ではありません）',
   checkRoutingCompileFailed: 'Ontographia が展開した Intent をコンパイルできませんでした。',
   checkRoutingExecuteFailed: 'Relate が確認済みの Intent を実行できませんでした。',
   checkInputLabel: 'FarmBot チェックについての質問を一文で入力',

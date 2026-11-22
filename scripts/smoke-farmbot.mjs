@@ -23,6 +23,7 @@ import {
   summaryLine,
 } from '../src/farmbot/findings-view.mjs';
 import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
+import { REJECTED_ROUTING_DEMO_TEXT } from '../src/farmbot/rejection-demo.mjs';
 import { SAMPLE_NOTIFICATIONS } from '../src/farmbot/sample-notifications.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -578,7 +579,12 @@ async function main() {
     processLanes: null,
     unknownFinding: null,
     malformedHashes: [],
-    checkRouting: { beforeConsent: null, noWebgpu: null, invalidModelOutputs: null },
+    checkRouting: {
+      beforeConsent: null,
+      noWebgpu: null,
+      invalidModelOutputs: null,
+      rejectionDemo: null,
+    },
     tamperedSeed: null,
     cspViolations: null,
     nonSameOriginRequests: [],
@@ -1157,6 +1163,93 @@ async function main() {
       pageErrors: [...noGpuFixture.pageErrors],
     };
     await noGpuFixture.context.close();
+
+    // Deterministic Cypher-output rejection: a labelled control feeds a fixed
+    // sample through the production validator in a fresh context. No model stub,
+    // consent, WebGPU support or model download is involved.
+    const rejectionFixture = await prepareContext(browser, 'check-routing-rejection-demo');
+    const demoButton = '[data-testid="farmbot-rejection-demo-button"]';
+    const errorSelector = '[data-testid="farmbot-free-text-error"]';
+    await rejectionFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await rejectionFixture.page.waitForSelector(demoButton, { timeout: 30000 });
+    assert(
+      !(await rejectionFixture.page.locator(demoButton).isDisabled()),
+      'the rejection demonstration control is disabled on first paint',
+    );
+    const readReason = () =>
+      rejectionFixture.page.evaluate((selector) => {
+        const pres = document.querySelectorAll(`${selector} pre`);
+        return pres.length > 0 ? pres[pres.length - 1].textContent ?? '' : '';
+      }, errorSelector);
+    await rejectionFixture.page.click(demoButton);
+    await rejectionFixture.page.waitForSelector(errorSelector, { timeout: 15000 });
+    const firstReason = await readReason();
+    assert(
+      firstReason.includes('Cypher'),
+      `the rejection demonstration did not show the validator reason: ${firstReason}`,
+    );
+    const sampleText = await rejectionFixture.page
+      .locator('[data-testid="farmbot-rejection-demo-sample"] pre')
+      .textContent();
+    assert(
+      (sampleText ?? '').includes(REJECTED_ROUTING_DEMO_TEXT),
+      'the rejection demonstration did not show the fixed sample input',
+    );
+    const rejectionState = await rejectionFixture.page.evaluate(() => ({
+      proposal: Boolean(document.querySelector('[data-testid="farmbot-check-proposal"]')),
+      result: Boolean(document.querySelector('[data-testid="farmbot-check-result"]')),
+      debug: JSON.parse(
+        document.querySelector('[data-testid="farmbot-check-routing-debug"]')?.textContent ?? '{}',
+      ),
+    }));
+    assert(
+      !rejectionState.proposal && !rejectionState.result,
+      'the rejection demonstration left a proposal or a run result on screen',
+    );
+    assert(
+      rejectionState.debug.compileAttempts === 0 && rejectionState.debug.runs === 0,
+      `the rejection demonstration reached compile or execution: ${JSON.stringify(rejectionState.debug)}`,
+    );
+
+    await rejectionFixture.page.click(demoButton);
+    await rejectionFixture.page.waitForFunction(
+      ({ selector, expected }) => {
+        const pres = document.querySelectorAll(`${selector} pre`);
+        return pres.length > 0 && (pres[pres.length - 1].textContent ?? '') === expected;
+      },
+      { selector: errorSelector, expected: firstReason },
+      { timeout: 15000 },
+    );
+    const secondReason = await readReason();
+    assert(
+      secondReason === firstReason,
+      `the rejection reason changed between presses: ${JSON.stringify(firstReason)} then ${JSON.stringify(secondReason)}`,
+    );
+
+    const rejectionModel = assertNoModelRequests(
+      rejectionFixture.requests,
+      'the FarmBot rejection demonstration',
+    );
+    const rejectionRealChunks = rejectionFixture.requests.filter((url) =>
+      /\/lib-[^/]+\.js$/.test(pathOf(url)),
+    );
+    assert(
+      rejectionRealChunks.length === 0,
+      `the rejection demonstration fetched the real WebLLM package: ${rejectionRealChunks.join(', ')}`,
+    );
+    const rejectionClean = await assertContextClean(rejectionFixture);
+    summary.checkRouting.rejectionDemo = {
+      reason: firstReason,
+      sample: REJECTED_ROUTING_DEMO_TEXT,
+      proposal: rejectionState.proposal,
+      result: rejectionState.result,
+      ...rejectionState.debug,
+      ...rejectionModel,
+      realPackageRequests: rejectionRealChunks.length,
+      ...rejectionClean,
+      pageErrors: [...rejectionFixture.pageErrors],
+    };
+    await rejectionFixture.context.close();
 
     // Replace only the same tiny package-boundary chunk used by the desk-fan
     // smoke. Invalid model outputs are rejected without the real model package,
@@ -2542,6 +2635,7 @@ async function main() {
         beforeConsent: summary.checkRouting.beforeConsent.cspViolations,
         noWebgpu: summary.checkRouting.noWebgpu.cspViolations,
         invalidModelOutputs: summary.checkRouting.invalidModelOutputs?.cspViolations ?? null,
+        rejectionDemo: summary.checkRouting.rejectionDemo.cspViolations,
       },
     };
     summary.pageErrors = [
@@ -2557,6 +2651,7 @@ async function main() {
       ...summary.checkRouting.beforeConsent.pageErrors,
       ...summary.checkRouting.noWebgpu.pageErrors,
       ...(summary.checkRouting.invalidModelOutputs?.pageErrors ?? []),
+      ...summary.checkRouting.rejectionDemo.pageErrors,
     ];
     summary.nonSameOriginRequests = [
       ...new Set([
@@ -2572,6 +2667,7 @@ async function main() {
         ...summary.checkRouting.beforeConsent.external,
         ...summary.checkRouting.noWebgpu.external,
         ...(summary.checkRouting.invalidModelOutputs?.external ?? []),
+        ...summary.checkRouting.rejectionDemo.external,
       ]),
     ];
 

@@ -31,6 +31,7 @@ interface CheckFreeTextPanelProps {
   onLoad(): void;
   onCancelLoad(): void;
   onConvert(): void;
+  onShowRejectionDemo(): void;
   t(key: MessageKey): string;
 }
 
@@ -57,6 +58,7 @@ export function CheckFreeTextPanel({
   onLoad,
   onCancelLoad,
   onConvert,
+  onShowRejectionDemo,
   t,
 }: CheckFreeTextPanelProps) {
   const percent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
@@ -167,6 +169,12 @@ export function CheckFreeTextPanel({
         <div className="error-box" role="alert" data-testid="farmbot-free-text-error">
           <strong>{t(ERROR_TITLE_KEYS[error.kind])}</strong>
           {error.kind === 'validation' && <p>{t('checkRoutingRejectedBody')}</p>}
+          {error.sample && (
+            <div data-testid="farmbot-rejection-demo-sample">
+              <p>{t('checkRejectionDemoSampleLabel')}</p>
+              <pre>{error.sample}</pre>
+            </div>
+          )}
           {error.detail && <pre>{error.detail}</pre>}
           {(error.kind === 'load' || error.kind === 'generate') && (
             <button
@@ -207,6 +215,18 @@ export function CheckFreeTextPanel({
               {t('checkGenerating')}
             </span>
           )}
+        </div>
+      </div>
+      <div data-testid="farmbot-rejection-demo">
+        <p className="muted small">{t('checkRejectionDemoHint')}</p>
+        <div className="farmbot-actions">
+          <button
+            type="button"
+            data-testid="farmbot-rejection-demo-button"
+            onClick={onShowRejectionDemo}
+          >
+            {t('checkRejectionDemoButton')}
+          </button>
         </div>
       </div>
       <p className="muted small">{t('checkFreeTextPrivacy')}</p>

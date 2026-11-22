@@ -40,4 +40,5 @@ export type CheckPanelErrorKind = 'load' | 'generate' | 'validation' | 'compile'
 export interface CheckPanelError {
   kind: CheckPanelErrorKind;
   detail: string;
+  sample?: string;
 }

@@ -22,7 +22,7 @@ import {
   orderFindings,
   summaryLine,
 } from '../src/farmbot/findings-view.mjs';
-import { layoutFinding } from '../src/farmbot/process-lanes.mjs';
+import { layoutFinding, orderEvidenceRows } from '../src/farmbot/process-lanes.mjs';
 import { REJECTED_ROUTING_DEMO_TEXT } from '../src/farmbot/rejection-demo.mjs';
 import { SAMPLE_NOTIFICATIONS } from '../src/farmbot/sample-notifications.mjs';
 
@@ -2133,6 +2133,7 @@ async function main() {
       rules: [],
       r2ManyStructures: null,
       r6Inferred: null,
+      r6Live: null,
       sbomLane: null,
       bopLane: null,
       phone: null,
@@ -2528,6 +2529,217 @@ async function main() {
       ...r6Clean,
     };
 
+    // Lane liveness at the filming viewport: open the R6 deep link at
+    // 1280x800, select the packing evidence row with its Select node control,
+    // and expand that row's Intent, Cypher and parameters block. The lane pane
+    // and the selected node must stay inside the 0..800 viewport in the same
+    // frame as the row, the pane must be sticky beside the evidence column,
+    // and the reveal and the selection must show their in-place motion.
+    const r6LiveFinding = findings.find((finding) => finding.id === 'R6-power-supply');
+    assert(r6LiveFinding, 'the committed file has no R6-power-supply finding');
+    const r6LiveRows = orderEvidenceRows(r6LiveFinding);
+    const r6LiveRow = r6LiveRows.findIndex((row) => row.role === 'packing-line');
+    assert(r6LiveRow >= 0, `${r6LiveFinding.id} has no packing-line evidence row to select`);
+    const r6LiveLayout = layoutFinding(r6LiveFinding);
+    assert(
+      r6LiveLayout.edges.some((edge) => edge.onPath),
+      `${r6LiveFinding.id} has no on-path edge to animate`,
+    );
+    const r6Live = await prepareContext(browser, 'process-lanes-r6-live', {
+      width: 1280,
+      height: 800,
+    });
+    await r6Live.page.goto(`${entryUrl}#finding=${encodeURIComponent(r6LiveFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await r6Live.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    await r6Live.page.waitForSelector(`[data-testid="finding-row-${r6LiveFinding.id}"]`, {
+      timeout: 30000,
+    });
+    // The reveal scrolls the finding view smoothly, so wait for it to settle
+    // at the top of the viewport before reading any bounding rect.
+    await r6Live.page.waitForFunction(
+      () => {
+        const view = document.querySelector('[data-testid="finding-view"]');
+        if (!view) return false;
+        const rect = view.getBoundingClientRect();
+        return rect.top <= 1 && rect.bottom > 0;
+      },
+      undefined,
+      { timeout: 30000 },
+    );
+    const r6Reveal = await r6Live.page.evaluate(() => {
+      const view = document.querySelector('[data-testid="finding-view"]');
+      const pane = document.querySelector('[data-testid="process-lanes"]');
+      const path = pane?.querySelector('.process-edge.is-on-path .process-edge-line') ?? null;
+      const paneRect = pane ? pane.getBoundingClientRect() : null;
+      return {
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        viewAnimation: view ? getComputedStyle(view).animationName : null,
+        pathAnimation: path ? getComputedStyle(path).animationName : null,
+        panePosition: pane ? getComputedStyle(pane).position : null,
+        paneRect: paneRect ? { top: paneRect.top, bottom: paneRect.bottom } : null,
+      };
+    });
+    assert(
+      r6Reveal.viewport.width === 1280 && r6Reveal.viewport.height === 800,
+      `the live check viewport is ${r6Reveal.viewport.width}x${r6Reveal.viewport.height}`,
+    );
+    assert(
+      r6Reveal.viewAnimation === 'finding-view-in',
+      `the deep-linked finding view shows animation ${JSON.stringify(r6Reveal.viewAnimation)}`,
+    );
+    assert(
+      r6Reveal.pathAnimation === 'lanes-path-in',
+      `the impacted path shows animation ${JSON.stringify(r6Reveal.pathAnimation)}`,
+    );
+    assert(
+      r6Reveal.panePosition === 'sticky',
+      `the lane pane is ${JSON.stringify(r6Reveal.panePosition)}, not sticky at the desktop split`,
+    );
+    assert(
+      r6Reveal.paneRect !== null &&
+        r6Reveal.paneRect.top >= 0 &&
+        r6Reveal.paneRect.bottom <= 800,
+      `the lane pane is outside 0..800 on reveal: ${JSON.stringify(r6Reveal.paneRect)}`,
+    );
+
+    await r6Live.page
+      .locator(
+        `[data-testid="evidence-row"][data-evidence-index="${r6LiveRow}"] button.evidence-select`,
+      )
+      .click();
+    await r6Live.page.waitForFunction(
+      (index) =>
+        document
+          .querySelector(`[data-testid="evidence-row"][data-evidence-index="${index}"]`)
+          ?.getAttribute('data-selected') === 'true',
+      r6LiveRow,
+      { timeout: 30000 },
+    );
+    await r6Live.page
+      .locator(
+        `[data-testid="evidence-row"][data-evidence-index="${r6LiveRow}"] details.evidence-queries summary`,
+      )
+      .click();
+    const r6LiveState = await r6Live.page.evaluate((rowIndex) => {
+      const pane = document.querySelector('[data-testid="process-lanes"]');
+      const row = document.querySelector(
+        `[data-testid="evidence-row"][data-evidence-index="${rowIndex}"]`,
+      );
+      const node = pane?.querySelector('.process-node.is-selected');
+      const box = node?.querySelector('.process-node-box') ?? null;
+      const details = row?.querySelector('details.evidence-queries');
+      const paneRect = pane?.getBoundingClientRect() ?? null;
+      const nodeRect = node?.getBoundingClientRect() ?? null;
+      const rowRect = row?.getBoundingClientRect() ?? null;
+      return {
+        pane: paneRect
+          ? {
+              position: getComputedStyle(pane).position,
+              top: paneRect.top,
+              bottom: paneRect.bottom,
+              left: paneRect.left,
+              right: paneRect.right,
+            }
+          : null,
+        node: nodeRect
+          ? {
+              id: node.getAttribute('data-node-id'),
+              animation: box ? getComputedStyle(box).animationName : null,
+              top: nodeRect.top,
+              bottom: nodeRect.bottom,
+            }
+          : null,
+        row: rowRect
+          ? {
+              selected: row.getAttribute('data-selected'),
+              detailsOpen: details ? details.open : null,
+              top: rowRect.top,
+              bottom: rowRect.bottom,
+              left: rowRect.left,
+            }
+          : null,
+        scrollY: window.scrollY,
+      };
+    }, r6LiveRow);
+    assert(
+      r6LiveState.pane.position === 'sticky',
+      'the lane pane lost its sticky position while a row was selected',
+    );
+    assert(
+      r6LiveState.pane.top >= 0 && r6LiveState.pane.bottom <= 800,
+      `the lane pane left 0..800 while a row was selected: ${JSON.stringify(r6LiveState.pane)}`,
+    );
+    assert(
+      r6LiveState.node.id === r6LiveRows[r6LiveRow].nodeId,
+      `the selected node is ${JSON.stringify(r6LiveState.node?.id)}, expected the packing row's node`,
+    );
+    assert(
+      r6LiveState.node.top >= 0 && r6LiveState.node.bottom <= 800,
+      `the selected node left 0..800: ${JSON.stringify(r6LiveState.node)}`,
+    );
+    assert(
+      r6LiveState.node.animation === 'lanes-node-pulse',
+      `the selected node shows animation ${JSON.stringify(r6LiveState.node?.animation)}`,
+    );
+    assert(
+      r6LiveState.row.selected === 'true' && r6LiveState.row.detailsOpen === true,
+      'the packing row did not stay selected with its query block expanded',
+    );
+    assert(
+      r6LiveState.row.top < 800 && r6LiveState.row.bottom > 0,
+      `the packing row left the viewport: ${JSON.stringify(r6LiveState.row)}`,
+    );
+    assert(
+      r6LiveState.pane.right <= r6LiveState.row.left,
+      'the lane pane overlaps the evidence column',
+    );
+    // Scrolling the evidence list must not drop the pane or the selected node
+    // out of the frame: the sticky pane keeps the highlight in view.
+    await r6Live.page.evaluate(() => window.scrollBy(0, 600));
+    const r6LiveScrolled = await r6Live.page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="process-lanes"]');
+      const node = pane?.querySelector('.process-node.is-selected');
+      const paneRect = pane?.getBoundingClientRect() ?? null;
+      const nodeRect = node?.getBoundingClientRect() ?? null;
+      return {
+        scrollY: window.scrollY,
+        pane: paneRect ? { top: paneRect.top, bottom: paneRect.bottom } : null,
+        node: nodeRect ? { top: nodeRect.top, bottom: nodeRect.bottom } : null,
+      };
+    });
+    assert(r6LiveScrolled.scrollY > 0, 'the evidence list did not scroll');
+    assert(
+      r6LiveScrolled.pane.top >= 0 && r6LiveScrolled.pane.bottom <= 800,
+      `the lane pane left 0..800 while the evidence list scrolled: ${JSON.stringify(
+        r6LiveScrolled.pane,
+      )}`,
+    );
+    assert(
+      r6LiveScrolled.node.top >= 0 && r6LiveScrolled.node.bottom <= 800,
+      `the selected node left 0..800 while the evidence list scrolled: ${JSON.stringify(
+        r6LiveScrolled.node,
+      )}`,
+    );
+    const r6LiveClean = await assertContextClean(r6Live);
+    processLaneFixtures.push({ fixture: r6Live, clean: r6LiveClean });
+    summary.processLanes.r6Live = {
+      id: r6LiveFinding.id,
+      viewport: '1280x800',
+      selectedRow: r6LiveRow,
+      selectedNode: r6LiveState.node.id,
+      paneBottom: Number(r6LiveState.pane.bottom.toFixed(2)),
+      rowTop: Number(r6LiveState.row.top.toFixed(2)),
+      scrolledPaneTop: Number(r6LiveScrolled.pane.top.toFixed(2)),
+      revealMotion: r6Reveal.viewAnimation === 'finding-view-in',
+      selectionMotion: r6LiveState.node.animation === 'lanes-node-pulse',
+      ...r6LiveClean,
+    };
+
     // Phone viewport: the diagram must not exceed a 375px-wide screen.
     const phone = await prepareContext(browser, 'process-lanes-phone', {
       width: 375,
@@ -2559,6 +2771,16 @@ async function main() {
       JSON.stringify(phoneDiagram.nodes.map((node) => node.id).sort()) ===
         JSON.stringify(phoneExpected.nodeIds),
       'the phone diagram shows different nodes from the layout',
+    );
+    // Below the desktop split the pane returns to the stacked flow: no sticky
+    // positioning on a phone-width screen.
+    const phonePanePosition = await phone.page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="process-lanes"]');
+      return pane ? getComputedStyle(pane).position : null;
+    });
+    assert(
+      phonePanePosition === 'static',
+      `the phone lane pane is ${JSON.stringify(phonePanePosition)}, not in the stacked flow`,
     );
     const phoneClean = await assertContextClean(phone);
     processLaneFixtures.push({ fixture: phone, clean: phoneClean });

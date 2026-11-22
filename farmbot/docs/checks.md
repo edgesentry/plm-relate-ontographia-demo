@@ -151,16 +151,28 @@ Opening a finding shows the summary, the process-lane diagram (see
 parameters, then cause candidates and countermeasures; composition is in
 `src/farmbot/App.tsx` and `src/farmbot/findings-view.mjs`.
 
+At desktop widths (1024px and wider) the diagram and the evidence rows share
+the viewport: the lane pane is a sticky column beside the scrolling evidence
+list, so selecting a row or expanding its Intent, Cypher and parameters block
+keeps the pane, the selected node and the row control in one frame. Below that
+width the pane stacks above the evidence list. The shared selection state is
+`src/farmbot/finding-selection.mjs`: only an explicit select or opening another
+finding can change it, so expanding a query block retains the selected node.
+The view, the impacted path and a newly selected node each show a short CSS
+transition when the finding opens or the selection changes, and
+`prefers-reduced-motion: reduce` turns all of that off.
+
 Cause and countermeasure texts come from `src/farmbot/agent/templates.mjs` and
 stay in English; labels, headings and the summary follow the selected language.
 Every value is a React text node, so document text is never interpreted as HTML.
 
 ## Process lanes
 
-`src/farmbot/ProcessLanes.tsx` renders the hand-built SVG diagram above the
-evidence table, and `layoutFinding` in `src/farmbot/process-lanes.mjs` computes it
-without the DOM, so Node tests and the screen share one layout; that module
-defines the lane model, per-rule edge patterns, highlight rules and node cap.
+`src/farmbot/ProcessLanes.tsx` renders the hand-built SVG diagram beside the
+evidence table at desktop widths and above it on narrower screens, and
+`layoutFinding` in `src/farmbot/process-lanes.mjs` computes it without the DOM,
+so Node tests and the screen share one layout; that module defines the lane
+model, per-rule edge patterns, highlight rules and node cap.
 Styling is classes and React attributes only, keeping `style-src 'self'`; a link
 the evidence cannot confirm ends at a lane-level placeholder rather than an
 invented node, since the target lane may not be drawn.

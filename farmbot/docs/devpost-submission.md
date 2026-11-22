@@ -81,3 +81,18 @@ This submission is a shipped, inspectable `/farmbot/` demo, not a design sketch.
   - **Local-only inference:** Prompts are processed locally in the browser tab; the demo sends no inference requests to any external API.
   - **Closed routing only:** The model may emit only a closed `{check, parameter}` JSON routing object. Its output is strictly validated against the closed schema and committed allowed-values before Ontographia compiles the expanded Intents, and the user must review and confirm the proposal before Relate executes anything.
   - **No Cypher or finding generation:** The model never writes Cypher and never detects, explains, scores, or proposes countermeasures for any finding. Finding detection, evidence collection, severity scoring, and cause/countermeasure templates are handled deterministically by the check engine.
+
+---
+
+## Positioning decisions (#69)
+
+This section records accepted positioning for the Devpost text (#61), the GitHub About description (#64), and the demo video (#74, #70, #60). It is not part of the Devpost paste. Judging-score weights are not stated in submission text.
+
+1. **Relate naming.** Submission prose uses "Relate, Neo4j's lightweight graph database", matching Official Rules §1. The contest title remains "Relate by Neo4j Hackathon".
+2. **Title.** Keep the project title above: "Cross-Process PLM Graph Audit on FarmBot Genesis with Ontographia and Relate".
+3. **Tagline.** Keep the short description above.
+4. **Demo video spine.** Open with a sample notification-email card (a sample, not a sent email), follow its `#finding=` deep link, and show the process-lane diagram with the evidence row's Intent, executed Cypher, and bound parameters. Close by stating that the optional local model only routes a closed `{check, parameter}` object; it never writes Cypher and never detects, explains, or scores a finding. **To be implemented in `/farmbot/` before recording (not shipped there today):** SBOM lane(s), BOP lane(s), and a Cypher-output rejection beat. The rejection beat must be a deterministic, reproducible demonstration of the existing validator (a fixed sample input or control that feeds Cypher-like text into the closed routing parser and shows the on-screen rejection). It must not depend on a live model roll. Those beats stay in the spine and are filmed only after they exist on the frozen `/farmbot/` screen.
+5. **GitHub About description (#64).** This is a repository setting changed only by the maintainer. Accepted text: "In-browser cross-document BOM checks for FarmBot Genesis on Relate, Neo4j's lightweight graph database." Leave the homepage and topics unchanged.
+6. **Contrast with relate-ideas.** Keep the four-idea contrast in the long description. The main axis is a shipped, inspectable cross-document audit on FarmBot Genesis documentation, not a free-text query demo. InstantCypher is a tighter bound (ontology-constrained Intents, closed routing, always-shown Cypher), not the product's primary purpose.
+
+Today, EBOM / MBOM / SBOM / BOP swimlanes exist on the desk-fan screen at `/`, which is pre-contest work and is not the `/farmbot/` process-lane diagram. `/farmbot/` currently uses Design change, EBOM part, Assembly / pre-assembly, Packing, and Service lanes. Do not describe desk-fan SBOM or BOP, or a Cypher-output rejection filmed from a live model, as shipped `/farmbot/` behaviour.

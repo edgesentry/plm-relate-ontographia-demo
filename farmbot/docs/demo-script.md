@@ -4,6 +4,8 @@ A draft narration guide for a later screen recording of `/farmbot/`. It is not a
 timed shot list; timing, shot-list sign-off, recording and publishing are
 separate steps (#74, #70, #60). Target spoken length: 1 to 2 minutes.
 
+For the timed, shootable recording guide, see `farmbot/docs/recording-guide.md`.
+
 On-screen labels come from `src/farmbot/i18n.ts`. This script names those keys
 rather than quoting the strings, so the labels stay in one place.
 

@@ -15,6 +15,8 @@ const WORKFLOW = resolve(ROOT, '.github/workflows/ci.yml');
 const DOCS_DIR = resolve(ROOT, 'farmbot/docs');
 const DUCKDB_DOC = join(DOCS_DIR, 'duckdb-distribution.md');
 const RELATE_STORE_DOC = join(DOCS_DIR, 'relate-store.md');
+const RECORDING_GUIDE = join(DOCS_DIR, 'recording-guide.md');
+const DEMO_SCRIPT = join(DOCS_DIR, 'demo-script.md');
 const README = resolve(ROOT, 'README.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
 const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
@@ -1191,5 +1193,212 @@ test('a cited gitignored build output may be absent from the checkout', () => {
   assert.ok(
     repoPathProblems('Typo: `farmbot/docs/does-not-exist-here.md`').length > 0,
     'a typo under a real top-level name still fails',
+  );
+});
+
+// --- opening beat and spoken budget (#117) -----------------------------------
+//
+// Both demo documents must open the take with a 10 to 15 second Beat 0
+// (background, purpose, and a visual overview of the flow) before any Beat 1
+// screen operation, the named beat durations must stay inside the 90 to 110
+// second envelope both documents promise, the trim that makes room for the
+// opening must be named and agree with the documented durations, and the
+// Beat 7 closing line must stay verbatim.
+
+const CLOSING_LINE = 'the model only routes; it never writes Cypher';
+
+/**
+ * The beats the recording guide documents, in document order. Each beat is a
+ * "### Beat N: ..." section that states one "**Target Timing:** N seconds"
+ * line. Any other heading ends the section.
+ *
+ * @param {string} text
+ * @returns {{ n: number, seconds: number | null, body: string }[]}
+ */
+function recordingGuideBeats(text) {
+  const beats = [];
+  let current = null;
+  for (const line of text.split(/\r?\n/)) {
+    const heading = /^### Beat (\d+):\s/.exec(line);
+    if (heading) {
+      current = { n: Number(heading[1]), seconds: null, body: [] };
+      beats.push(current);
+      continue;
+    }
+    if (!current) continue;
+    if (/^#{1,3}\s/.test(line)) {
+      current = null;
+      continue;
+    }
+    const timing = /^[-*]\s*\*\*Target Timing:\*\*\s*(\d+)\s*seconds\b/.exec(line);
+    if (timing && current.seconds === null) current.seconds = Number(timing[1]);
+    current.body.push(line);
+  }
+  return beats.map((beat) => ({ ...beat, body: beat.body.join('\n') }));
+}
+
+/**
+ * The steps the demo script documents, in document order. Each step is a
+ * "### N. Title (about N seconds)" heading; any other heading ends it.
+ *
+ * @param {string} text
+ * @returns {{ n: number, seconds: number, body: string }[]}
+ */
+function demoScriptSteps(text) {
+  const steps = [];
+  let current = null;
+  for (const line of text.split(/\r?\n/)) {
+    const heading = /^### (\d+)\..*\(about (\d+) seconds\)\s*$/.exec(line);
+    if (heading) {
+      current = { n: Number(heading[1]), seconds: Number(heading[2]), body: [] };
+      steps.push(current);
+      continue;
+    }
+    if (!current) continue;
+    if (/^#{1,3}\s/.test(line)) {
+      current = null;
+      continue;
+    }
+    current.body.push(line);
+  }
+  return steps.map((step) => ({ ...step, body: step.body.join('\n') }));
+}
+
+/**
+ * One named trim entry, such as "Beat 6 is trimmed by 3 seconds (12 to 9
+ * seconds)" or "step 7 by 5 seconds (12 to 7 seconds)". The "to" value must
+ * equal the beat's documented duration, so the note cannot drift from the
+ * shot list.
+ *
+ * @param {string} text
+ * @param {'Beat' | 'step'} word
+ * @returns {{ n: number, to: number }[]}
+ */
+function namedTrims(text, word) {
+  const pattern = new RegExp(
+    `\\b${word} (\\d+)\\s+(?:is|by)[^\\n()]*?\\((\\d+) to (\\d+) seconds\\)`,
+    'gi',
+  );
+  return [...text.matchAll(pattern)].map((match) => ({
+    n: Number(match[1]),
+    from: Number(match[2]),
+    to: Number(match[3]),
+  }));
+}
+
+test('the demo documents open with a 10 to 15 second Beat 0 before Beat 1', () => {
+  const guideBeats = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8'));
+  const scriptSteps = demoScriptSteps(readFileSync(DEMO_SCRIPT, 'utf8'));
+  for (const [label, beats] of [
+    ['farmbot/docs/recording-guide.md', guideBeats],
+    ['farmbot/docs/demo-script.md', scriptSteps],
+  ]) {
+    assert.deepEqual(
+      beats.map((beat) => beat.n),
+      [0, 1, 2, 3, 4, 5, 6, 7],
+      `${label} must document exactly beats 0 through 7 in order; found ` +
+        `${beats.map((beat) => beat.n).join(', ')}`,
+    );
+    const opening = beats[0];
+    assert.ok(
+      opening.seconds !== null && opening.seconds >= 10 && opening.seconds <= 15,
+      `${label} documents a ${opening.seconds} second opening; Beat 0 must be 10 to 15 seconds`,
+    );
+    assert.ok(
+      opening.body.includes('data-testid="flow-strip"'),
+      `${label} Beat 0 does not name the flow strip as its visual overview`,
+    );
+    assert.ok(
+      /do not click|no click/i.test(opening.body),
+      `${label} Beat 0 does not state the no-operation rule; the opening is spoken ` +
+        'before any Beat 1 screen operation',
+    );
+  }
+  for (let n = 0; n <= 7; n += 1) {
+    assert.equal(
+      guideBeats.find((beat) => beat.n === n).seconds,
+      scriptSteps.find((step) => step.n === n).seconds,
+      `the recording guide and the demo script disagree on the duration of beat ${n}`,
+    );
+  }
+});
+
+test('the documented spoken durations sum inside the 90 to 110 second envelope', () => {
+  for (const [label, path, read] of [
+    ['farmbot/docs/recording-guide.md', RECORDING_GUIDE, recordingGuideBeats],
+    ['farmbot/docs/demo-script.md', DEMO_SCRIPT, demoScriptSteps],
+  ]) {
+    const beats = read(readFileSync(path, 'utf8'));
+    for (const beat of beats) {
+      assert.ok(
+        Number.isInteger(beat.seconds) && beat.seconds > 0,
+        `${label} beat ${beat.n} has no documented duration`,
+      );
+    }
+    const total = beats.reduce((sum, beat) => sum + beat.seconds, 0);
+    assert.ok(
+      total <= 110,
+      `${label} documents ${total} spoken seconds; the named beats must sum to at most 110 seconds`,
+    );
+    assert.ok(
+      total >= 90,
+      `${label} documents ${total} spoken seconds, below the 90 to 110 second envelope the document promises`,
+    );
+  }
+});
+
+test('the named trim agrees with the documented beat durations', () => {
+  const guide = readFileSync(RECORDING_GUIDE, 'utf8');
+  const script = readFileSync(DEMO_SCRIPT, 'utf8');
+  const guideTrims = namedTrims(guide, 'Beat');
+  const scriptTrims = namedTrims(script, 'step');
+  assert.ok(
+    guideTrims.length > 0,
+    'farmbot/docs/recording-guide.md names no trim; record it as ' +
+      '"Beat N is trimmed by X seconds (A to B seconds)"',
+  );
+  assert.ok(
+    scriptTrims.length > 0,
+    'farmbot/docs/demo-script.md names no trim; record it as ' +
+      '"step N is trimmed by X seconds (A to B seconds)"',
+  );
+  const guideBeats = recordingGuideBeats(guide);
+  const scriptSteps = demoScriptSteps(script);
+  for (const trim of guideTrims) {
+    const beat = guideBeats.find((entry) => entry.n === trim.n);
+    assert.ok(beat, `farmbot/docs/recording-guide.md trims unknown Beat ${trim.n}`);
+    assert.equal(
+      beat.seconds,
+      trim.to,
+      `farmbot/docs/recording-guide.md trims Beat ${trim.n} to ${trim.to} seconds but documents ${beat.seconds}`,
+    );
+  }
+  for (const trim of scriptTrims) {
+    const step = scriptSteps.find((entry) => entry.n === trim.n);
+    assert.ok(step, `farmbot/docs/demo-script.md trims unknown step ${trim.n}`);
+    assert.equal(
+      step.seconds,
+      trim.to,
+      `farmbot/docs/demo-script.md trims step ${trim.n} to ${trim.to} seconds but documents ${step.seconds}`,
+    );
+  }
+});
+
+test('the Beat 7 closing line stays verbatim in both demo documents', () => {
+  const guideBeats = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8'));
+  const scriptSteps = demoScriptSteps(readFileSync(DEMO_SCRIPT, 'utf8'));
+  const guideBeat7 = guideBeats.find((beat) => beat.n === 7);
+  const scriptStep7 = scriptSteps.find((step) => step.n === 7);
+  assert.ok(guideBeat7, 'the recording guide has no Beat 7');
+  assert.ok(scriptStep7, 'the demo script has no step 7');
+  assert.ok(
+    guideBeat7.body.includes(CLOSING_LINE),
+    'the recording guide Beat 7 voiceover lost the closing line ' +
+      `"${CLOSING_LINE}"`,
+  );
+  assert.ok(
+    scriptStep7.body.includes(CLOSING_LINE),
+    'the demo script step 7 narration lost the closing line ' +
+      `"${CLOSING_LINE}"`,
   );
 });

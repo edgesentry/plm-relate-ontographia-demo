@@ -49,10 +49,32 @@ below open specific findings to show specific lanes.
 
 ## Narration draft (about 90 to 110 seconds)
 
-Spine: sample notification-email card → `#finding=` deep link → process-lane
-diagram with each evidence row's Intent, executed Cypher, and bound parameters
-→ a short deterministic Cypher-output rejection beat → close on closed routing
-with the words "the model only routes; it never writes Cypher".
+Spine: opening background and purpose over the landing flow strip → sample
+notification-email card → `#finding=` deep link → process-lane diagram with
+each evidence row's Intent, executed Cypher, and bound parameters → a short
+deterministic Cypher-output rejection beat → close on closed routing with the
+words "the model only routes; it never writes Cypher".
+
+Named trim, so the opening plus the seven beats stays inside the spoken envelope:
+
+- The 12-second step 0 opening is added.
+- Step 6 is trimmed by 3 seconds (12 to 9 seconds).
+- Step 7 is trimmed by 5 seconds (12 to 7 seconds), by dropping its first sentence; the closing line stays verbatim.
+- The eight named durations sum to 103 seconds, inside the 90 to 110 second envelope and under 2 minutes.
+
+### 0. Opening (about 12 seconds)
+
+Speak over the landing before any screen operation. The camera holds on the
+compact 3-step flow strip above the sample notification cards
+(`[data-testid="flow-strip"]`, labels `flowStepAgent`, `flowStepEmail`,
+`flowStepAnalysis`): the agent finds the drift, the email link, and graph
+analysis in the browser. The `howItWorksLabel` disclosure
+(`[data-testid="how-it-works"]`) stays closed, so the EBOM/MBOM and engine
+definitions stay off the fold. No click, no scroll, no typing.
+
+Narration: "Hardware docs drift across BOMs, packing lists, and service
+pages. An agent spots the broken subgraph, emails a link, and clicking it
+runs live graph verification right in your browser."
 
 ### 1. Sample notification card (about 12 seconds)
 
@@ -130,7 +152,7 @@ Narration: "A pre-assembly page whose steps are only in a PDF gets this marker.
 It records that the page has no machine-readable component list; it is not a claim
 that the PDF was parsed."
 
-### 6. Cypher-output rejection (about 12 seconds)
+### 6. Cypher-output rejection (about 9 seconds)
 
 Scroll to the free-text heading (`checkFreeTextHeading`). The consent card
 (`checkConsentTitle`) may be visible; declining leaves the rule chips
@@ -145,23 +167,23 @@ new is compiled or executed. Do not film a live model roll.
 Narration: "If the routing output contains Cypher or a markdown fence, the
 screen rejects it. Nothing new is compiled or executed."
 
-### 7. Closed routing close (about 12 seconds)
+### 7. Closed routing close (about 7 seconds)
 
 Stay on the free-text heading. Point at the always-visible bound
 (`checkModelNoCypher`). Do not claim a particular routing result or model
 accuracy for a typed sentence.
 
-Narration: "The optional local model selects a closed check Intent and the
-check engine does the work. In short, the model only routes; it never writes
-Cypher."
+Narration: "In short, the model only routes; it never writes Cypher."
 
-If the take runs long, cut the decline-path explanation here first.
+If the take still runs long, shorten step 6 first; the closing words stay the
+final statement.
 
 ## Recording notes
 
 - No email is sent and no secret is shown during the take.
-- Keep the narration within 1 to 2 minutes, about 90 to 110 seconds. If it runs
-  long, cut the decline-path explanation in step 7 first, then shorten step 6.
+- Keep the narration within 1 to 2 minutes, about 90 to 110 seconds. If it
+  runs long, shorten step 6 first, then step 0; the closing words must stay
+  the final statement.
 - Do not claim that the live deployment already serves a build you have not
   confirmed.
 - The desk-fan screen at `/` is a different graph; do not film or describe its

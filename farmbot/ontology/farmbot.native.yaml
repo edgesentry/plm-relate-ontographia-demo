@@ -116,6 +116,17 @@ classes:
       One text unit of the v1.7 Change Log page, one row of the `change_note`
       table. `path` is the Change Log page; `line` is the 1-based first source
       line of the unit.
+  - name: Material
+    description: >-
+      One documented material string from the `specs.material` key of a BOM
+      part page, normalized so strings that differ only by case or internal
+      spacing (typographic twins) share one node. Reached from a part through
+      HAS_MATERIAL. This is the constructed SBOM view of this repository: a
+      view over the material strings the pinned FarmBot Genesis v1.7
+      documentation records, like the EBOM and MBOM groupings. It is not a
+      software BOM, not a CAS-level substance list, and not a spare-parts
+      list; a part page without `specs.material` reaches no material node,
+      and no material is invented for it.
 
 relationships:
   - name: IN_CATEGORY
@@ -162,6 +173,10 @@ relationships:
     from_class: DesignChange
     to_class: Part
     direction: out
+  - name: HAS_MATERIAL
+    from_class: Part
+    to_class: Material
+    direction: out
 
 properties:
   - name: name
@@ -185,6 +200,12 @@ properties:
     owner_class: Part
     datatype: boolean
   - name: market_price
+    owner_class: Part
+    datatype: string
+  - name: material_raw
+    owner_class: Part
+    datatype: string
+  - name: material_name
     owner_class: Part
     datatype: string
 

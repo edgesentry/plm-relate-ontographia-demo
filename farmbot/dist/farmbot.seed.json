@@ -1476,6 +1476,541 @@
       "type": "FOR_VARIANT"
     },
     {
+      "from": "part:100mm Nut Bar",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:100mm Zip Tie",
+      "to": "material:nylon",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:10mm Nut Bar",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:140mm Nut Bar",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:16 Gauge Luer Lock Needle",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:19 Gauge Luer Lock Needle",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:200mm Zip Tie",
+      "to": "material:nylon",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:20mm Nut Bar",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:3-Slot Toolbay",
+      "to": "material:5052 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:30mm Cable Carrier Mount",
+      "to": "material:machined 6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:40mm Nut Bar",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:60mm Horizontal Cable Carrier Support",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:60mm Nut Bar",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:80mm Cable Carrier Mount",
+      "to": "material:machined 6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:90-Degree Barb",
+      "to": "material:brass",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Bearing",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Belt",
+      "to": "material:neoprene with fiberglass cords",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Belt Clip",
+      "to": "material:6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Belt Sleeve",
+      "to": "material:aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Blue LED Indicator",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Cable Carrier Spacer Block",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Camera Calibration Card",
+      "to": "material:matte cardstock",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Camera Mount Half",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Countersunk Magnet",
+      "to": "material:neodymium (ndfeb)",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Cross-Slide Plate",
+      "to": "material:6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Eccentric Spacer",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Gantry Column",
+      "to": "material:6063-t5 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Gantry Joining Bracket",
+      "to": "material:6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Gantry Main Beam",
+      "to": "material:6063-t5 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Gantry Wheel Plate",
+      "to": "material:6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Garden Hose to Barb Adapter",
+      "to": "material:brass",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Green LED Indicator",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Horizontal Motor Housing",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Inline Air Filter",
+      "to": "material:plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Jumper Link",
+      "to": "material:aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:LED Indicator Nut",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:LED Indicator O-Ring",
+      "to": "material:buna-n",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Leadscrew",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Leadscrew Block",
+      "to": "material:black delrin",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Left Gantry Corner Bracket",
+      "to": "material:5052 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Luer Lock Adapter",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M2.5 x 4mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M2.5 x 6mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M3 Locknut",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M3 x 12mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M3 x 16mm Flat Head Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M3 x 35mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M3 x 4mm Setscrew",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M3 x 6mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M4 x 4mm Setscrew",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 Barb",
+      "to": "material:brass",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 Flange Locknut",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 Precision Shim",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 x 10mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 x 16mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 x 22mm Flat Head Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 x 30mm Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:M5 x 4mm Setscrew",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:NPT to Barb Adapter",
+      "to": "material:brass",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:O-Ring",
+      "to": "material:viton",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Pressure Regulator",
+      "to": "material:uv resistant plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Pulley",
+      "to": "material:aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Push Button Nut",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Push Button O-Ring",
+      "to": "material:buna-n",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Red Push Button",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Right Gantry Corner Bracket",
+      "to": "material:5052 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool Bottom",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool Chuck Adapter",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool M5 Shaft Adapter",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool Shaft Extension",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool Top",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool Trimmer",
+      "to": "material:nylon",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rotary Tool Trimmer Mount",
+      "to": "material:aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Rubber Gasket",
+      "to": "material:rubber",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Seed Bin",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Seed Tray",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Seed Trough",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Seed Trough Holder",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Seed Trough Holder Mount",
+      "to": "material:6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Seeder",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Shaft Coupler",
+      "to": "material:aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Soil Sensor",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Solenoid Valve Mount",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Standard Magnet",
+      "to": "material:neodymium (ndfeb)",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Standard Spacer",
+      "to": "material:aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:T10 Flathead Wood Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:T25 Wood Screw",
+      "to": "material:stainless steel",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Track Extrusion",
+      "to": "material:6063-t5 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:UTM",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:V-Wheel",
+      "to": "material:clear polycarbonate",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Vacuum Pump Cover",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Vacuum Pump Mount",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Vacuum Tube",
+      "to": "material:semi-clear silicone",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Vertical Cable Carrier Support",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Vertical Motor Housing",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Water Tube",
+      "to": "material:semi-clear silicone",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Watering Nozzle Bottom",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Watering Nozzle Top",
+      "to": "material:gray uv stabilized abs",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:White LED Indicator",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:White Push Button",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:X-Axis Cable Carrier",
+      "to": "material:black nylon pa66",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Y-Axis Cable Carrier",
+      "to": "material:black nylon pa66",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Yellow Push Button",
+      "to": "material:stainless steel and plastic",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Z-Axis Cable Carrier",
+      "to": "material:black nylon pa66",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Z-Axis Extrusion",
+      "to": "material:6063-t5 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Z-Axis Hardstop",
+      "to": "material:6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
+      "from": "part:Z-Axis Motor Mount",
+      "to": "material:machined 6061 aluminum",
+      "type": "HAS_MATERIAL"
+    },
+    {
       "from": "part:Belt",
       "to": "partvariant:Belt@1",
       "type": "HAS_PART_VARIANT"
@@ -7109,6 +7644,160 @@
       }
     },
     {
+      "id": "material:5052 aluminum",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:6061 aluminum",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:6063-t5 aluminum",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:aluminum",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:black delrin",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:black nylon pa66",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:brass",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:buna-n",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:clear polycarbonate",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:gray uv stabilized abs",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:machined 6061 aluminum",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:matte cardstock",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:neodymium (ndfeb)",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:neoprene with fiberglass cords",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:nylon",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:plastic",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:rubber",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:semi-clear silicone",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:stainless steel",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:stainless steel and plastic",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:uv resistant plastic",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "material:viton",
+      "labels": [
+        "Material"
+      ],
+      "properties": {}
+    },
+    {
       "id": "part:100mm Nut Bar",
       "labels": [
         "Part",
@@ -7118,6 +7807,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$2.50",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "100mm Nut Bar",
         "quantity_standard": 2,
         "quantity_xl": 6,
@@ -7134,6 +7825,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.07",
+        "material_name": "Nylon",
+        "material_raw": "Nylon",
         "name": "100mm Zip Tie",
         "quantity_standard": 25,
         "quantity_xl": 25,
@@ -7150,6 +7843,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$1.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "10mm Nut Bar",
         "quantity_standard": 14,
         "quantity_xl": 14,
@@ -7166,6 +7861,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "140mm Nut Bar",
         "quantity_standard": 0,
         "quantity_xl": 2,
@@ -7182,6 +7879,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "16 Gauge Luer Lock Needle",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -7198,6 +7897,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "19 Gauge Luer Lock Needle",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -7214,6 +7915,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.10",
+        "material_name": "Nylon",
+        "material_raw": "Nylon",
         "name": "200mm Zip Tie",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -7230,6 +7933,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$1.50",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "20mm Nut Bar",
         "quantity_standard": 6,
         "quantity_xl": 6,
@@ -7262,6 +7967,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$40.00",
+        "material_name": "5052 Aluminum",
+        "material_raw": "5052 Aluminum",
         "name": "3-Slot Toolbay",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -7278,6 +7985,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$8.00",
+        "material_name": "Machined 6061 Aluminum",
+        "material_raw": "Machined 6061 Aluminum",
         "name": "30mm Cable Carrier Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7310,6 +8019,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$1.75",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "40mm Nut Bar",
         "quantity_standard": 24,
         "quantity_xl": 42,
@@ -7342,6 +8053,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "60mm Horizontal Cable Carrier Support",
         "quantity_standard": 6,
         "quantity_xl": 12,
@@ -7358,6 +8071,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$2.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "60mm Nut Bar",
         "quantity_standard": 20,
         "quantity_xl": 20,
@@ -7374,6 +8089,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$10.00",
+        "material_name": "Machined 6061 Aluminum",
+        "material_raw": "Machined 6061 Aluminum",
         "name": "80mm Cable Carrier Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7390,6 +8107,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Brass",
+        "material_raw": "Brass",
         "name": "90-Degree Barb",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7406,6 +8125,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$0.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "Bearing",
         "quantity_standard": 60,
         "quantity_xl": 60,
@@ -7422,6 +8143,8 @@
         "category_slug": "drivetrain",
         "has_variants": true,
         "market_price": "$20.00|$30.00|$40.00|$70.00",
+        "material_name": "Neoprene with fiberglass cords",
+        "material_raw": "Neoprene with fiberglass cords",
         "name": "Belt",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -7438,6 +8161,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "6061 Aluminum",
+        "material_raw": "6061 Aluminum",
         "name": "Belt Clip",
         "quantity_standard": 6,
         "quantity_xl": 6,
@@ -7454,6 +8179,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$0.50",
+        "material_name": "Aluminum",
+        "material_raw": "Aluminum",
         "name": "Belt Sleeve",
         "quantity_standard": 6,
         "quantity_xl": 6,
@@ -7470,6 +8197,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "Blue LED Indicator",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7486,6 +8215,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Cable Carrier Spacer Block",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7534,6 +8265,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$1.50",
+        "material_name": "Matte cardstock",
+        "material_raw": "Matte cardstock",
         "name": "Camera Calibration Card",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7550,6 +8283,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Camera Mount Half",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -7566,6 +8301,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Neodymium (NdFeB)",
+        "material_raw": "Neodymium (NdFeB)",
         "name": "Countersunk Magnet",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -7582,6 +8319,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$25.00",
+        "material_name": "6061 Aluminum",
+        "material_raw": "6061 Aluminum",
         "name": "Cross-Slide Plate",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7598,6 +8337,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$2.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "Eccentric Spacer",
         "quantity_standard": 15,
         "quantity_xl": 15,
@@ -7710,6 +8451,8 @@
         "category_slug": "extrusions",
         "has_variants": false,
         "market_price": "$15.00",
+        "material_name": "6063-T5 Aluminum",
+        "material_raw": "6063-T5 Aluminum",
         "name": "Gantry Column",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -7726,6 +8469,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$35.00",
+        "material_name": "6061 Aluminum",
+        "material_raw": "6061 Aluminum",
         "name": "Gantry Joining Bracket",
         "quantity_standard": 0,
         "quantity_xl": 1,
@@ -7742,6 +8487,8 @@
         "category_slug": "extrusions",
         "has_variants": false,
         "market_price": "$35.00",
+        "material_name": "6063-T5 Aluminum",
+        "material_raw": "6063-T5 Aluminum",
         "name": "Gantry Main Beam",
         "quantity_standard": 1,
         "quantity_xl": 2,
@@ -7758,6 +8505,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$20.00",
+        "material_name": "6061 Aluminum",
+        "material_raw": "6061 Aluminum",
         "name": "Gantry Wheel Plate",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -7774,6 +8523,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$10.00",
+        "material_name": "Brass",
+        "material_raw": "Brass",
         "name": "Garden Hose to Barb Adapter",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7790,6 +8541,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "Green LED Indicator",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7806,6 +8559,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$10.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Horizontal Motor Housing",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -7822,6 +8577,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$8.00",
+        "material_name": "Plastic",
+        "material_raw": "Plastic",
         "name": "Inline Air Filter",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7838,6 +8595,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$0.50",
+        "material_name": "Aluminum",
+        "material_raw": "Aluminum",
         "name": "Jumper Link",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -7854,6 +8613,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$0.25",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "LED Indicator Nut",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -7870,6 +8631,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$0.05",
+        "material_name": "Buna-N",
+        "material_raw": "Buna-N",
         "name": "LED Indicator O-Ring",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -7918,6 +8681,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$35.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "Leadscrew",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7934,6 +8699,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$7.00",
+        "material_name": "Black delrin",
+        "material_raw": "Black delrin",
         "name": "Leadscrew Block",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7950,6 +8717,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$15.00",
+        "material_name": "5052 Aluminum",
+        "material_raw": "5052 Aluminum",
         "name": "Left Gantry Corner Bracket",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7966,6 +8735,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "Luer Lock Adapter",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -7982,6 +8753,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.15",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "M2.5 x 4mm Screw",
         "quantity_standard": 8,
         "quantity_xl": 8,
@@ -7998,6 +8771,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.20",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "M2.5 x 6mm Screw",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -8014,6 +8789,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.10",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M3 Locknut",
         "quantity_standard": 24,
         "quantity_xl": 24,
@@ -8030,6 +8807,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.15",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M3 x 12mm Screw",
         "quantity_standard": 35,
         "quantity_xl": 35,
@@ -8046,6 +8825,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.15",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M3 x 16mm Flat Head Screw",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -8062,6 +8843,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.20",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M3 x 35mm Screw",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -8078,6 +8861,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.25",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "M3 x 4mm Setscrew",
         "quantity_standard": 6,
         "quantity_xl": 6,
@@ -8094,6 +8879,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.10",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M3 x 6mm Screw",
         "quantity_standard": 10,
         "quantity_xl": 10,
@@ -8110,6 +8897,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.25",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "M4 x 4mm Setscrew",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8126,6 +8915,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Brass",
+        "material_raw": "Brass",
         "name": "M5 Barb",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -8142,6 +8933,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.20",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M5 Flange Locknut",
         "quantity_standard": 70,
         "quantity_xl": 70,
@@ -8158,6 +8951,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$0.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "M5 Precision Shim",
         "quantity_standard": 30,
         "quantity_xl": 30,
@@ -8174,6 +8969,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.15",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M5 x 10mm Screw",
         "quantity_standard": 150,
         "quantity_xl": 200,
@@ -8190,6 +8987,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.20",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M5 x 16mm Screw",
         "quantity_standard": 27,
         "quantity_xl": 27,
@@ -8206,6 +9005,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.28",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M5 x 22mm Flat Head Screw",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -8222,6 +9023,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.30",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M5 x 30mm Screw",
         "quantity_standard": 43,
         "quantity_xl": 43,
@@ -8238,6 +9041,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.15",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "M5 x 4mm Setscrew",
         "quantity_standard": 4,
         "quantity_xl": 12,
@@ -8318,6 +9123,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Brass",
+        "material_raw": "Brass",
         "name": "NPT to Barb Adapter",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -8334,6 +9141,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$0.50",
+        "material_name": "Viton",
+        "material_raw": "Viton",
         "name": "O-Ring",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -8446,6 +9255,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$8.00",
+        "material_name": "UV resistant plastic",
+        "material_raw": "UV resistant plastic",
         "name": "Pressure Regulator",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8462,6 +9273,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Aluminum",
+        "material_raw": "Aluminum",
         "name": "Pulley",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -8478,6 +9291,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$0.25",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "Push Button Nut",
         "quantity_standard": 5,
         "quantity_xl": 5,
@@ -8494,6 +9309,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$0.10",
+        "material_name": "Buna-N",
+        "material_raw": "Buna-N",
         "name": "Push Button O-Ring",
         "quantity_standard": 5,
         "quantity_xl": 5,
@@ -8574,6 +9391,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "Red Push Button",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8590,6 +9409,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$15.00",
+        "material_name": "5052 Aluminum",
+        "material_raw": "5052 Aluminum",
         "name": "Right Gantry Corner Bracket",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8606,6 +9427,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Rotary Tool Bottom",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8638,6 +9461,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "Rotary Tool Chuck Adapter",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8654,6 +9479,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "Rotary Tool M5 Shaft Adapter",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8702,6 +9529,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless steel",
         "name": "Rotary Tool Shaft Extension",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8718,6 +9547,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$10.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Rotary Tool Top",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8734,6 +9565,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Nylon",
+        "material_raw": "Nylon",
         "name": "Rotary Tool Trimmer",
         "quantity_standard": 30,
         "quantity_xl": 30,
@@ -8750,6 +9583,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Aluminum",
+        "material_raw": "Aluminum",
         "name": "Rotary Tool Trimmer Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8766,6 +9601,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$1.00",
+        "material_name": "Rubber",
+        "material_raw": "Rubber",
         "name": "Rubber Gasket",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -8782,6 +9619,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$7.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Seed Bin",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8798,6 +9637,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$7.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Seed Tray",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8814,6 +9655,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Seed Trough",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -8830,6 +9673,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$8.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Seed Trough Holder",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8846,6 +9691,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "6061 Aluminum",
+        "material_raw": "6061 Aluminum",
         "name": "Seed Trough Holder Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8862,6 +9709,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$7.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Seeder",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8878,6 +9727,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Aluminum",
+        "material_raw": "Aluminum",
         "name": "Shaft Coupler",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8910,6 +9761,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$7.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Soil Sensor",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8974,6 +9827,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Solenoid Valve Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -8990,6 +9845,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Neodymium (NdFeB)",
+        "material_raw": "Neodymium (NdFeB)",
         "name": "Standard Magnet",
         "quantity_standard": 15,
         "quantity_xl": 15,
@@ -9006,6 +9863,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.20",
+        "material_name": "Aluminum",
+        "material_raw": "Aluminum",
         "name": "Standard Spacer",
         "quantity_standard": 30,
         "quantity_xl": 30,
@@ -9054,6 +9913,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.05",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "T10 Flathead Wood Screw",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -9086,6 +9947,8 @@
         "category_slug": "fasteners-and-hardware",
         "has_variants": false,
         "market_price": "$0.05",
+        "material_name": "Stainless Steel",
+        "material_raw": "Stainless Steel",
         "name": "T25 Wood Screw",
         "quantity_standard": 40,
         "quantity_xl": 60,
@@ -9102,6 +9965,8 @@
         "category_slug": "extrusions",
         "has_variants": false,
         "market_price": "$20.00",
+        "material_name": "6063-T5 Aluminum",
+        "material_raw": "6063-T5 Aluminum",
         "name": "Track Extrusion",
         "quantity_standard": 4,
         "quantity_xl": 8,
@@ -9118,6 +9983,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$30.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "UTM",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9166,6 +10033,8 @@
         "category_slug": "drivetrain",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Clear polycarbonate",
+        "material_raw": "Clear polycarbonate",
         "name": "V-Wheel",
         "quantity_standard": 30,
         "quantity_xl": 30,
@@ -9198,6 +10067,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$15.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Vacuum Pump Cover",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9214,6 +10085,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Vacuum Pump Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9230,6 +10103,8 @@
         "category_slug": "tubing",
         "has_variants": false,
         "market_price": "$1.00",
+        "material_name": "Semi-clear silicone",
+        "material_raw": "Semi-clear silicone",
         "name": "Vacuum Tube",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -9246,6 +10121,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Vertical Cable Carrier Support",
         "quantity_standard": 4,
         "quantity_xl": 4,
@@ -9262,6 +10139,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$12.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Vertical Motor Housing",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9278,6 +10157,8 @@
         "category_slug": "tubing",
         "has_variants": true,
         "market_price": "$5.00|$8.00|$10.00|$12.00|$15.00",
+        "material_name": "Semi-clear silicone",
+        "material_raw": "Semi-clear silicone",
         "name": "Water Tube",
         "quantity_standard": 3,
         "quantity_xl": 3,
@@ -9294,6 +10175,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Watering Nozzle Bottom",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9310,6 +10193,8 @@
         "category_slug": "plastic-parts",
         "has_variants": false,
         "market_price": "$7.00",
+        "material_name": "Gray UV stabilized ABS",
+        "material_raw": "Gray UV stabilized ABS",
         "name": "Watering Nozzle Top",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9326,6 +10211,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$5.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "White LED Indicator",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -9342,6 +10229,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "White Push Button",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9358,6 +10247,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": true,
         "market_price": "$50.00|$80.00",
+        "material_name": "Black Nylon PA66",
+        "material_raw": "Black Nylon PA66",
         "name": "X-Axis Cable Carrier",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9390,6 +10281,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": true,
         "market_price": "$50.00|$80.00",
+        "material_name": "Black Nylon PA66",
+        "material_raw": "Black Nylon PA66",
         "name": "Y-Axis Cable Carrier",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9406,6 +10299,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "$6.00",
+        "material_name": "Stainless steel and plastic",
+        "material_raw": "Stainless steel and plastic",
         "name": "Yellow Push Button",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9438,6 +10333,8 @@
         "category_slug": "electronics-and-wiring",
         "has_variants": false,
         "market_price": "30.00",
+        "material_name": "Black Nylon PA66",
+        "material_raw": "Black Nylon PA66",
         "name": "Z-Axis Cable Carrier",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9454,6 +10351,8 @@
         "category_slug": "extrusions",
         "has_variants": false,
         "market_price": "$20.00",
+        "material_name": "6063-T5 Aluminum",
+        "material_raw": "6063-T5 Aluminum",
         "name": "Z-Axis Extrusion",
         "quantity_standard": 1,
         "quantity_xl": 1,
@@ -9470,6 +10369,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$3.00",
+        "material_name": "6061 Aluminum",
+        "material_raw": "6061 Aluminum",
         "name": "Z-Axis Hardstop",
         "quantity_standard": 2,
         "quantity_xl": 2,
@@ -9486,6 +10387,8 @@
         "category_slug": "plates-and-brackets",
         "has_variants": false,
         "market_price": "$20.00",
+        "material_name": "Machined 6061 Aluminum",
+        "material_raw": "Machined 6061 Aluminum",
         "name": "Z-Axis Motor Mount",
         "quantity_standard": 1,
         "quantity_xl": 1,

@@ -1,5 +1,6 @@
-// Tests for the schema version 2 tables: the Change Log notes and the
-// troubleshooting / maintenance service pages.
+// Tests for the Change Log and service tables that schema version 2 added,
+// and for the schema-version pin itself (version 3 added the documented
+// material columns to the `part` table; the extract fixtures cover those).
 //
 // The expected counts are never written by hand. A small independent oracle
 // scans the source Markdown for the `[[part name]]` syntax, resolves each name
@@ -144,11 +145,11 @@ after(() => {
   for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
 });
 
-test('schema version is 2 and the new counts are recorded', async () => {
+test('schema version is 3 and the counts are recorded', async () => {
   const metadata = Object.fromEntries(
     (await query('SELECT key, value FROM extract_metadata')).map((row) => [row.key, row.value]),
   );
-  assert.equal(metadata.schema_version, '2');
+  assert.equal(metadata.schema_version, '3');
 
   const tables = await query(
     "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main' ORDER BY table_name",
@@ -486,7 +487,7 @@ test('the page parse does not depend on input order', async () => {
   }
 });
 
-test('the existing tables keep their schema version 1 logical dumps', async () => {
+test('the fixture tables keep their committed logical dumps', async () => {
   const fixture = JSON.parse(readFileSync(FIXTURE, 'utf8'));
   const digests = await tableDigests(build());
   for (const [table, expected] of Object.entries(fixture.tables)) {
@@ -500,7 +501,7 @@ test('the existing tables keep their schema version 1 logical dumps', async () =
     if (key === 'schema_version') continue;
     assert.equal(metadata[key], expected, `metadata ${key} changed`);
   }
-  assert.equal(metadata.schema_version, '2');
+  assert.equal(metadata.schema_version, '3');
 });
 
 test('two extractions agree and match the committed digest', async () => {

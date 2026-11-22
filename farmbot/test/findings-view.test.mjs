@@ -39,7 +39,7 @@ const FINDINGS_DIGEST_PATH = `${FINDINGS_PATH}.sha256`;
 // canonical findings bytes must fail this test even if the sidecar is rewritten
 // to match, so the expected digest is never recomputed from the current file.
 const PINNED_FINDINGS_DIGEST =
-  'farmbot-findings-v1 sha256:9de39a97d890068e0b246e5b5e183937f01f4a468d101f3f0a945303284406d5';
+  'farmbot-findings-v1 sha256:1385a806eea90ce52c2c57ea1bcf7bfe9f0c1174a3b230ad84d51ce95bf15ab8';
 
 const findingsText = readFileSync(FINDINGS_PATH, 'utf8');
 const document = JSON.parse(findingsText);

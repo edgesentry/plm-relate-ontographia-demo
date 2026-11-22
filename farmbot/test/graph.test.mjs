@@ -23,6 +23,7 @@ import {
   sidecarText,
   validateSeed,
 } from '../scripts/graph.mjs';
+import { materialKey, materialNodeId } from '../../src/farmbot/materials.mjs';
 import { CHANGE_LOG_PATH } from '../scripts/lib/change-log.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -136,6 +137,56 @@ test('the full graph has the counts the extract implies', () => {
     tables.quantity_difference.length,
   );
   assert.equal(counts.get('ProductVariant'), PRODUCT_VARIANTS.length);
+
+  // The constructed SBOM view: one Material node per distinct normalization
+  // key the part table documents, and nothing for the parts without one.
+  const withMaterial = tables.part.filter((row) => row.material_raw !== null);
+  const materialKeys = new Set(withMaterial.map((row) => materialKey(row.material_raw)));
+  assert.equal(counts.get('Material'), materialKeys.size);
+});
+
+test('Material nodes and HAS_MATERIAL edges match the extract rows', () => {
+  const withMaterial = tables.part.filter((row) => row.material_raw !== null);
+  const keys = new Set(withMaterial.map((row) => materialKey(row.material_raw)));
+
+  const materialNodes = fullSeed.nodes.filter((node) => node.labels[0] === 'Material');
+  assert.deepEqual(
+    materialNodes.map((node) => node.id).sort(),
+    [...keys].map((key) => materialNodeId(key)).sort(),
+  );
+  // A Material node carries no properties: the raw string and the display
+  // name stay on the part that documents them, and the key is the node id.
+  for (const node of materialNodes) {
+    assert.deepEqual(node.properties, {}, `${node.id} carries properties`);
+  }
+
+  const hasMaterial = fullSeed.edges.filter((edge) => edge.type === 'HAS_MATERIAL');
+  assert.deepEqual(
+    hasMaterial.map((edge) => `${edge.from}\u0000${edge.to}`).sort(),
+    withMaterial
+      .map(
+        (row) => `part:${row.name}\u0000${materialNodeId(materialKey(row.material_raw))}`,
+      )
+      .sort(),
+    'one HAS_MATERIAL edge per part page that documents a material',
+  );
+
+  // Every part node keeps its own raw string and the display name of its key.
+  const partNodeById = new Map(
+    fullSeed.nodes.filter((node) => node.labels[0] === 'Part').map((node) => [node.id, node]),
+  );
+  for (const row of withMaterial) {
+    const node = partNodeById.get(`part:${row.name}`);
+    assert.ok(node, `part:${row.name} is not a node`);
+    assert.equal(node.properties.material_raw, row.material_raw);
+    assert.equal(node.properties.material_name, row.material_name);
+  }
+  for (const row of tables.part.filter((entry) => entry.material_raw === null)) {
+    const node = partNodeById.get(`part:${row.name}`);
+    assert.ok(node, `part:${row.name} is not a node`);
+    assert.equal('material_raw' in node.properties, false, `part:${row.name} gained a material`);
+    assert.equal('material_name' in node.properties, false, `part:${row.name} gained a name`);
+  }
 });
 
 function edgeSet(seed, type) {

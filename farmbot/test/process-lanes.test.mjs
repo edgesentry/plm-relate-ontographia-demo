@@ -634,6 +634,149 @@ test('R9 candidate parts hang off the unresolved reference', () => {
   assert.equal(incoming.length, 1, 'the candidate part is not connected to the reference');
 });
 
+test('a finding that cites a part with a documented material shows the SBOM lane', () => {
+  const withMaterial = findings.filter((finding) =>
+    finding.evidence.some((row) => row.role === 'material'),
+  );
+  assert.ok(withMaterial.length > 0, 'the committed file has no material evidence row');
+
+  for (const finding of withMaterial) {
+    const layout = layoutFinding(finding);
+    const lane = layout.lanes.find((entry) => entry.id === 'sbom');
+    assert.ok(lane, `${finding.id} hides the SBOM lane`);
+    const laneIndex = layout.lanes.findIndex((entry) => entry.id === 'sbom');
+    const partIndex = layout.lanes.findIndex((entry) => entry.id === 'ebom-part');
+    assert.ok(
+      partIndex !== -1 && laneIndex === partIndex + 1,
+      `${finding.id} does not draw the SBOM lane next to the EBOM lane`,
+    );
+
+    const materialRows = finding.evidence.filter((row) => row.role === 'material');
+    const laneNodes = layout.nodes.filter((node) => node.lane === 'sbom');
+    assert.equal(lane.count, laneNodes.length, `${finding.id} lane count drifted`);
+
+    // Every material node in the diagram is cited by an evidence row, and
+    // every material row is drawn (or reported as overflow with its node id).
+    for (const node of laneNodes) {
+      const citing = materialRows.filter((row) => row.nodeId === node.id);
+      assert.ok(citing.length > 0, `${finding.id} draws uncited material node ${node.id}`);
+      assert.equal(node.role, 'material');
+      // The material node links back to each part row that cited it.
+      for (const row of citing) {
+        assert.ok(
+          layout.edges.some(
+            (edge) =>
+              edge.kind === 'link' &&
+              edge.from === row.facts.partNodeId &&
+              edge.to === node.id,
+          ),
+          `${finding.id} has no edge from ${row.facts.partNodeId} to ${node.id}`,
+        );
+      }
+    }
+    for (const row of materialRows) {
+      assert.ok(
+        laneNodes.some((node) => node.id === row.nodeId) ||
+          layout.overflow.nodeIds.includes(row.nodeId),
+        `${finding.id} drops material row ${row.nodeId}`,
+      );
+    }
+  }
+});
+
+test('a finding with no material evidence hides the SBOM lane', () => {
+  const withoutMaterial = findings.filter(
+    (finding) => !finding.evidence.some((row) => row.role === 'material'),
+  );
+  assert.ok(withoutMaterial.length > 0, 'every committed finding cites a material');
+
+  for (const finding of withoutMaterial) {
+    const layout = layoutFinding(finding);
+    assert.ok(
+      !layout.lanes.some((lane) => lane.id === 'sbom'),
+      `${finding.id} shows an empty SBOM lane`,
+    );
+    assert.ok(
+      !layout.nodes.some((node) => node.lane === 'sbom'),
+      `${finding.id} draws a node in the hidden SBOM lane`,
+    );
+  }
+});
+
+test('the SBOM lane appears only with a material row and links the citing part', () => {
+  const partRow = {
+    role: 'part',
+    nodeId: 'part:Tee Nuts',
+    sourceFile: 'parts/tee-nuts.md',
+    line: null,
+    facts: { name: 'Tee Nuts' },
+  };
+  const materialRow = {
+    role: 'material',
+    nodeId: 'material:stainless steel',
+    sourceFile: 'parts/tee-nuts.md',
+    line: null,
+    facts: {
+      displayName: 'Stainless Steel',
+      material: 'Stainless Steel',
+      partNodeId: 'part:Tee Nuts',
+    },
+  };
+  const subject = { key: 'Tee Nuts', kind: 'part', label: 'Tee Nuts', nodeId: 'part:Tee Nuts' };
+
+  const withMaterial = {
+    id: 'R3-material',
+    rule: 'R3',
+    subject,
+    evidence: [partRow, materialRow],
+    queries: [],
+  };
+  const layout = layoutFinding(withMaterial);
+  const laneIds = layout.lanes.map((lane) => lane.id);
+  assert.deepEqual(laneIds, ['ebom-part', 'sbom'], 'the lanes are out of order');
+  const material = layout.nodes.find((node) => node.lane === 'sbom');
+  assert.ok(material, 'the material node is not drawn');
+  assert.equal(material.label, 'Stainless Steel');
+  assert.equal(material.meta, 'parts/tee-nuts.md');
+  assert.equal(material.problem, false);
+  assert.ok(
+    layout.edges.some(
+      (edge) => edge.kind === 'link' && edge.from === 'part:Tee Nuts' && edge.to === material.id,
+    ),
+    'the citing part is not linked to the material node',
+  );
+  // Shuffled evidence order must not change the layout.
+  const shuffledLayout = layoutFinding({
+    ...withMaterial,
+    evidence: [materialRow, partRow],
+  });
+  assert.deepEqual(shuffledLayout, layout);
+
+  // Without the material row the lane is hidden and the edge is gone.
+  const withoutMaterial = {
+    ...withMaterial,
+    id: 'R3-no-material',
+    evidence: [partRow],
+  };
+  const bare = layoutFinding(withoutMaterial);
+  assert.deepEqual(bare.lanes.map((lane) => lane.id), ['ebom-part']);
+  assert.deepEqual(
+    bare.edges.filter((edge) => edge.to.startsWith('material:')),
+    [],
+    'a material edge survived without a material row',
+  );
+
+  // A material row whose citing part is not in evidence draws the node but
+  // no edge to an invented part.
+  const orphan = layoutFinding({
+    ...withMaterial,
+    id: 'R3-orphan-material',
+    evidence: [materialRow],
+  });
+  assert.deepEqual(orphan.lanes.map((lane) => lane.id), ['sbom']);
+  assert.deepEqual(orphan.edges, [], 'an uncited part gained an edge');
+});
+
 test('quantity labels carry the sign and class of their facts', () => {
   const r1 = findings.filter((finding) => finding.rule === 'R1');
   assert.ok(r1.length > 0, 'the committed file has no R1 finding');

@@ -21,6 +21,7 @@ import {
 } from './checks.mjs';
 import { compileCheck } from './compile.mjs';
 import { assignFindingIds, findingSubjectKey } from './ids.mjs';
+import { materialKey, materialNodeId } from '../materials.mjs';
 import { matchChangeNames, normalizeName } from './names.mjs';
 import { evaluateSeverity } from './severity.mjs';
 import {
@@ -166,6 +167,74 @@ function finalizeEvidence(evidence) {
 }
 
 /**
+ * The materials documented on the parts the check Intents return, keyed by
+ * part seed node id. The part node carries the raw string (`material_raw`)
+ * and the display name of its normalization key (`material_name`) that the
+ * extract wrote, so Node and the browser read the same values from the same
+ * seed without a new caller input.
+ *
+ * @param {Map<string, Array<Record<string, unknown>>>} rowsByName Intent rows.
+ * @returns {Map<string, { nodeId: string, raw: string, name: string }>}
+ */
+function materialsByPartId(rowsByName) {
+  /** @type {Map<string, { nodeId: string, raw: string, name: string }>} */
+  const materials = new Map();
+  for (const intentRows of rowsByName.values()) {
+    for (const row of intentRows) {
+      for (const value of Object.values(row)) {
+        if (value === null || typeof value !== 'object') continue;
+        const properties = value.properties;
+        if (properties === null || typeof properties !== 'object') continue;
+        const id = properties.id;
+        if (typeof id !== 'string' || !id.startsWith('part:')) continue;
+        const raw = properties.material_raw;
+        if (typeof raw !== 'string' || raw === '') continue;
+        const name = properties.material_name;
+        if (typeof name !== 'string' || name === '') {
+          throw new Error(`part node ${id} carries material_raw without material_name`);
+        }
+        materials.set(id, { nodeId: materialNodeId(materialKey(raw)), raw, name });
+      }
+    }
+  }
+  return materials;
+}
+
+/**
+ * Attach the constructed SBOM evidence: for every part row the finding
+ * already cites, one `material` row naming the material node that part
+ * documents. The row adds no finding and cites no uncited part; its source
+ * file is the citing part row's own page path (or `null` when that row has
+ * none) and it claims no line number, because the material string lives in
+ * the part page's frontmatter rather than on a numbered source line.
+ *
+ * @param {Array<{ role: string, nodeId: string, sourceFile: string | null, line: number | null }>} evidence
+ * @param {Map<string, { nodeId: string, raw: string, name: string }>} materialOfPart
+ * @returns {Array<Record<string, unknown>>}
+ */
+function attachMaterialEvidence(evidence, materialOfPart) {
+  if (materialOfPart.size === 0) return evidence;
+  const withMaterials = [...evidence];
+  for (const row of evidence) {
+    if (row.role !== 'part') continue;
+    const material = materialOfPart.get(row.nodeId);
+    if (!material) continue;
+    withMaterials.push({
+      nodeId: material.nodeId,
+      role: 'material',
+      sourceFile: row.sourceFile === undefined ? null : row.sourceFile,
+      line: null,
+      facts: {
+        displayName: material.name,
+        material: material.raw,
+        partNodeId: row.nodeId,
+      },
+    });
+  }
+  return withMaterials;
+}
+
+/**
  * @param {Record<string, unknown>} part
  * @returns {number}
  */
@@ -261,6 +330,20 @@ export function collectFindings(options) {
 
   const { plans, rows } = runIntents(options);
 
+  // The SBOM evidence is attached on the shared path below, so every rule gets
+  // it the same way in Node and in the browser.
+  const materialOfPart = materialsByPartId(rows);
+
+  /**
+   * Every finding's evidence passes through here: the material rows are
+   * attached to the ordinary rows first, then the whole set is deduplicated
+   * and sorted, so the material rows land in the same order everywhere.
+   *
+   * @param {Array<Record<string, unknown>>} evidence
+   */
+  const finalize = (evidence) =>
+    finalizeEvidence(attachMaterialEvidence(evidence, materialOfPart));
+
   /**
    * @param {string} nodeId
    * @returns {string | null}
@@ -353,7 +436,7 @@ export function collectFindings(options) {
         pdfCount: page.pdf_count ?? 0,
       }),
       countermeasures: unreadablePageCountermeasures({ path: page.path ?? '' }),
-      evidence: finalizeEvidence([
+      evidence: finalize([
         {
           nodeId: page.id,
           role: 'pre-assembly-page',
@@ -462,7 +545,7 @@ export function collectFindings(options) {
         quantityDifference,
       }),
       countermeasures: quantityCountermeasures({ partName: part.name, variantCode }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       queries: queryFor(ruleOf('R1')),
       rule: 'R1',
       severityFactors: {
@@ -533,7 +616,7 @@ export function collectFindings(options) {
         structureCount: structures.size,
       }),
       countermeasures: unresolvedReferenceCountermeasures({ displayName }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       queries: queryFor(ruleOf('R2')),
       rule: 'R2',
       severityFactors: {
@@ -562,7 +645,7 @@ export function collectFindings(options) {
         r5Paths,
       }),
       countermeasures: unreferencedPartCountermeasures({ partName: part.name }),
-      evidence: finalizeEvidence([
+      evidence: finalize([
         {
           nodeId: part.id,
           role: 'part',
@@ -647,7 +730,7 @@ export function collectFindings(options) {
     findings.push({
       causes: packedWithoutProcessCauses({ files, partName: part.name, r5Paths }),
       countermeasures: packedWithoutProcessCountermeasures({ partName: part.name }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       queries: queryFor(ruleOf('R4')),
       rule: 'R4',
       severityFactors: {
@@ -882,7 +965,7 @@ export function collectFindings(options) {
     findings.push({
       causes: changedNameCauses({ files, inferred: match.inferred, name, sections }),
       countermeasures: changedNameCountermeasures({ files, name }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       inferred: match.inferred,
       queries: queryFor(ruleOf('R6')),
       rule: 'R6',
@@ -952,7 +1035,7 @@ export function collectFindings(options) {
     findings.push({
       causes: changedPartUnreachedCauses({ partName, r5Paths, unresolvedNames }),
       countermeasures: changedPartUnreachedCountermeasures({ partName }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       inferred: false,
       queries: queryFor(ruleOf('R7')),
       rule: 'R7',
@@ -1048,7 +1131,7 @@ export function collectFindings(options) {
         unreferenced: !packingStructuresByPart.has(partName),
       }),
       countermeasures: serviceOnlyPartCountermeasures({ partName }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       inferred: false,
       queries: queryFor(ruleOf('R8')),
       rule: 'R8',
@@ -1142,7 +1225,7 @@ export function collectFindings(options) {
     findings.push({
       causes: unresolvedServiceCauses({ candidates, displayName, pages, r2Names }),
       countermeasures: unresolvedServiceCountermeasures({ displayName, pages }),
-      evidence: finalizeEvidence(evidence),
+      evidence: finalize(evidence),
       inferred: false,
       queries: queryFor(ruleOf('R9')),
       rule: 'R9',

@@ -14,15 +14,16 @@ import { evidenceRows } from './findings-view.mjs';
 export const LANES = Object.freeze([
   { id: 'design-change', labelKey: 'laneDesignChange' },
   { id: 'ebom-part', labelKey: 'laneEbomPart' },
+  { id: 'sbom', labelKey: 'laneSbom' },
   { id: 'assembly', labelKey: 'laneAssembly' },
   { id: 'packing', labelKey: 'lanePacking' },
   { id: 'service', labelKey: 'laneService' },
 ]);
 
 /**
- * Per-finding node cap. The largest committed finding has seven unique evidence
- * nodes, so the cap only applies to evidence sets that grow later; the
- * remainder is reported as overflow and stays in the evidence table.
+ * Per-finding node cap, a display limit only. Evidence beyond the cap is
+ * reported as overflow and stays in the evidence table, so a large evidence
+ * set is truncated visibly rather than dropped silently.
  */
 export const DEFAULT_NODE_CAP = 12;
 
@@ -82,22 +83,26 @@ function usageKindOf(nodeId) {
 /**
  * The lane an evidence row belongs to.
  *
- * `part` is a BOM part page, so it sits in the EBOM lane. A `structure` row is
- * placed by its node id prefix (`chapter:`, `preassembly:`, `container:`,
- * `bag:`) and a `reference` row by its usage kind (`usage:assembly:`,
+ * `part` is a BOM part page, so it sits in the EBOM lane. A `material` row is
+ * the constructed SBOM view of the part row it follows: it sits in the SBOM
+ * lane right after the parts it is documented on. A `structure` row is placed
+ * by its node id prefix (`chapter:`, `preassembly:`, `container:`, `bag:`) and
+ * a `reference` row by its usage kind (`usage:assembly:`,
  * `usage:preassembly:`, `usage:packing:`). A quantity comparison is a packing
  * list row checked against the part page, so it sits in the packing lane.
  * Roles defined by later rules (`design-change`, `service`) map to their own
  * lanes. Anything else throws rather than guessing.
  *
  * @param {{ role: string, nodeId: string }} row
- * @returns {'design-change' | 'ebom-part' | 'assembly' | 'packing' | 'service'}
+ * @returns {'design-change' | 'ebom-part' | 'sbom' | 'assembly' | 'packing' | 'service'}
  */
 export function laneForEvidence(row) {
   if (!row || typeof row !== 'object') throw new Error('laneForEvidence needs an evidence row');
   switch (row.role) {
     case 'part':
       return 'ebom-part';
+    case 'material':
+      return 'sbom';
     case 'quantity-difference':
     case 'packing-line':
     case 'packing-structure':
@@ -209,6 +214,11 @@ export function orderEvidenceRows(finding) {
  * - R9: the service page → its unresolved reference (shared source file), the
  *   reference → each candidate part the extract recorded, plus a missing edge
  *   from the reference to the EBOM lane.
+ *
+ * After the rule-specific edges, one rule-independent edge is added per
+ * `material` row: the citing part node → the material node. The material row
+ * exists only when the finding already cites that part, so the SBOM lane adds
+ * no node and no edge of its own invention.
  *
  * A `missing` edge ends at a lane-level placeholder (`lane:<lane id>`), never
  * at an invented node. Rules without a pattern yield no edges.
@@ -379,6 +389,16 @@ export function edgesForFinding(finding) {
       for (const candidate of candidates) add(reference, candidate);
       add(reference, `${PLACEHOLDER_PREFIX}ebom-part`, 'missing');
     }
+  }
+
+  // SBOM: every material row links back to the part row that cited it, so a
+  // material node is drawn next to the part it is documented on, for any rule
+  // whose evidence reaches a part with a documented material. The layout drops
+  // the edge when either endpoint is not drawn.
+  for (const row of rows) {
+    if (row.role !== 'material') continue;
+    const partNodeId = row.facts && row.facts.partNodeId;
+    if (typeof partNodeId === 'string' && partNodeId !== '') add(partNodeId, row.nodeId);
   }
 
   const seen = new Map();

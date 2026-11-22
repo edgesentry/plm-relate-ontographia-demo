@@ -6,6 +6,7 @@
 //   part:<name>
 //   partvariant:<part_name>@<variant_index>
 //   category:<slug>
+//   material:<key>                        Documented material normalization key
 //   productvariant:<code>
 //   chapter:<path>
 //   preassembly:<path>
@@ -21,6 +22,13 @@
 //   designchange:<change_log_path>#<section>@<bullet>
 //   unmatched:<display_name>
 //
+// A Material node id is the `material:` prefix plus the normalization key of
+// `src/farmbot/materials.mjs` verbatim, so one documented material string
+// always reaches one node. Material nodes form the constructed SBOM view: one
+// node per key recorded on at least one part page, one HAS_MATERIAL edge from
+// each part page that documents it, and nothing for a part page without
+// `specs.material`.
+//
 // The seed is canonical: object keys are sorted, nodes are sorted by id, and
 // edges are sorted by type, source id and target id. Every label, property and
 // relationship type is checked against the ontology before anything is
@@ -34,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { DuckDBInstance } from '@duckdb/node-api';
 import { parse } from 'yaml';
 import { CHANGE_LOG_PATH } from './lib/change-log.mjs';
+import { materialKey, materialNodeId } from '../../src/farmbot/materials.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const FARMBOT_DIR = resolve(SCRIPT_DIR, '..');
@@ -70,16 +79,17 @@ export const PRODUCT_VARIANTS = [
 ];
 
 // The part-scoped recipe keeps these node classes and traverses them in a
-// fixed direction: a part reaches its category, variants, usages and
-// comparisons; a usage reaches its owning structure and product variant; a
-// structure reaches all of its usage lines; a comparison reaches its part,
-// container and product variant. A different Part is never admitted, and the
-// traversal never runs backwards from a container into another part's
+// fixed direction: a part reaches its category, variants, documented material,
+// usages and comparisons; a usage reaches its owning structure and product
+// variant; a structure reaches all of its usage lines; a comparison reaches
+// its part, container and product variant. A different Part is never admitted,
+// and the traversal never runs backwards from a container into another part's
 // comparisons.
 const PART_SCOPE_LABELS = new Set([
   'Part',
   'PartVariant',
   'BomCategory',
+  'Material',
   'ProductVariant',
   'Usage',
   'Structure',
@@ -430,7 +440,28 @@ export function buildFullGraph(sourceTables, ontology) {
       quantity_xl: part.quantity_xl,
       has_variants: part.has_variants,
       market_price: part.market_price,
+      material_raw: part.material_raw,
+      material_name: part.material_name,
     });
+  }
+
+  // Materials: the constructed SBOM view. One Material node per normalization
+  // key that at least one part page documents, one HAS_MATERIAL edge from each
+  // such part. A part without `material_raw` reaches nothing. The node carries
+  // no properties: the raw string and the display name stay on the part that
+  // documents them, and the key is the node id.
+  const materialIdByKey = new Map();
+  for (const part of tables.part) {
+    if (part.material_raw === null || part.material_raw === undefined) continue;
+    const key = materialKey(part.material_raw);
+    if (!materialIdByKey.has(key)) {
+      const id = materialNodeId(key);
+      materialIdByKey.set(key, id);
+      addNode('Material', id, {});
+    }
+    const partNode = partId.get(part.name);
+    if (!partNode) throw new Error(`material key ${key} names unknown part ${part.name}`);
+    addEdge('HAS_MATERIAL', partNode, materialIdByKey.get(key));
   }
 
   const categoryId = new Map();

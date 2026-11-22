@@ -20,27 +20,28 @@ rather than quoting the strings, so the labels stay in one place.
 
 ### To be implemented in `/farmbot/` before recording
 
-These beats stay in the video spine. They are **not shipped on `/farmbot/`
-today**. Do not film them, and do not claim they already exist, until they are
-on the frozen `/farmbot/` screen:
+- BOP lane(s) on the `/farmbot/` process-lane diagram are **not shipped
+  today**. Do not film a BOP lane, and do not claim it already exists, until it
+  is on the frozen `/farmbot/` screen. The desk-fan screen at `/` already has
+  EBOM / MBOM / SBOM / BOP swimlanes; that is a different screen and a
+  different graph.
 
-- SBOM lane(s) and BOP lane(s) on the `/farmbot/` process-lane diagram. The
-  desk-fan screen at `/` already has EBOM / MBOM / SBOM / BOP swimlanes; that
-  is a different screen and a different graph. `/farmbot/` currently shows
-  Design change, EBOM part, Assembly / pre-assembly, Packing, and Service
-  (`laneDesignChange`, `laneEbomPart`, `laneAssembly`, `lanePacking`,
-  `laneService`).
-- A Cypher-output rejection beat that is deterministic and reproducible: a
-  fixed sample input or control whose path shows `checkRoutingRejected` /
-  `checkRoutingRejectedBody` by feeding Cypher-like text into the closed
-  routing parser. Do not rely on a live model roll to produce Cypher.
+`/farmbot/` already shows Design change, EBOM part, SBOM (materials), Assembly
+/ pre-assembly, Packing, and Service (`laneDesignChange`, `laneEbomPart`,
+`laneSbom`, `laneAssembly`, `lanePacking`, `laneService`). The SBOM
+(materials) lane appears only when the opened finding cites a part whose page
+documents `specs.material`. The Cypher-output rejection beat uses the labelled
+control (`checkRejectionDemoButton`): a fixed sample through the closed
+routing parser, not a live model roll.
 
 ## Narration draft (about 90 seconds)
 
 Spine: sample notification-email card → `#finding=` deep link → process-lane
 diagram plus Intent, executed Cypher, and bound parameters → close on closed
-routing. Add the rejection beat and any SBOM / BOP lane visibility only after
-those features ship on `/farmbot/`.
+routing. The SBOM (materials) lane is on the diagram whenever the opened
+finding cites a part with a documented material. The rejection beat uses the
+labelled control (`checkRejectionDemoButton`). Add BOP lane visibility only
+after that feature ships on `/farmbot/`.
 
 ### 1. Sample notification card (about 15 seconds)
 
@@ -82,9 +83,11 @@ Point at the evidence query block (`evidenceQueriesLabel`,
 Narration: "Every evidence row carries the Intent, the executed Cypher, and the
 bound parameters that produced it."
 
-If, after the work above lands, this finding also shows an SBOM or BOP lane,
-name only the lanes that are visible on that take. Do not name a lane that is
-not on screen.
+If the finding shows the SBOM (materials) lane (`laneSbom`) — it does whenever
+the finding cites a part whose page documents `specs.material` — name it as the
+materials the cited part pages record, next to the EBOM part lane. It stays
+hidden when no cited part documents a material, so name it only when it is
+visible on that take. Do not name a BOP lane; it is not yet implemented.
 
 ### 4. Closed routing (about 15 seconds)
 
@@ -99,22 +102,22 @@ anything runs."
 Point at the always-visible bound (`checkModelNoCypher`). Do not claim a
 particular routing result or model accuracy for a typed sentence.
 
-### 5. Cypher-output rejection (only after it ships; about 15 seconds)
+### 5. Cypher-output rejection (about 15 seconds)
 
-Use the deterministic demonstration control or fixed sample input, not a live
+Use the labelled demonstration control (`checkRejectionDemoButton`), not a live
 prompt hoping the model emits Cypher.
 
 Narration: "If the routing output contains Cypher, the screen rejects it
 (`checkRoutingRejected`). Nothing new is compiled or executed."
-
-If this control is not yet on the frozen screen, skip this shot.
 
 ## Recording notes
 
 - No email is sent and no secret is shown during the take.
 - Do not claim that the live deployment already serves a build you have not
   confirmed.
-- Do not claim that `/farmbot/` already has SBOM or BOP lanes, or a
-  deterministic rejection control, until those are on the frozen screen.
+- Name the SBOM (materials) lane only when it is visible on the take: it
+  appears when the opened finding cites a part whose page documents
+  `specs.material`, and stays hidden otherwise. Do not claim that `/farmbot/`
+  already has a BOP lane.
 - Keep the narration within 1–2 minutes. If it runs long, cut the decline path
   in step 4 first, then shorten step 5.

@@ -25,6 +25,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:40mm Nut Bar"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/nut-bar-40mm.md"
+        },
+        {
+          "facts": {
             "displayName": "40mm Nut Bar",
             "quantity": null
           },
@@ -114,6 +125,17 @@
         "Correct whichever of the packing list and the part page is out of date, then rebuild the extract."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:40mm Nut Bar"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/nut-bar-40mm.md"
+        },
         {
           "facts": {
             "displayName": "40mm Nut Bar",
@@ -207,6 +229,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:60mm Nut Bar"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/nut-bar-60mm.md"
+        },
+        {
+          "facts": {
             "displayName": "60mm Nut Bar",
             "quantity": null
           },
@@ -296,6 +329,17 @@
         "Correct whichever of the packing list and the part page is out of date, then rebuild the extract."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 Locknut"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-locknut.md"
+        },
         {
           "facts": {
             "displayName": "M3 Locknuts",
@@ -399,6 +443,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 Locknut"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-locknut.md"
+        },
+        {
+          "facts": {
             "displayName": "M3 Locknuts",
             "quantity": 16
           },
@@ -498,6 +553,17 @@
         "Correct whichever of the packing list and the part page is out of date, then rebuild the extract."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 x 12mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-screw-12mm.md"
+        },
         {
           "facts": {
             "displayName": "M3 x 12mm Screws",
@@ -601,6 +667,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 x 12mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-screw-12mm.md"
+        },
+        {
+          "facts": {
             "displayName": "M3 x 12mm Screws",
             "quantity": 40
           },
@@ -700,6 +777,17 @@
         "Correct whichever of the packing list and the part page is out of date, then rebuild the extract."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M5 x 10mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-screw-10mm.md"
+        },
         {
           "facts": {
             "displayName": "M5 x 10mm Screws",
@@ -803,6 +891,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M5 x 16mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-screw-16mm.md"
+        },
+        {
+          "facts": {
             "displayName": "M5 x 16mm Screws",
             "quantity": 40
           },
@@ -902,6 +1001,17 @@
         "Correct whichever of the packing list and the part page is out of date, then rebuild the extract."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M5 x 16mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-screw-16mm.md"
+        },
         {
           "facts": {
             "displayName": "M5 x 16mm Screws",
@@ -1005,6 +1115,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M5 x 30mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-screw-30mm.md"
+        },
+        {
+          "facts": {
             "displayName": "M5 x 30mm Screws",
             "quantity": 40
           },
@@ -1104,6 +1225,17 @@
         "Correct whichever of the packing list and the part page is out of date, then rebuild the extract."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M5 x 30mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-screw-30mm.md"
+        },
         {
           "facts": {
             "displayName": "M5 x 30mm Screws",
@@ -2274,6 +2406,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:10mm Nut Bar"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/nut-bar-10mm.md"
+        },
+        {
+          "facts": {
             "categorySlug": "fasteners-and-hardware",
             "name": "10mm Nut Bar",
             "slug": "nut-bar-10mm"
@@ -2340,6 +2483,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:16 Gauge Luer Lock Needle"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/luer-lock-needle-16-gauge.md"
+        },
+        {
+          "facts": {
             "categorySlug": "tubing",
             "name": "16 Gauge Luer Lock Needle",
             "slug": "luer-lock-needle-16-gauge"
@@ -2404,6 +2558,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:19 Gauge Luer Lock Needle"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/luer-lock-needle-19-gauge.md"
+        },
         {
           "facts": {
             "categorySlug": "tubing",
@@ -2536,6 +2701,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Machined 6061 Aluminum",
+            "material": "Machined 6061 Aluminum",
+            "partNodeId": "part:30mm Cable Carrier Mount"
+          },
+          "line": null,
+          "nodeId": "material:machined 6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/cable-carrier-mount-30mm.md"
+        },
         {
           "facts": {
             "categorySlug": "plates-and-brackets",
@@ -2736,6 +2912,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:Blue LED Indicator"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/led-indicator-blue.md"
+        },
+        {
+          "facts": {
             "categorySlug": "electronics-and-wiring",
             "name": "Blue LED Indicator",
             "slug": "led-indicator-blue"
@@ -2802,6 +2989,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Cable Carrier Spacer Block"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/cable-carrier-spacer-block-60mm.md"
+        },
+        {
+          "facts": {
             "categorySlug": "plastic-parts",
             "name": "Cable Carrier Spacer Block",
             "slug": "cable-carrier-spacer-block-60mm"
@@ -2866,6 +3064,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Camera Mount Half"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/camera-mount-half.md"
+        },
         {
           "facts": {
             "categorySlug": "plastic-parts",
@@ -3066,6 +3275,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:Green LED Indicator"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/led-indicator-green.md"
+        },
+        {
+          "facts": {
             "categorySlug": "electronics-and-wiring",
             "name": "Green LED Indicator",
             "slug": "led-indicator-green"
@@ -3132,6 +3352,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:LED Indicator Nut"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/led-indicator-nut.md"
+        },
+        {
+          "facts": {
             "categorySlug": "electronics-and-wiring",
             "name": "LED Indicator Nut",
             "slug": "led-indicator-nut"
@@ -3196,6 +3427,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Buna-N",
+            "material": "Buna-N",
+            "partNodeId": "part:LED Indicator O-Ring"
+          },
+          "line": null,
+          "nodeId": "material:buna-n",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/led-indicator-o-ring.md"
+        },
         {
           "facts": {
             "categorySlug": "electronics-and-wiring",
@@ -3330,6 +3572,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "5052 Aluminum",
+            "material": "5052 Aluminum",
+            "partNodeId": "part:Left Gantry Corner Bracket"
+          },
+          "line": null,
+          "nodeId": "material:5052 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/gantry-corner-bracket-left.md"
+        },
+        {
+          "facts": {
             "categorySlug": "plates-and-brackets",
             "name": "Left Gantry Corner Bracket",
             "slug": "gantry-corner-bracket-left"
@@ -3394,6 +3647,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:M2.5 x 4mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m2-5-screw-4mm.md"
+        },
         {
           "facts": {
             "categorySlug": "fasteners-and-hardware",
@@ -3462,6 +3726,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 x 16mm Flat Head Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-flat-head-screw-16mm.md"
+        },
+        {
+          "facts": {
             "categorySlug": "fasteners-and-hardware",
             "name": "M3 x 16mm Flat Head Screw",
             "slug": "m3-flat-head-screw-16mm"
@@ -3526,6 +3801,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 x 35mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-screw-35mm.md"
+        },
         {
           "facts": {
             "categorySlug": "fasteners-and-hardware",
@@ -3594,6 +3880,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:M3 x 4mm Setscrew"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-setscrew-4mm.md"
+        },
+        {
+          "facts": {
             "categorySlug": "fasteners-and-hardware",
             "name": "M3 x 4mm Setscrew",
             "slug": "m3-setscrew-4mm"
@@ -3658,6 +3955,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Brass",
+            "material": "Brass",
+            "partNodeId": "part:M5 Barb"
+          },
+          "line": null,
+          "nodeId": "material:brass",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/m5-barb.md"
+        },
         {
           "facts": {
             "categorySlug": "tubing",
@@ -3726,6 +4034,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Viton",
+            "material": "Viton",
+            "partNodeId": "part:O-Ring"
+          },
+          "line": null,
+          "nodeId": "material:viton",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/o-ring.md"
+        },
+        {
+          "facts": {
             "categorySlug": "tubing",
             "name": "O-Ring",
             "slug": "o-ring"
@@ -3792,6 +4111,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:Push Button Nut"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/push-button-nut.md"
+        },
+        {
+          "facts": {
             "categorySlug": "electronics-and-wiring",
             "name": "Push Button Nut",
             "slug": "push-button-nut"
@@ -3856,6 +4186,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Buna-N",
+            "material": "Buna-N",
+            "partNodeId": "part:Push Button O-Ring"
+          },
+          "line": null,
+          "nodeId": "material:buna-n",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/push-button-o-ring.md"
+        },
         {
           "facts": {
             "categorySlug": "electronics-and-wiring",
@@ -4122,6 +4463,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:Red Push Button"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/push-button-red.md"
+        },
+        {
+          "facts": {
             "categorySlug": "electronics-and-wiring",
             "name": "Red Push Button",
             "slug": "push-button-red"
@@ -4254,6 +4606,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Solenoid Valve Mount"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/solenoid-valve-mount.md"
+        },
+        {
+          "facts": {
             "categorySlug": "plastic-parts",
             "name": "Solenoid Valve Mount",
             "slug": "solenoid-valve-mount"
@@ -4318,6 +4681,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Neodymium (NdFeB)",
+            "material": "Neodymium (NdFeB)",
+            "partNodeId": "part:Standard Magnet"
+          },
+          "line": null,
+          "nodeId": "material:neodymium (ndfeb)",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/magnet-standard.md"
+        },
         {
           "facts": {
             "categorySlug": "fasteners-and-hardware",
@@ -4452,6 +4826,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:T25 Wood Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/wood-screw-t25.md"
+        },
+        {
+          "facts": {
             "categorySlug": "fasteners-and-hardware",
             "name": "T25 Wood Screw",
             "slug": "wood-screw-t25"
@@ -4516,6 +4901,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Vacuum Pump Cover"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/vacuum-pump-cover.md"
+        },
         {
           "facts": {
             "categorySlug": "plastic-parts",
@@ -4584,6 +4980,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Vacuum Pump Mount"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/vacuum-pump-mount.md"
+        },
+        {
+          "facts": {
             "categorySlug": "plastic-parts",
             "name": "Vacuum Pump Mount",
             "slug": "vacuum-pump-mount"
@@ -4648,6 +5055,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Vertical Cable Carrier Support"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/cable-carrier-support-vertical-60mm.md"
+        },
         {
           "facts": {
             "categorySlug": "plastic-parts",
@@ -4716,6 +5134,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:Vertical Motor Housing"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/motor-housing-vertical-80mm.md"
+        },
+        {
+          "facts": {
             "categorySlug": "plastic-parts",
             "name": "Vertical Motor Housing",
             "slug": "motor-housing-vertical-80mm"
@@ -4780,6 +5209,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:White LED Indicator"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/led-indicator-white.md"
+        },
         {
           "facts": {
             "categorySlug": "electronics-and-wiring",
@@ -4848,6 +5288,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:White Push Button"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/push-button-white.md"
+        },
+        {
+          "facts": {
             "categorySlug": "electronics-and-wiring",
             "name": "White Push Button",
             "slug": "push-button-white"
@@ -4912,6 +5363,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless steel and plastic",
+            "material": "Stainless steel and plastic",
+            "partNodeId": "part:Yellow Push Button"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel and plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/push-button-yellow.md"
+        },
         {
           "facts": {
             "categorySlug": "electronics-and-wiring",
@@ -4980,6 +5442,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "6063-T5 Aluminum",
+            "material": "6063-T5 Aluminum",
+            "partNodeId": "part:Z-Axis Extrusion"
+          },
+          "line": null,
+          "nodeId": "material:6063-t5 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/extrusions/z-axis-extrusion.md"
+        },
+        {
+          "facts": {
             "categorySlug": "extrusions",
             "name": "Z-Axis Extrusion",
             "slug": "z-axis-extrusion"
@@ -5044,6 +5517,17 @@
         "If the part belongs to a pre-assembly, add a machine-readable parts table to that page."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "6061 Aluminum",
+            "material": "6061 Aluminum",
+            "partNodeId": "part:Z-Axis Hardstop"
+          },
+          "line": null,
+          "nodeId": "material:6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/z-axis-hardstop.md"
+        },
         {
           "facts": {
             "categorySlug": "plates-and-brackets",
@@ -5112,6 +5596,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Machined 6061 Aluminum",
+            "material": "Machined 6061 Aluminum",
+            "partNodeId": "part:Z-Axis Motor Mount"
+          },
+          "line": null,
+          "nodeId": "material:machined 6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/z-axis-motor-mount.md"
+        },
+        {
+          "facts": {
             "categorySlug": "plates-and-brackets",
             "name": "Z-Axis Motor Mount",
             "slug": "z-axis-motor-mount"
@@ -5171,6 +5666,17 @@
         "Otherwise add the missing assembly chapter or pre-assembly reference so the packed part has a process step."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:100mm Nut Bar"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/nut-bar-100mm.md"
+        },
         {
           "facts": {
             "displayName": "100mm Nut Bar",
@@ -5268,6 +5774,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Nylon",
+            "material": "Nylon",
+            "partNodeId": "part:200mm Zip Tie"
+          },
+          "line": null,
+          "nodeId": "material:nylon",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/zip-tie-200mm.md"
+        },
+        {
+          "facts": {
             "displayName": "200mm Zip Ties",
             "quantity": null
           },
@@ -5361,6 +5878,17 @@
         "Otherwise add the missing assembly chapter or pre-assembly reference so the packed part has a process step."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Matte cardstock",
+            "material": "Matte cardstock",
+            "partNodeId": "part:Camera Calibration Card"
+          },
+          "line": null,
+          "nodeId": "material:matte cardstock",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/camera-calibration-card.md"
+        },
         {
           "facts": {
             "displayName": "Camera Calibration Card",
@@ -5458,6 +5986,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Plastic",
+            "material": "Plastic",
+            "partNodeId": "part:Inline Air Filter"
+          },
+          "line": null,
+          "nodeId": "material:plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/inline-air-filter.md"
+        },
+        {
+          "facts": {
             "displayName": "Inline Air Filter",
             "quantity": null
           },
@@ -5553,6 +6092,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Black delrin",
+            "material": "Black delrin",
+            "partNodeId": "part:Leadscrew Block"
+          },
+          "line": null,
+          "nodeId": "material:black delrin",
+          "role": "material",
+          "sourceFile": "v1.7/bom/drivetrain/leadscrew-block.md"
+        },
+        {
+          "facts": {
             "displayName": "Leadscrew Block",
             "quantity": null
           },
@@ -5646,6 +6196,17 @@
         "Otherwise add the missing assembly chapter or pre-assembly reference so the packed part has a process step."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M3 x 6mm Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m3-screw-6mm.md"
+        },
         {
           "facts": {
             "displayName": "M3 x 6mm Screws",
@@ -5753,6 +6314,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "UV resistant plastic",
+            "material": "UV resistant plastic",
+            "partNodeId": "part:Pressure Regulator"
+          },
+          "line": null,
+          "nodeId": "material:uv resistant plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/pressure-regulator.md"
+        },
+        {
+          "facts": {
             "displayName": "Pressure Regulator",
             "quantity": null
           },
@@ -5846,6 +6418,17 @@
         "Otherwise add the missing assembly chapter or pre-assembly reference so the packed part has a process step."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Rubber",
+            "material": "Rubber",
+            "partNodeId": "part:Rubber Gasket"
+          },
+          "line": null,
+          "nodeId": "material:rubber",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/rubber-gasket.md"
+        },
         {
           "facts": {
             "displayName": "Rubber Gasket",
@@ -5943,6 +6526,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "Aluminum",
+            "material": "Aluminum",
+            "partNodeId": "part:Shaft Coupler"
+          },
+          "line": null,
+          "nodeId": "material:aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/drivetrain/shaft-coupler.md"
+        },
+        {
+          "facts": {
             "displayName": "Shaft Coupler",
             "quantity": null
           },
@@ -6036,6 +6630,17 @@
         "Otherwise add the missing assembly chapter or pre-assembly reference so the packed part has a process step."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Aluminum",
+            "material": "Aluminum",
+            "partNodeId": "part:Standard Spacer"
+          },
+          "line": null,
+          "nodeId": "material:aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/standard-spacer.md"
+        },
         {
           "facts": {
             "displayName": "Standard Spacers",
@@ -6141,6 +6746,17 @@
         "Otherwise add the missing assembly chapter or pre-assembly reference so the packed part has a process step."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Semi-clear silicone",
+            "material": "Semi-clear silicone",
+            "partNodeId": "part:Vacuum Tube"
+          },
+          "line": null,
+          "nodeId": "material:semi-clear silicone",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/tube-vacuum.md"
+        },
         {
           "facts": {
             "displayName": "Vacuum Tubes",
@@ -6585,6 +7201,17 @@
         },
         {
           "facts": {
+            "displayName": "Brass",
+            "material": "Brass",
+            "partNodeId": "part:90-Degree Barb"
+          },
+          "line": null,
+          "nodeId": "material:brass",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/90-degree-barb.md"
+        },
+        {
+          "facts": {
             "displayName": "90-Degree Barb",
             "matchMethod": "exact",
             "quantity": null,
@@ -6708,6 +7335,17 @@
           "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@1",
           "role": "design-change",
           "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "6061 Aluminum",
+            "material": "6061 Aluminum",
+            "partNodeId": "part:Belt Clip"
+          },
+          "line": null,
+          "nodeId": "material:6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/belt-clip.md"
         },
         {
           "facts": {
@@ -6972,6 +7610,17 @@
           "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Gantry columns@0",
           "role": "design-change",
           "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "6063-T5 Aluminum",
+            "material": "6063-T5 Aluminum",
+            "partNodeId": "part:Gantry Column"
+          },
+          "line": null,
+          "nodeId": "material:6063-t5 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/extrusions/gantry-column.md"
         },
         {
           "facts": {
@@ -7514,6 +8163,17 @@
         },
         {
           "facts": {
+            "displayName": "6063-T5 Aluminum",
+            "material": "6063-T5 Aluminum",
+            "partNodeId": "part:Track Extrusion"
+          },
+          "line": null,
+          "nodeId": "material:6063-t5 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/extrusions/track-extrusion.md"
+        },
+        {
+          "facts": {
             "displayName": "Track Extrusion",
             "matchMethod": "exact",
             "quantity": 4,
@@ -7649,6 +8309,17 @@
           "nodeId": "designchange:v1.7/assembly/intro/change-log.md#X-axis cable carrier@0",
           "role": "design-change",
           "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "Black Nylon PA66",
+            "material": "Black Nylon PA66",
+            "partNodeId": "part:X-Axis Cable Carrier"
+          },
+          "line": null,
+          "nodeId": "material:black nylon pa66",
+          "role": "material",
+          "sourceFile": "v1.7/bom/electronics-and-wiring/cable-carrier-x-axis.md"
         },
         {
           "facts": {
@@ -7817,6 +8488,17 @@
         },
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless steel",
+            "partNodeId": "part:10mm Nut Bar"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/nut-bar-10mm.md"
+        },
+        {
+          "facts": {
             "categorySlug": "fasteners-and-hardware",
             "name": "10mm Nut Bar",
             "slug": "nut-bar-10mm"
@@ -7902,6 +8584,17 @@
           "nodeId": "designchange:v1.7/assembly/intro/change-log.md#X-axis cable carrier@0",
           "role": "design-change",
           "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "Machined 6061 Aluminum",
+            "material": "Machined 6061 Aluminum",
+            "partNodeId": "part:30mm Cable Carrier Mount"
+          },
+          "line": null,
+          "nodeId": "material:machined 6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/cable-carrier-mount-30mm.md"
         },
         {
           "facts": {
@@ -8078,6 +8771,17 @@
           "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@0",
           "role": "design-change",
           "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "5052 Aluminum",
+            "material": "5052 Aluminum",
+            "partNodeId": "part:Left Gantry Corner Bracket"
+          },
+          "line": null,
+          "nodeId": "material:5052 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/gantry-corner-bracket-left.md"
         },
         {
           "facts": {
@@ -8262,6 +8966,17 @@
         },
         {
           "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:T25 Wood Screw"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/wood-screw-t25.md"
+        },
+        {
+          "facts": {
             "categorySlug": "fasteners-and-hardware",
             "name": "T25 Wood Screw",
             "slug": "wood-screw-t25"
@@ -8343,6 +9058,17 @@
         "If it is a service-only spare, record that in the packing or service page so the difference is intentional."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Black delrin",
+            "material": "Black delrin",
+            "partNodeId": "part:Leadscrew Block"
+          },
+          "line": null,
+          "nodeId": "material:black delrin",
+          "role": "material",
+          "sourceFile": "v1.7/bom/drivetrain/leadscrew-block.md"
+        },
         {
           "facts": {
             "displayName": "Leadscrew Block",
@@ -8476,6 +9202,17 @@
       "evidence": [
         {
           "facts": {
+            "displayName": "UV resistant plastic",
+            "material": "UV resistant plastic",
+            "partNodeId": "part:Pressure Regulator"
+          },
+          "line": null,
+          "nodeId": "material:uv resistant plastic",
+          "role": "material",
+          "sourceFile": "v1.7/bom/tubing/pressure-regulator.md"
+        },
+        {
+          "facts": {
             "displayName": "Pressure Regulator",
             "matchMethod": "exact",
             "quantity": null,
@@ -8605,6 +9342,17 @@
         "If it is a service-only spare, record that in the packing or service page so the difference is intentional."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "Aluminum",
+            "material": "Aluminum",
+            "partNodeId": "part:Shaft Coupler"
+          },
+          "line": null,
+          "nodeId": "material:aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/drivetrain/shaft-coupler.md"
+        },
         {
           "facts": {
             "displayName": "Shaft Coupler",
@@ -8846,6 +9594,17 @@
         "If it is a service-only spare, record that in the packing or service page so the difference is intentional."
       ],
       "evidence": [
+        {
+          "facts": {
+            "displayName": "6063-T5 Aluminum",
+            "material": "6063-T5 Aluminum",
+            "partNodeId": "part:Z-Axis Extrusion"
+          },
+          "line": null,
+          "nodeId": "material:6063-t5 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/extrusions/z-axis-extrusion.md"
+        },
         {
           "facts": {
             "categorySlug": "extrusions",
@@ -9180,7 +9939,7 @@
     }
   ],
   "seed": {
-    "bytes": 395675,
-    "digest": "farmbot-graph-v1 sha256:5e0a2e2b65bf89ce61a1dbc217c7df2bcf09f61b527bf4626348892a52b15cd3"
+    "bytes": 421047,
+    "digest": "farmbot-graph-v1 sha256:d747ee0c794fc01ea0a3baa578d8c57b64301d04907383e1b85f4eb2fbe0d71f"
   }
 }

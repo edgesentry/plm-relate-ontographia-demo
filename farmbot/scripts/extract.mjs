@@ -39,10 +39,18 @@ import {
   resolveWithQualifier,
   singularizeName,
 } from './lib/normalize.mjs';
+import {
+  materialDisplayName,
+  materialGroupsByRaw,
+  materialKey,
+} from '../../src/farmbot/materials.mjs';
 
 export const EXPECTED_PIN = '44e0fa24d4a538dfa1255a4e89308ccabf3abaeb';
 export const SOURCE_LABEL = 'v1.7';
-export const SCHEMA_VERSION = '2';
+// Schema 3 adds the documented-material columns `material_raw` and
+// `material_name` to the `part` table. A page without `specs.material` leaves
+// both NULL; no value is invented.
+export const SCHEMA_VERSION = '3';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const FARMBOT_DIR = resolve(SCRIPT_DIR, '..');
@@ -185,7 +193,13 @@ function readCategories(sourceDir) {
   return categories;
 }
 
-function readParts(sourceDir, categories) {
+// One row per BOM part page. A page must carry a `quantity` mapping to count
+// as a part; category pages do not. `materialRaw` is the exact `specs.material`
+// frontmatter string (the reader trims surrounding whitespace), or null when
+// the page records none. `materialName` is the display name chosen for the
+// normalization key shared by the raw strings, so typographic twins keep their
+// own raw string on their part while one canonical display name covers the key.
+export function readParts(sourceDir, categories) {
   const bomDir = join(sourceDir, SOURCE_LABEL, 'bom');
   const parts = [];
   const categoryPages = new Set([...categories.values()].map((category) => category.path));
@@ -204,6 +218,11 @@ function readParts(sourceDir, categories) {
     const xlValues = splitPipe(xlRaw);
     const lengths = splitPipe(page.data.specs?.length);
     const internalNames = splitPipe(page.data['internal-specs']?.['internal-part-name']);
+    // The frontmatter reader returns strings; anything other than a non-empty
+    // string means the page documents no material, and nothing is invented.
+    const materialValue = page.data.specs?.material;
+    const materialRaw =
+      typeof materialValue === 'string' && materialValue !== '' ? materialValue : null;
 
     const variants = variantLabels.map((label, index) => ({
       partName: page.title,
@@ -233,11 +252,26 @@ function readParts(sourceDir, categories) {
       hasVariants: variantLabels.length > 0,
       variantsRaw: page.data.variants ?? null,
       internalPartNameRaw: page.data['internal-specs']?.['internal-part-name'] ?? null,
+      materialRaw,
       variants,
     });
   }
 
   parts.sort((a, b) => a.name.localeCompare(b.name));
+
+  // One display name per normalization key: the first raw string of the key
+  // group in plain code-unit order. Parts keep their own raw string.
+  const materialGroups = materialGroupsByRaw(parts.map((part) => part.materialRaw));
+  for (const part of parts) {
+    if (part.materialRaw === null) {
+      part.materialName = null;
+      continue;
+    }
+    part.materialName = materialDisplayName(
+      materialGroups.get(materialKey(part.materialRaw)),
+    );
+  }
+
   return parts;
 }
 
@@ -754,7 +788,9 @@ async function buildDatabase(outFile, extract) {
       variant_count INTEGER,
       has_variants BOOLEAN,
       variants_raw VARCHAR,
-      internal_part_name_raw VARCHAR
+      internal_part_name_raw VARCHAR,
+      material_raw VARCHAR,
+      material_name VARCHAR
     )
   `);
   await connection.run(`
@@ -981,6 +1017,8 @@ async function buildDatabase(outFile, extract) {
       'has_variants',
       'variants_raw',
       'internal_part_name_raw',
+      'material_raw',
+      'material_name',
     ],
     extract.parts.map((part) => [
       part.name,
@@ -998,6 +1036,8 @@ async function buildDatabase(outFile, extract) {
       part.hasVariants,
       part.variantsRaw,
       part.internalPartNameRaw,
+      part.materialRaw,
+      part.materialName,
     ]),
   );
 
@@ -1323,6 +1363,10 @@ async function buildDatabase(outFile, extract) {
 
   const versionReader = await connection.runAndReadAll('SELECT version()');
   const duckdbVersion = String(versionReader.getRows()[0][0]);
+  // The documented-material view is generated, never hand-counted: the counts
+  // come from the same part rows the `part` table stores.
+  const materialGroups = materialGroupsByRaw(extract.parts.map((part) => part.materialRaw));
+  const partsWithMaterial = extract.parts.filter((part) => part.materialRaw !== null).length;
   const metadata = [
     ['source_label', SOURCE_LABEL],
     ['source_pin', EXPECTED_PIN],
@@ -1346,6 +1390,8 @@ async function buildDatabase(outFile, extract) {
       ),
     ],
     ['duckdb_version', duckdbVersion],
+    ['material_key_count', String(materialGroups.size)],
+    ['part_material_count', String(partsWithMaterial)],
   ].sort((a, b) => a[0].localeCompare(b[0]));
   await insert('extract_metadata', ['key', 'value'], metadata);
 
@@ -1534,6 +1580,8 @@ export async function runExtract(options = {}) {
     comparisons: comparisons.length,
     differences: comparisons.filter((comparison) => comparison.status === 'difference').length,
     unmatched: unmatched.length,
+    partsWithMaterial: parts.filter((part) => part.materialRaw !== null).length,
+    materialKeys: materialGroupsByRaw(parts.map((part) => part.materialRaw)).size,
   };
 }
 
@@ -1558,6 +1606,9 @@ if (isMain) {
     );
     console.log(`quantity comparisons: ${summary.comparisons} (differences: ${summary.differences})`);
     console.log(`unmatched display names: ${summary.unmatched}`);
+    console.log(
+      `parts with a documented material: ${summary.partsWithMaterial} (keys: ${summary.materialKeys})`,
+    );
   } catch (error) {
     console.error(`FarmBot extract failed: ${error.message}`);
     process.exitCode = 1;

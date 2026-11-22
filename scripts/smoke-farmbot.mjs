@@ -2129,7 +2129,13 @@ async function main() {
             .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0],
       );
     const processLaneFixtures = [];
-    summary.processLanes = { rules: [], r2ManyStructures: null, r6Inferred: null, phone: null };
+    summary.processLanes = {
+      rules: [],
+      r2ManyStructures: null,
+      r6Inferred: null,
+      sbomLane: null,
+      phone: null,
+    };
 
     for (const finding of ruleFindings) {
       const expected = expectedDiagram(finding);
@@ -2561,6 +2567,122 @@ async function main() {
       svgWidth: Number(phoneDiagram.svgWidth.toFixed(2)),
       nodes: phoneDiagram.nodes.length,
       ...phoneClean,
+    };
+
+    // SBOM lane: a finding whose evidence cites a part with a documented
+    // material must show the materials lane, and a finding whose evidence
+    // reaches no such part must hide it. Both findings come from the committed
+    // document only; the lane is identified by the same data-testid the other
+    // lanes use.
+    const materialFinding = [...findings]
+      .filter((finding) => finding.evidence.some((row) => row.role === 'material'))
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(materialFinding, 'the committed findings have no material evidence row');
+    const materialExpected = expectedDiagram(materialFinding);
+    const materialFixture = await prepareContext(browser, 'process-lanes-sbom');
+    await materialFixture.page.goto(`${entryUrl}#finding=${encodeURIComponent(materialFinding.id)}`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await materialFixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const sbomDiagram = await readDiagram(materialFixture.page);
+    assert(sbomDiagram.present, 'the SBOM process-lane diagram is missing');
+    assert(
+      (await materialFixture.page.locator('[data-testid="process-lane-sbom"]').count()) === 1,
+      'the SBOM lane is not drawn for a finding with material evidence',
+    );
+    const sbomNodes = sbomDiagram.nodes.filter((node) => node.lane === 'sbom');
+    assert(sbomNodes.length > 0, 'the SBOM lane is drawn without a material node');
+    for (const node of sbomNodes) {
+      assert(
+        node.id.startsWith('material:'),
+        `the SBOM lane holds a non-material node ${node.id}`,
+      );
+    }
+    assert(
+      JSON.stringify(sbomDiagram.nodes.map((node) => node.id).sort()) ===
+        JSON.stringify(materialExpected.nodeIds),
+      `the SBOM finding draws different nodes from the layout: ` +
+        `${JSON.stringify(sbomDiagram.nodes.map((node) => node.id).sort())} != ` +
+        `${JSON.stringify(materialExpected.nodeIds)}`,
+    );
+    assert(
+      JSON.stringify(
+        sbomDiagram.edges.map((edge) => `${edge.from}\u0000${edge.to}\u0000${edge.kind}`).sort(),
+      ) === JSON.stringify(materialExpected.edges),
+      'the SBOM finding draws different edges from the layout',
+    );
+    assert(
+      sbomDiagram.rows.length === materialExpected.rows,
+      `the SBOM finding shows ${sbomDiagram.rows.length} evidence rows, expected ` +
+        `${materialExpected.rows}`,
+    );
+    // The evidence table cites the material node: one row per committed
+    // material row, each naming a material node id.
+    const sbomEvidenceState = await materialFixture.page.evaluate(() => ({
+      laneLabel:
+        document.querySelector('[data-testid="process-lane-sbom"]')?.textContent?.trim() ?? '',
+      materialRowIds: [...document.querySelectorAll('[data-testid="evidence-row"]')]
+        .map((row) => row.querySelector('code')?.textContent ?? '')
+        .filter((text) => text.startsWith('material:')),
+    }));
+    const committedMaterialRows = materialFinding.evidence.filter(
+      (row) => row.role === 'material',
+    );
+    assert(committedMaterialRows.length > 0, `${materialFinding.id} has no material row`);
+    assert(
+      JSON.stringify(sbomEvidenceState.materialRowIds.sort()) ===
+        JSON.stringify(committedMaterialRows.map((row) => row.nodeId).sort()),
+      'the evidence table does not cite the committed material rows',
+    );
+    assert(
+      sbomEvidenceState.laneLabel === 'SBOM (materials)',
+      `the SBOM lane label is ${JSON.stringify(sbomEvidenceState.laneLabel)}`,
+    );
+    const sbomClean = await assertContextClean(materialFixture);
+    processLaneFixtures.push({ fixture: materialFixture, clean: sbomClean });
+
+    // The same committed document names a finding with no material evidence.
+    const noMaterialFinding = [...findings]
+      .filter((finding) => !finding.evidence.some((row) => row.role === 'material'))
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(noMaterialFinding, 'every committed finding has material evidence');
+    const noMaterialFixture = await prepareContext(browser, 'process-lanes-sbom-hidden');
+    await noMaterialFixture.page.goto(
+      `${entryUrl}#finding=${encodeURIComponent(noMaterialFinding.id)}`,
+      { waitUntil: 'load', timeout: 60000 },
+    );
+    await noMaterialFixture.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+      timeout: 180000,
+    });
+    const noMaterialDiagram = await readDiagram(noMaterialFixture.page);
+    assert(
+      (await noMaterialFixture.page.locator('[data-testid="process-lane-sbom"]').count()) === 0,
+      'the SBOM lane is drawn for a finding with no material evidence',
+    );
+    assert(
+      noMaterialDiagram.nodes.every((node) => node.lane !== 'sbom'),
+      'a material node is drawn outside the SBOM lane',
+    );
+    const noMaterialClean = await assertContextClean(noMaterialFixture);
+    processLaneFixtures.push({ fixture: noMaterialFixture, clean: noMaterialClean });
+    summary.processLanes.sbomLane = {
+      withMaterial: {
+        id: materialFinding.id,
+        laneLabel: sbomEvidenceState.laneLabel,
+        materialNodes: sbomNodes.map((node) => node.id),
+        edges: sbomDiagram.edges.length,
+        evidenceRows: sbomDiagram.rows.length,
+        ...sbomClean,
+      },
+      withoutMaterial: {
+        id: noMaterialFinding.id,
+        laneVisible: false,
+        nodes: noMaterialDiagram.nodes.length,
+        ...noMaterialClean,
+      },
     };
 
     // A well-formed but unknown id may run the checks; it opens nothing and

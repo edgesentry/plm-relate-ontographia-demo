@@ -165,6 +165,26 @@ Styling is classes and React attributes only, keeping `style-src 'self'`; a link
 the evidence cannot confirm ends at a lane-level placeholder rather than an
 invented node, since the target lane may not be drawn.
 
+The SBOM lane (`sbom`, labeled `laneSbom`) is this repository's constructed
+materials view, like the EBOM and MBOM groupings already are: the
+`material:<key>` nodes that `farmbot/scripts/graph.mjs` builds from the
+`specs.material` strings the pinned part pages record, with the
+canonicalization that `src/farmbot/materials.mjs` defines. It is not a software
+BOM, not a CAS-level substance list, and not a spare-parts list; a part page
+without `specs.material` reaches no material node, and no material is invented
+for it. The lane sits right after the EBOM lane so each material appears next
+to the parts that document it, and the diagram draws an edge from each cited
+part node to its material node after the rule-specific edges.
+
+A material node appears only when the finding already cites a part that
+documents a material: `src/farmbot/agent/index.mjs` attaches one `material`
+evidence row per cited part row on the shared path, so every material node in
+the diagram is cited by an evidence row, and the lane stays hidden — like every
+unused lane — when no cited part documents a material. Material counts are not
+stated here; they come from the `part` table of the extract built by
+`farmbot/scripts/extract.mjs` and from the seed at
+`farmbot/dist/farmbot.seed.json`.
+
 ## Deep link
 
 The format is `#finding=<id>` from the committed document. `parseFindingHash` in
@@ -187,6 +207,15 @@ pair is rejected.
 `src/farmbot/agent/index.mjs` and `src/farmbot/findings-view.mjs` define the row
 shape, roles and line-number rules. A part row's `sourceFile` is the Node entry's
 page path, or `null` when no source is supplied rather than an invented path.
+
+A `material` row is the constructed SBOM citation of a part row the finding
+already cites: `nodeId` is the `material:<key>` node, `sourceFile` is that part
+row's own page path (or `null` when it has none), and `line` is `null` because
+the documented string lives in the part page's frontmatter, so no line number
+is invented. Its facts carry the raw material string, the display name of the
+normalization key, and the citing part node id, which is the edge the diagram
+draws. `src/farmbot/materials.mjs` defines the key, node id and display-name
+rules, and a part page without `specs.material` yields no such row.
 
 ## Severity
 

@@ -1081,7 +1081,7 @@ export function App() {
             </dd>
             <dt>{t('ruleLabel')}</dt>
             <dd>
-              {selectedCategoryKey !== null
+              {CHECK_RULE_LABEL_KEYS[selectedFinding.rule] !== undefined
                 ? t(CHECK_RULE_LABEL_KEYS[selectedFinding.rule])
                 : selectedFinding.rule}
             </dd>

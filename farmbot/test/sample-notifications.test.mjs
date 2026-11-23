@@ -10,8 +10,8 @@
 //
 // The R1 and R3 cards carry their EBOM / MBOM reconciliation category label
 // (issue #124), so the tests below pin that grouping's heading, its three
-// category labels, and the R1 part-page versus packing-list comparison note in
-// both languages.
+// category labels, the R1 part-page versus packing-list comparison note and
+// the intro that names the info-severity toggle in both languages.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -123,6 +123,39 @@ test('the reconciliation group heading and category labels stay exact in both la
   assert.equal(messages.ja.reconciliationCategoryR4, '製造または梱包にのみ存在');
   assert.equal(messages.en.reconciliationR1Note, 'Part page versus packing list');
   assert.equal(messages.ja.reconciliationR1Note, '部品ページと梱包リストの比較');
+});
+
+test('the reconciliation intro exists and quotes the info-severity toggle label', () => {
+  for (const lang of ['en', 'ja']) {
+    assert.equal(
+      typeof messages[lang].reconciliationIntro,
+      'string',
+      `src/farmbot/i18n.ts has no ${lang} reconciliationIntro`,
+    );
+    assert.notEqual(
+      messages[lang].reconciliationIntro,
+      '',
+      `the ${lang} reconciliationIntro is empty`,
+    );
+    assert.equal(
+      typeof messages[lang].reconciliationCategoryLabel,
+      'string',
+      `src/farmbot/i18n.ts has no ${lang} reconciliationCategoryLabel`,
+    );
+    assert.notEqual(
+      messages[lang].reconciliationCategoryLabel,
+      '',
+      `the ${lang} reconciliationCategoryLabel is empty`,
+    );
+  }
+  assert.ok(
+    messages.en.reconciliationIntro.includes(messages.en.showInfoFindings),
+    'the English reconciliationIntro must quote messages.en.showInfoFindings verbatim',
+  );
+  assert.ok(
+    messages.ja.reconciliationIntro.includes(messages.ja.showInfoFindings),
+    'the Japanese reconciliationIntro must quote messages.ja.showInfoFindings verbatim',
+  );
 });
 
 test('the reconciliation rules are committed checks with a label in each language', () => {

@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { parse } from 'yaml';
 
 import { CHECKS, INTENT_FILES } from '../../src/farmbot/agent/checks.mjs';
+import { messages } from '../../src/farmbot/i18n.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -1408,9 +1409,9 @@ test('the Beat 7 closing line stays verbatim in both demo documents', () => {
 // Beat 4 / step 4 open #finding=R1-40mm-nut-bar-standard, the one shot the
 // category labels land on, so both demo documents must record the on-screen
 // category label and the part-page versus packing-list wording, and the
-// checks document must keep naming the three categories. The spoken budget
-// and the SBOM narration are covered by the beat tests above; these checks
-// pin only the on-screen wording.
+// checks document must keep naming the three categories. The SBOM narration
+// is covered by the beat tests above; these checks pin the on-screen wording
+// and the parsed 12-second budget.
 
 test('Beat 4 and step 4 record the on-screen reconciliation labels for the R1 shot', () => {
   const guideBeat4 = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8')).find(
@@ -1421,6 +1422,16 @@ test('Beat 4 and step 4 record the on-screen reconciliation labels for the R1 sh
   );
   assert.ok(guideBeat4, 'farmbot/docs/recording-guide.md has no Beat 4');
   assert.ok(scriptStep4, 'farmbot/docs/demo-script.md has no step 4');
+  assert.equal(
+    guideBeat4.seconds,
+    12,
+    'farmbot/docs/recording-guide.md Beat 4 does not keep its 12-second budget',
+  );
+  assert.equal(
+    scriptStep4.seconds,
+    12,
+    'farmbot/docs/demo-script.md step 4 does not keep its 12-second budget',
+  );
   for (const [label, body] of [
     ['farmbot/docs/recording-guide.md Beat 4', guideBeat4.body],
     ['farmbot/docs/demo-script.md step 4', scriptStep4.body],
@@ -1439,12 +1450,14 @@ test('Beat 4 and step 4 record the on-screen reconciliation labels for the R1 sh
       `${label} does not record the comparison note key`,
     );
     assert.ok(
-      /part[ -]page versus packing[ -]list/i.test(flat),
-      `${label} does not record the part-page versus packing-list wording`,
+      flat.includes(messages.en.reconciliationCategoryR1),
+      `${label} does not quote messages.en.reconciliationCategoryR1 ` +
+        `(${JSON.stringify(messages.en.reconciliationCategoryR1)}) verbatim`,
     );
     assert.ok(
-      /12 seconds|12-second/i.test(flat),
-      `${label} no longer keeps the 12-second budget on this beat`,
+      flat.includes(messages.en.reconciliationR1Note),
+      `${label} does not quote messages.en.reconciliationR1Note ` +
+        `(${JSON.stringify(messages.en.reconciliationR1Note)}) verbatim`,
     );
   }
 });

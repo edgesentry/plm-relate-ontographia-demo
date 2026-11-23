@@ -120,7 +120,8 @@ const en = {
     'EBOM and MBOM here are constructed views, not official FarmBot terms. ' +
     'The three reconciliation categories label the R1, R3 and R4 findings ' +
     'below; R1 compares the part page quantity with the packing list quantity ' +
-    'for one product variant.',
+    'for one product variant. The R3 and R4 findings are info severity, so ' +
+    'they appear only while "Show info findings" is on.',
   reconciliationCategoryLabel: 'Reconciliation category',
   reconciliationCategoryR1: 'Quantity difference',
   reconciliationCategoryR3: 'Missing from process',
@@ -375,7 +376,8 @@ const ja: Record<keyof typeof en, string> = {
   reconciliationIntro:
     'ここでの EBOM と MBOM は構成された見方であり、FarmBot の公式用語ではありません。' +
     '3 つの照合カテゴリが下の R1・R3・R4 の検出に付き、R1 は 1 つの製品バリアントについて' +
-    '部品ページの数量と梱包リストの数量を比較します。',
+    '部品ページの数量と梱包リストの数量を比較します。R3 と R4 の検出は情報重大度のため、' +
+    '「情報の検出も表示」がオンのときだけ一覧に表示されます。',
   reconciliationCategoryLabel: '照合カテゴリ',
   reconciliationCategoryR1: '数量の相違',
   reconciliationCategoryR3: '工程から欠落',

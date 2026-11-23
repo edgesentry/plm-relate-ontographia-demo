@@ -506,6 +506,35 @@ function expectedDiagram(finding) {
   };
 }
 
+/**
+ * The reconciliation presentation inside the finding view: the rule dd's
+ * text, the category badge's data-testid and text, and whether the
+ * reconciliation category dt is rendered at all.
+ *
+ * @param {import('playwright').Page} page
+ * @param {string} ruleDtText the localized rule dt text
+ * @param {string} categoryDtText the localized category dt text
+ */
+async function readFindingViewMeta(page, ruleDtText, categoryDtText) {
+  return page.evaluate(([ruleDt, categoryDt]) => {
+    const view = document.querySelector('[data-testid="finding-view"]');
+    const dts = [...(view?.querySelectorAll('.farmbot-meta dt') ?? [])].map(
+      (dt) => (dt.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+    const dds = [...(view?.querySelectorAll('.farmbot-meta dd') ?? [])].map(
+      (dd) => (dd.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+    const ruleIndex = dts.findIndex((text) => text === ruleDt);
+    const badge = view?.querySelector('[data-testid^="reconciliation-category-"]') ?? null;
+    return {
+      ruleText: ruleIndex === -1 ? null : (dds[ruleIndex] ?? null),
+      categoryTestid: badge?.getAttribute('data-testid') ?? null,
+      categoryLabel: badge ? (badge.textContent ?? '').replace(/\s+/g, ' ').trim() : null,
+      hasCategoryDt: dts.includes(categoryDt),
+    };
+  }, [ruleDtText, categoryDtText]);
+}
+
 async function main() {
   const committedSeedBytes = readFileSync(committedSeedPath);
   const committedSeedSha = sha256Hex(committedSeedBytes);
@@ -581,6 +610,7 @@ async function main() {
     sampleEmails: null,
     landingFold: null,
     processLanes: null,
+    reconciliationView: null,
     unknownFinding: null,
     malformedHashes: [],
     checkRouting: {
@@ -765,6 +795,11 @@ async function main() {
             .querySelector('[data-testid="reconciliation-group"] h3')
             ?.textContent?.replace(/\s+/g, ' ')
             .trim() ?? null,
+        reconciliationIntro:
+          document
+            .querySelector('[data-testid="reconciliation-group"] p')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim() ?? null,
       };
     });
     assert(
@@ -786,6 +821,12 @@ async function main() {
       `the findings panel shows reconciliation heading ` +
         `${JSON.stringify(panel.reconciliationHeading)}, expected ` +
         `${JSON.stringify(messages.en.reconciliationHeading)}`,
+    );
+    assert(
+      panel.reconciliationIntro === messages.en.reconciliationIntro,
+      `the findings panel shows reconciliation intro ` +
+        `${JSON.stringify(panel.reconciliationIntro)}, expected ` +
+        `${JSON.stringify(messages.en.reconciliationIntro)}`,
     );
 
     const toggle = page.locator('[data-testid="toggle-info-findings"]');
@@ -1793,6 +1834,10 @@ async function main() {
           card.querySelector('[data-testid^="reconciliation-category-"]')?.textContent
             ?.replace(/\s+/g, ' ')
             .trim() ?? '',
+        categoryTestid:
+          card
+            .querySelector('[data-testid^="reconciliation-category-"]')
+            ?.getAttribute('data-testid') ?? '',
       })),
     );
     assert(
@@ -1816,11 +1861,21 @@ async function main() {
           `sample card ${card.id} shows a Japanese reconciliation category outside ` +
             `the grouping: ${card.category}`,
         );
+        assert(
+          card.categoryTestid === '',
+          `sample card ${card.id} carries a Japanese reconciliation badge outside ` +
+            `the grouping: ${card.categoryTestid}`,
+        );
       } else {
         assert(
           card.category === messages.ja[jaCategoryKey],
           `sample card ${card.id} does not show its Japanese reconciliation category ` +
             `${messages.ja[jaCategoryKey]}: ${card.category}`,
+        );
+        assert(
+          card.categoryTestid === `reconciliation-category-${finding.rule}`,
+          `sample card ${card.id} carries badge ${JSON.stringify(card.categoryTestid)}, ` +
+            `expected "reconciliation-category-${finding.rule}"`,
         );
       }
     }
@@ -1847,6 +1902,10 @@ async function main() {
           card.querySelector('[data-testid^="reconciliation-category-"]')?.textContent
             ?.replace(/\s+/g, ' ')
             .trim() ?? '',
+        categoryTestid:
+          card
+            .querySelector('[data-testid^="reconciliation-category-"]')
+            ?.getAttribute('data-testid') ?? '',
         text: (card.textContent ?? '').replace(/\s+/g, ' ').trim(),
       })),
     );
@@ -1885,8 +1944,9 @@ async function main() {
           `  expected: ${expectedSummary}\n  actual:   ${card.summary}`,
       );
       // Reconciliation categories (issue #124): the R1 and R3 cards carry their
-      // category badge, the R6 and R8 cards carry none, and no card count or
-      // rule outside the grouping gains a badge.
+      // category badge under their own rule's testid, the R6 and R8 cards
+      // carry none, and no card count or rule outside the grouping gains a
+      // badge.
       const categoryKey = reconciliationCategoryKey(card.rule);
       if (categoryKey === null) {
         assert(
@@ -1894,11 +1954,21 @@ async function main() {
           `sample card ${card.id} shows a reconciliation category outside the grouping: ` +
             `${card.category}`,
         );
+        assert(
+          card.categoryTestid === '',
+          `sample card ${card.id} carries a reconciliation badge outside the grouping: ` +
+            `${card.categoryTestid}`,
+        );
       } else {
         assert(
           card.category === messages.en[categoryKey],
           `sample card ${card.id} does not show its reconciliation category ` +
             `${messages.en[categoryKey]}: ${card.category}`,
+        );
+        assert(
+          card.categoryTestid === `reconciliation-category-${card.rule}`,
+          `sample card ${card.id} carries badge ${JSON.stringify(card.categoryTestid)}, ` +
+            `expected "reconciliation-category-${card.rule}"`,
         );
       }
     }
@@ -2372,6 +2442,51 @@ async function main() {
         (await fixture.page.locator(`[data-testid="finding-row-${finding.id}"]`).count()) === 1,
         `${finding.rule}: the deep-linked finding has no row in the filtered list`,
       );
+      // Reconciliation presentation (issue #124): every finding view shows the
+      // full localized rule label; R1, R3 and R4 add the category badge with
+      // its own testid and the category dt, and no ungrouped rule gains
+      // either.
+      const viewMeta = await readFindingViewMeta(
+        fixture.page,
+        messages.en.ruleLabel,
+        messages.en.reconciliationCategoryLabel,
+      );
+      const ruleLabelKey = `check${finding.rule}Label`;
+      assert(
+        viewMeta.ruleText === messages.en[ruleLabelKey],
+        `${finding.rule}: the finding view shows rule label ` +
+          `${JSON.stringify(viewMeta.ruleText)}, expected ` +
+          `${JSON.stringify(messages.en[ruleLabelKey])}`,
+      );
+      const findingCategoryKey = reconciliationCategoryKey(finding.rule);
+      if (findingCategoryKey === null) {
+        assert(
+          viewMeta.categoryTestid === null,
+          `${finding.rule}: the ungrouped finding view carries a reconciliation badge: ` +
+            `${viewMeta.categoryTestid}`,
+        );
+        assert(
+          !viewMeta.hasCategoryDt,
+          `${finding.rule}: the ungrouped finding view shows a reconciliation category dt`,
+        );
+      } else {
+        assert(
+          viewMeta.categoryTestid === `reconciliation-category-${finding.rule}`,
+          `${finding.rule}: the finding view carries badge ` +
+            `${JSON.stringify(viewMeta.categoryTestid)}, expected ` +
+            `"reconciliation-category-${finding.rule}"`,
+        );
+        assert(
+          viewMeta.categoryLabel === messages.en[findingCategoryKey],
+          `${finding.rule}: the finding view shows category ` +
+            `${JSON.stringify(viewMeta.categoryLabel)}, expected ` +
+            `${JSON.stringify(messages.en[findingCategoryKey])}`,
+        );
+        assert(
+          viewMeta.hasCategoryDt,
+          `${finding.rule}: the finding view shows no reconciliation category dt`,
+        );
+      }
       const diagram = await readDiagram(fixture.page);
       assert(diagram.present, `${finding.rule}: the process-lane diagram is missing`);
       assert(
@@ -3431,6 +3546,80 @@ async function main() {
     );
     const sbomClean = await assertContextClean(materialFixture);
     processLaneFixtures.push({ fixture: materialFixture, clean: sbomClean });
+
+    // The R3 and R4 categories reach the finding view the same way. Both
+    // rules' findings are info severity, so the default list hides every
+    // R3 and R4 row, but the deep link still opens the view. R3 cites the
+    // sample card finding (R3-fuse) and R4 the first committed R4 id, both
+    // from the committed document only.
+    const r3SampleCard = SAMPLE_NOTIFICATIONS.find((card) => card.rule === 'R3');
+    assert(r3SampleCard, 'the sample catalog cites no R3 card');
+    const r3ViewFinding = findings.find((finding) => finding.id === r3SampleCard.id);
+    assert(r3ViewFinding, `the committed file has no ${r3SampleCard.id} finding`);
+    const r4ViewFinding = [...findings]
+      .filter((finding) => finding.rule === 'R4')
+      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))[0];
+    assert(r4ViewFinding, 'the committed file has no R4 finding');
+    const groupedViewFixture = await prepareContext(browser, 'reconciliation-finding-view');
+    const groupedViewStates = {};
+    for (const finding of [r3ViewFinding, r4ViewFinding]) {
+      await groupedViewFixture.page.goto(
+        `${entryUrl}#finding=${encodeURIComponent(finding.id)}`,
+        { waitUntil: 'load', timeout: 60000 },
+      );
+      await groupedViewFixture.page.waitForSelector('[data-testid="finding-view"]', {
+        timeout: 180000,
+      });
+      await groupedViewFixture.page.waitForSelector(
+        `[data-testid="finding-row-${finding.id}"]`,
+        { timeout: 30000 },
+      );
+      const viewMeta = await readFindingViewMeta(
+        groupedViewFixture.page,
+        messages.en.ruleLabel,
+        messages.en.reconciliationCategoryLabel,
+      );
+      const viewCategoryKey = reconciliationCategoryKey(finding.rule);
+      assert(
+        viewCategoryKey !== null,
+        `${finding.id} is not a reconciliation-rule finding`,
+      );
+      assert(
+        viewMeta.categoryTestid === `reconciliation-category-${finding.rule}`,
+        `${finding.id}: the finding view carries badge ` +
+          `${JSON.stringify(viewMeta.categoryTestid)}, expected ` +
+          `"reconciliation-category-${finding.rule}"`,
+      );
+      assert(
+        viewMeta.categoryLabel === messages.en[viewCategoryKey],
+        `${finding.id}: the finding view shows category ` +
+          `${JSON.stringify(viewMeta.categoryLabel)}, expected ` +
+          `${JSON.stringify(messages.en[viewCategoryKey])}`,
+      );
+      assert(
+        viewMeta.hasCategoryDt,
+        `${finding.id}: the finding view shows no reconciliation category dt`,
+      );
+      assert(
+        viewMeta.ruleText === messages.en[`check${finding.rule}Label`],
+        `${finding.id}: the finding view shows rule label ` +
+          `${JSON.stringify(viewMeta.ruleText)}, expected ` +
+          `${JSON.stringify(messages.en[`check${finding.rule}Label`])}`,
+      );
+      groupedViewStates[finding.rule] = {
+        id: finding.id,
+        categoryTestid: viewMeta.categoryTestid,
+        category: viewMeta.categoryLabel,
+        ruleLabel: viewMeta.ruleText,
+      };
+    }
+    const groupedViewClean = await assertContextClean(groupedViewFixture);
+    processLaneFixtures.push({ fixture: groupedViewFixture, clean: groupedViewClean });
+    summary.reconciliationView = {
+      grouped: groupedViewStates,
+      introOnPanel: true,
+      ...groupedViewClean,
+    };
 
     // The same committed document names a finding with no material evidence.
     const noMaterialFinding = [...findings]

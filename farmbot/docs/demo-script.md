@@ -127,6 +127,12 @@ part whose page documents `specs.material`, so the SBOM (materials) lane
 (`laneSbom`) is visible on it. Point at the attached material evidence node
 `material:stainless steel`, displayed as `Stainless Steel`.
 
+On screen the finding view also carries the reconciliation presentation for
+this shot: the category label `reconciliationCategoryR1` (Quantity difference)
+with the comparison note `reconciliationR1Note` (Part page versus packing
+list). Do not narrate them; the spoken beat stays the SBOM (materials) lane
+inside the same about-12-second budget.
+
 Narration: "When a cited part page records a material, the SBOM (materials) lane
 shows that documented material next to the part. It is a view of the recorded
 values, not a software bill of materials and not a substance list. The lane

@@ -1402,3 +1402,76 @@ test('the Beat 7 closing line stays verbatim in both demo documents', () => {
       `"${CLOSING_LINE}"`,
   );
 });
+
+// --- reconciliation presentation (issue #124) --------------------------------
+//
+// Beat 4 / step 4 open #finding=R1-40mm-nut-bar-standard, the one shot the
+// category labels land on, so both demo documents must record the on-screen
+// category label and the part-page versus packing-list wording, and the
+// checks document must keep naming the three categories. The spoken budget
+// and the SBOM narration are covered by the beat tests above; these checks
+// pin only the on-screen wording.
+
+test('Beat 4 and step 4 record the on-screen reconciliation labels for the R1 shot', () => {
+  const guideBeat4 = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8')).find(
+    (beat) => beat.n === 4,
+  );
+  const scriptStep4 = demoScriptSteps(readFileSync(DEMO_SCRIPT, 'utf8')).find(
+    (step) => step.n === 4,
+  );
+  assert.ok(guideBeat4, 'farmbot/docs/recording-guide.md has no Beat 4');
+  assert.ok(scriptStep4, 'farmbot/docs/demo-script.md has no step 4');
+  for (const [label, body] of [
+    ['farmbot/docs/recording-guide.md Beat 4', guideBeat4.body],
+    ['farmbot/docs/demo-script.md step 4', scriptStep4.body],
+  ]) {
+    const flat = body.replace(/\s+/g, ' ');
+    assert.ok(
+      flat.includes('R1-40mm-nut-bar-standard'),
+      `${label} no longer names the R1 deep link`,
+    );
+    assert.ok(
+      flat.includes('reconciliationCategoryR1'),
+      `${label} does not record the on-screen category label key`,
+    );
+    assert.ok(
+      flat.includes('reconciliationR1Note'),
+      `${label} does not record the comparison note key`,
+    );
+    assert.ok(
+      /part[ -]page versus packing[ -]list/i.test(flat),
+      `${label} does not record the part-page versus packing-list wording`,
+    );
+    assert.ok(
+      /12 seconds|12-second/i.test(flat),
+      `${label} no longer keeps the 12-second budget on this beat`,
+    );
+  }
+});
+
+test('checks.md names the three reconciliation categories and keeps the R1 comparison', () => {
+  const flat = readFileSync(join(DOCS_DIR, 'checks.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.ok(
+    flat.includes('EBOM / MBOM reconciliation'),
+    'farmbot/docs/checks.md does not name the EBOM / MBOM reconciliation grouping',
+  );
+  for (const category of [
+    'missing from process (R3)',
+    'manufacturing- or packing-only (R4)',
+    'quantity difference (R1)',
+  ]) {
+    assert.ok(
+      flat.includes(category),
+      `farmbot/docs/checks.md does not name the ${category} category`,
+    );
+  }
+  assert.ok(
+    /packing-list quantity versus the part-page quantity/i.test(flat),
+    'farmbot/docs/checks.md does not keep the packing list versus part page ' +
+      'quantity comparison on R1',
+  );
+  assert.ok(
+    !/\bintentional difference\b/i.test(flat),
+    'farmbot/docs/checks.md must not add an intentional-difference category',
+  );
+});

@@ -23,7 +23,9 @@ import {
   splitEvidenceQueries,
   summaryLine,
 } from '../src/farmbot/findings-view.mjs';
+import { messages } from '../src/farmbot/i18n.ts';
 import { layoutFinding, orderEvidenceRows } from '../src/farmbot/process-lanes.mjs';
+import { reconciliationCategoryKey } from '../src/farmbot/reconciliation.mjs';
 import { REJECTED_ROUTING_DEMO_TEXT } from '../src/farmbot/rejection-demo.mjs';
 import { SAMPLE_NOTIFICATIONS } from '../src/farmbot/sample-notifications.mjs';
 
@@ -758,6 +760,11 @@ async function main() {
         ids: [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
           (element) => element.getAttribute('data-finding-id'),
         ),
+        reconciliationHeading:
+          document
+            .querySelector('[data-testid="reconciliation-group"] h3')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim() ?? null,
       };
     });
     assert(
@@ -774,6 +781,12 @@ async function main() {
         `the panel shows ${panel[level]} ${level} findings, the committed file has ${expectedSeverity[level]}`,
       );
     }
+    assert(
+      panel.reconciliationHeading === messages.en.reconciliationHeading,
+      `the findings panel shows reconciliation heading ` +
+        `${JSON.stringify(panel.reconciliationHeading)}, expected ` +
+        `${JSON.stringify(messages.en.reconciliationHeading)}`,
+    );
 
     const toggle = page.locator('[data-testid="toggle-info-findings"]');
     assert(
@@ -785,15 +798,51 @@ async function main() {
       'the findings severity filter is not in its default state',
     );
     await toggle.click();
-    const revealedIds = await page.evaluate(() =>
+    const revealedRows = await page.evaluate(() =>
       [...document.querySelectorAll('[data-testid="finding-list"] [data-finding-id]')].map(
-        (element) => element.getAttribute('data-finding-id'),
+        (row) => {
+          const badge = row.querySelector('[data-testid^="reconciliation-category-"]');
+          return {
+            id: row.getAttribute('data-finding-id'),
+            categoryTestid: badge ? badge.getAttribute('data-testid') : null,
+            categoryLabel: badge ? (badge.textContent ?? '').replace(/\s+/g, ' ').trim() : null,
+          };
+        },
       ),
     );
+    const revealedIds = revealedRows.map((row) => row.id);
     assert(
       JSON.stringify(revealedIds) === JSON.stringify(expectedRevealedIds),
       'revealing info findings did not show the whole committed list in order',
     );
+    // Reconciliation categories (issue #124): every R1, R3 and R4 row carries
+    // exactly its own category badge, and every other rule carries none.
+    for (const row of revealedRows) {
+      const finding = findings.find((candidate) => candidate.id === row.id);
+      assert(
+        finding !== undefined,
+        `a revealed row cites unknown finding id ${row.id}`,
+      );
+      const categoryKey = reconciliationCategoryKey(finding.rule);
+      if (categoryKey === null) {
+        assert(
+          row.categoryTestid === null,
+          `finding row ${row.id} carries a reconciliation badge outside the grouping: ` +
+            `${row.categoryTestid}`,
+        );
+        continue;
+      }
+      assert(
+        row.categoryTestid === `reconciliation-category-${finding.rule}`,
+        `finding row ${row.id} carries badge ${JSON.stringify(row.categoryTestid)}, ` +
+          `expected "reconciliation-category-${finding.rule}"`,
+      );
+      assert(
+        row.categoryLabel === messages.en[categoryKey],
+        `finding row ${row.id} shows category ${JSON.stringify(row.categoryLabel)}, ` +
+          `expected ${JSON.stringify(messages.en[categoryKey])}`,
+      );
+    }
     assert(
       (await toggle.getAttribute('aria-pressed')) === 'true',
       'the findings severity filter did not report the revealed state',
@@ -849,6 +898,8 @@ async function main() {
       digest: checksTimings.digest,
       matches: checksTimings.matches,
       checksMs: Number(checksTimings.ms.toFixed(2)),
+      reconciliationHeading: panel.reconciliationHeading,
+      reconciliationBadges: true,
     };
 
     for (const [index, question] of gold.questions.entries()) {
@@ -1729,7 +1780,8 @@ async function main() {
       { timeout: 30000 },
     );
     // While the UI is in Japanese, every rendered card summary must equal
-    // summaryLine(finding, 'ja') for the committed findings document.
+    // summaryLine(finding, 'ja') for the committed findings document, and the
+    // R1 and R3 cards must show their Japanese reconciliation category badge.
     const jaCards = await sample.page.evaluate(() =>
       [...document.querySelectorAll('[data-testid="sample-card"]')].map((card) => ({
         id: card.getAttribute('data-finding-id') ?? '',
@@ -1737,6 +1789,10 @@ async function main() {
           (card.querySelector('[data-testid="sample-summary"]')?.textContent ?? '')
             .replace(/\s+/g, ' ')
             .trim(),
+        category:
+          card.querySelector('[data-testid^="reconciliation-category-"]')?.textContent
+            ?.replace(/\s+/g, ' ')
+            .trim() ?? '',
       })),
     );
     assert(
@@ -1753,6 +1809,20 @@ async function main() {
         `sample card ${card.id} does not show the committed Japanese summary\n` +
           `  expected: ${expectedJaSummary}\n  actual:   ${card.summary}`,
       );
+      const jaCategoryKey = reconciliationCategoryKey(finding.rule);
+      if (jaCategoryKey === null) {
+        assert(
+          card.category === '',
+          `sample card ${card.id} shows a Japanese reconciliation category outside ` +
+            `the grouping: ${card.category}`,
+        );
+      } else {
+        assert(
+          card.category === messages.ja[jaCategoryKey],
+          `sample card ${card.id} does not show its Japanese reconciliation category ` +
+            `${messages.ja[jaCategoryKey]}: ${card.category}`,
+        );
+      }
     }
     await sample.page.selectOption('[data-testid="lang-toggle"]', 'en');
     await sample.page.waitForFunction(
@@ -1773,6 +1843,10 @@ async function main() {
           (card.querySelector('[data-testid="sample-summary"]')?.textContent ?? '')
             .replace(/\s+/g, ' ')
             .trim(),
+        category:
+          card.querySelector('[data-testid^="reconciliation-category-"]')?.textContent
+            ?.replace(/\s+/g, ' ')
+            .trim() ?? '',
         text: (card.textContent ?? '').replace(/\s+/g, ' ').trim(),
       })),
     );
@@ -1810,6 +1884,23 @@ async function main() {
         `sample card ${card.id} does not show the committed summary\n` +
           `  expected: ${expectedSummary}\n  actual:   ${card.summary}`,
       );
+      // Reconciliation categories (issue #124): the R1 and R3 cards carry their
+      // category badge, the R6 and R8 cards carry none, and no card count or
+      // rule outside the grouping gains a badge.
+      const categoryKey = reconciliationCategoryKey(card.rule);
+      if (categoryKey === null) {
+        assert(
+          card.category === '',
+          `sample card ${card.id} shows a reconciliation category outside the grouping: ` +
+            `${card.category}`,
+        );
+      } else {
+        assert(
+          card.category === messages.en[categoryKey],
+          `sample card ${card.id} does not show its reconciliation category ` +
+            `${messages.en[categoryKey]}: ${card.category}`,
+        );
+      }
     }
     const samplesAboveQuestions = await sample.page.evaluate(() => {
       const samples = document.querySelector('[data-testid="sample-notifications"]');
@@ -2013,6 +2104,14 @@ async function main() {
       })),
       aboveQuestions: true,
       jaSummariesMatch: true,
+      reconciliationCategories: {
+        r1: messages.en.reconciliationCategoryR1,
+        r3: messages.en.reconciliationCategoryR3,
+        ungroupedCards: sampleCards
+          .filter((card) => reconciliationCategoryKey(card.rule) === null)
+          .map((card) => card.rule),
+        jaFollowsToggle: true,
+      },
       idleClick: {
         id: idleCard.id,
         hash: sampleClickState.hash,
@@ -3271,6 +3370,65 @@ async function main() {
       sbomEvidenceState.laneLabel === 'SBOM (materials)',
       `the SBOM lane label is ${JSON.stringify(sbomEvidenceState.laneLabel)}`,
     );
+
+    // Reconciliation presentation (issue #124): Beat 4 of the recording guide
+    // opens this same deep link, so the R1 finding view must carry the
+    // quantity-difference category badge, the part-page versus packing-list
+    // comparison note and the full rule label, and its row in the findings
+    // list must carry the same category badge. The SBOM lane assertions above
+    // stay unchanged.
+    assert(
+      materialFinding.rule === 'R1' && materialFinding.id === 'R1-40mm-nut-bar-standard',
+      `the SBOM lane fixture no longer opens the Beat 4 finding ` +
+        `${materialFinding.id} (${materialFinding.rule})`,
+    );
+    const r1Reconciliation = await materialFixture.page.evaluate(() => ({
+      categoryBadge:
+        document
+          .querySelector('[data-testid="finding-view"] [data-testid="reconciliation-category-R1"]')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim() ?? '',
+      comparisonNote:
+        document
+          .querySelector('[data-testid="reconciliation-r1-note"]')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim() ?? '',
+      rowBadge:
+        document
+          .querySelector(
+            '[data-testid="finding-row-R1-40mm-nut-bar-standard"] [data-testid="reconciliation-category-R1"]',
+          )
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim() ?? '',
+      ruleText:
+        [...document.querySelectorAll('[data-testid="finding-view"] .farmbot-meta dd')]
+          .map((cell) => (cell.textContent ?? '').replace(/\s+/g, ' ').trim())
+          .find((text) => text.startsWith('R1 ·')) ?? '',
+    }));
+    assert(
+      r1Reconciliation.categoryBadge === messages.en.reconciliationCategoryR1,
+      `the R1 finding view shows category badge ` +
+        `${JSON.stringify(r1Reconciliation.categoryBadge)}, expected ` +
+        `${JSON.stringify(messages.en.reconciliationCategoryR1)}`,
+    );
+    assert(
+      r1Reconciliation.comparisonNote === messages.en.reconciliationR1Note,
+      `the R1 finding view shows comparison note ` +
+        `${JSON.stringify(r1Reconciliation.comparisonNote)}, expected ` +
+        `${JSON.stringify(messages.en.reconciliationR1Note)}`,
+    );
+    assert(
+      r1Reconciliation.rowBadge === messages.en.reconciliationCategoryR1,
+      `the R1 finding list row shows category badge ` +
+        `${JSON.stringify(r1Reconciliation.rowBadge)}, expected ` +
+        `${JSON.stringify(messages.en.reconciliationCategoryR1)}`,
+    );
+    assert(
+      r1Reconciliation.ruleText === messages.en.checkR1Label,
+      `the R1 finding view shows rule label ` +
+        `${JSON.stringify(r1Reconciliation.ruleText)}, expected ` +
+        `${JSON.stringify(messages.en.checkR1Label)}`,
+    );
     const sbomClean = await assertContextClean(materialFixture);
     processLaneFixtures.push({ fixture: materialFixture, clean: sbomClean });
 
@@ -3305,6 +3463,12 @@ async function main() {
         materialNodes: sbomNodes.map((node) => node.id),
         edges: sbomDiagram.edges.length,
         evidenceRows: sbomDiagram.rows.length,
+        reconciliation: {
+          category: r1Reconciliation.categoryBadge,
+          note: r1Reconciliation.comparisonNote,
+          rowBadge: r1Reconciliation.rowBadge,
+          ruleLabel: r1Reconciliation.ruleText,
+        },
         ...sbomClean,
       },
       withoutMaterial: {

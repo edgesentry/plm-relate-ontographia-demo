@@ -24,10 +24,10 @@ const en = {
     'page: opening a link runs the checks in this tab and highlights that finding.',
   sampleCardLabel: 'Sample',
   sampleScenarioLabel: 'Scenario checked',
-  sampleScenarioPacking: 'Packing and process documents versus part pages',
+  sampleScenarioPacking: 'Reconciliation: part page versus packing list',
   sampleScenarioDesignChange: 'Design-change reach into downstream documents',
   sampleScenarioService: 'Service documents feeding back to design',
-  sampleScenarioCoverage: 'Coverage gaps in process documentation',
+  sampleScenarioCoverage: 'Reconciliation: process coverage gaps',
   sampleSummaryR1NutBar:
     'The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for ' +
     '40mm Nut Bar disagree by 4 for standard.',
@@ -115,6 +115,17 @@ const en = {
   hideInfoFindings: 'Hide info findings',
   findingsMatch: 'The browser result matches the committed findings',
   findingsMismatch: 'The browser result does not match the committed findings',
+  reconciliationHeading: 'EBOM / MBOM reconciliation',
+  reconciliationIntro:
+    'EBOM and MBOM here are constructed views, not official FarmBot terms. ' +
+    'The three reconciliation categories label the R1, R3 and R4 findings ' +
+    'below; R1 compares the part page quantity with the packing list quantity ' +
+    'for one product variant.',
+  reconciliationCategoryLabel: 'Reconciliation category',
+  reconciliationCategoryR1: 'Quantity difference',
+  reconciliationCategoryR3: 'Missing from process',
+  reconciliationCategoryR4: 'Manufacturing- or packing-only',
+  reconciliationR1Note: 'Part page versus packing list',
   findingHeading: 'Finding',
   findingIdLabel: 'Finding ID',
   ruleLabel: 'Rule',
@@ -264,10 +275,10 @@ const ja: Record<keyof typeof en, string> = {
     'リンクを開くと、このタブ内でチェックを実行して該当の検出を強調表示します。',
   sampleCardLabel: 'サンプル',
   sampleScenarioLabel: '確認したシナリオ',
-  sampleScenarioPacking: '梱包・工程文書と部品ページの突き合わせ',
+  sampleScenarioPacking: '照合: 部品ページと梱包リストの比較',
   sampleScenarioDesignChange: '設計変更の下流文書への到達',
   sampleScenarioService: 'サービス文書から設計へのフィードバック',
-  sampleScenarioCoverage: '工程文書のカバレッジの欠落',
+  sampleScenarioCoverage: '照合: 工程カバレッジの欠落',
   sampleSummaryR1NutBar:
     'v1.7/manufacturing/packing/hardware-kit.md の梱包リストと 40mm Nut Bar の部品ページでは ' +
     'standard の数量が 4 だけ異なります。',
@@ -360,6 +371,16 @@ const ja: Record<keyof typeof en, string> = {
   hideInfoFindings: '情報の検出を隠す',
   findingsMatch: 'ブラウザの結果はコミット済みの検出結果と一致しています',
   findingsMismatch: 'ブラウザの結果はコミット済みの検出結果と一致していません',
+  reconciliationHeading: 'EBOM と MBOM の照合',
+  reconciliationIntro:
+    'ここでの EBOM と MBOM は構成された見方であり、FarmBot の公式用語ではありません。' +
+    '3 つの照合カテゴリが下の R1・R3・R4 の検出に付き、R1 は 1 つの製品バリアントについて' +
+    '部品ページの数量と梱包リストの数量を比較します。',
+  reconciliationCategoryLabel: '照合カテゴリ',
+  reconciliationCategoryR1: '数量の相違',
+  reconciliationCategoryR3: '工程から欠落',
+  reconciliationCategoryR4: '製造または梱包にのみ存在',
+  reconciliationR1Note: '部品ページと梱包リストの比較',
   findingHeading: '検出の詳細',
   findingIdLabel: '検出 ID',
   ruleLabel: 'ルール',

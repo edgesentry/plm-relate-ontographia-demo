@@ -140,6 +140,7 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   4. Cursor indicates the newly visible `SBOM (materials)` lane and hovers over the `Stainless Steel` node.
 - **On-Screen Requirements:**
   - Finding header indicates `R1-40mm-nut-bar-standard` (`checkR1Label`: "R1 · Packing quantity differs from the part page quantity").
+  - Reconciliation category on screen: the finding view shows the category label `reconciliationCategoryR1` ("Quantity difference") with the comparison note `reconciliationR1Note` ("Part page versus packing list"). On-screen only: no extra narration, and the beat keeps its 12-second target timing.
   - Process lanes rendered: `laneEbomPart` ("EBOM part"), `laneSbom` ("SBOM (materials)"), and `lanePacking` ("Packing").
   - In `laneSbom`, the material node `material:stainless steel` is rendered with display text `Stainless Steel`.
   - Contrast note visible or demonstrable: `laneSbom` is present here because the part page documents `specs.material`, but was absent on `R6-power-supply`.

@@ -20,6 +20,13 @@ regenerates it. The notes below are design rationale for how a rule reads its
 rows, not a rule catalogue: start classes, `not_exists` entries and join keys are
 in `farmbot/checks/` and `CHECKS` / `INTENT_FILES`.
 
+R1, R3 and R4 are presented on the screen as the three EBOM / MBOM
+reconciliation categories: missing from process (R3), manufacturing- or
+packing-only (R4), and quantity difference (R1). The R1 comparison stays
+packing-list quantity versus the part-page quantity for one product variant;
+it is not an assembly-versus-packing quantity check. The EBOM and MBOM names
+are this repository's constructed views, not official FarmBot terms.
+
 ### R1: packing quantity differs from the part page
 
 One finding per `quantity_difference` row (one part and product version); a part
@@ -145,8 +152,10 @@ The landing leads with sample notification-email cards. `SCENARIO_DIRECTIONS` in
 `src/farmbot/sample-notifications.mjs` groups the rules by the `direction`
 field on `CHECKS`, and each card cites one finding id from
 `farmbot/dist/farmbot.findings.json`; the localized scenario and summary strings
-live in `src/farmbot/i18n.ts`, and `scripts/smoke-farmbot.mjs` compares the
-rendered cards with the committed document. The cards are samples: nothing is
+live in `src/farmbot/i18n.ts`, the R1 and R3 cards carry their reconciliation
+category label (`reconciliationCategoryR1` / `reconciliationCategoryR3`), and
+`scripts/smoke-farmbot.mjs` compares the rendered cards with the committed
+document. The cards are samples: nothing is
 sent from the page, and the Worker email path in `worker/notify.ts` is the only
 sender.
 

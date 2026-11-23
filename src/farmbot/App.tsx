@@ -33,6 +33,7 @@ import {
 import { planQuestion } from './plan.mjs';
 import { ProcessLanes } from './ProcessLanes';
 import { orderEvidenceRows } from './process-lanes.mjs';
+import { reconciliationCategoryKey } from './reconciliation.mjs';
 import { SAMPLE_NOTIFICATIONS } from './sample-notifications.mjs';
 import { formatSeedDigest, SEED_DIGEST, sha256Hex } from './seed-digest.mjs';
 import {
@@ -713,6 +714,10 @@ export function App() {
   const selectedCountermeasures = selectedFinding
     ? findingCountermeasures(selectedFinding, lang)
     : [];
+  // Null when the open finding is not one of the reconciliation rules.
+  const selectedCategoryKey = selectedFinding
+    ? reconciliationCategoryKey(selectedFinding.rule)
+    : null;
 
   const checksStatus = (): string => {
     switch (checks.status) {
@@ -827,43 +832,56 @@ export function App() {
           </span>
         </p>
         <ul className="sample-list">
-          {SAMPLE_NOTIFICATIONS.map((card) => (
-            <li
-              key={card.id}
-              className="sample-card"
-              data-testid="sample-card"
-              data-finding-id={card.id}
-              data-rule={card.rule}
-              data-severity={card.severity}
-            >
-              <p className="sample-card-head">
-                <span className="sample-card-badge" data-testid="sample-badge">
-                  {t('sampleCardLabel')}
-                </span>
-                <span className="sample-card-scenario">
-                  <span className="muted">{t('sampleScenarioLabel')}:</span>{' '}
-                  {t(card.scenarioKey)}
-                </span>
-              </p>
-              <p className="sample-card-found">
-                <span
-                  className={`severity-badge severity-${card.severity}`}
-                  data-testid="sample-severity"
-                >
-                  {t(SEVERITY_LABEL_KEYS[card.severity])}
-                </span>{' '}
-                {t(CHECK_RULE_LABEL_KEYS[card.rule])}
-              </p>
-              <p className="sample-card-summary" data-testid="sample-summary">
-                {t(card.summaryKey)}
-              </p>
-              <p className="sample-card-link-row">
-                <a data-testid="sample-open-finding" href={`#finding=${card.id}`}>
-                  {t('sampleOpenFinding')} <code>{`#finding=${card.id}`}</code>
-                </a>
-              </p>
-            </li>
-          ))}
+          {SAMPLE_NOTIFICATIONS.map((card) => {
+            const categoryKey = reconciliationCategoryKey(card.rule);
+            return (
+              <li
+                key={card.id}
+                className="sample-card"
+                data-testid="sample-card"
+                data-finding-id={card.id}
+                data-rule={card.rule}
+                data-severity={card.severity}
+              >
+                <p className="sample-card-head">
+                  <span className="sample-card-badge" data-testid="sample-badge">
+                    {t('sampleCardLabel')}
+                  </span>
+                  <span className="sample-card-scenario">
+                    <span className="muted">{t('sampleScenarioLabel')}:</span>{' '}
+                    {t(card.scenarioKey)}
+                  </span>
+                </p>
+                <p className="sample-card-found">
+                  <span
+                    className={`severity-badge severity-${card.severity}`}
+                    data-testid="sample-severity"
+                  >
+                    {t(SEVERITY_LABEL_KEYS[card.severity])}
+                  </span>{' '}
+                  {categoryKey !== null && (
+                    <>
+                      <span
+                        className="reconciliation-badge"
+                        data-testid={`reconciliation-category-${card.rule}`}
+                      >
+                        {t(categoryKey)}
+                      </span>{' '}
+                    </>
+                  )}
+                  {t(CHECK_RULE_LABEL_KEYS[card.rule])}
+                </p>
+                <p className="sample-card-summary" data-testid="sample-summary">
+                  {t(card.summaryKey)}
+                </p>
+                <p className="sample-card-link-row">
+                  <a data-testid="sample-open-finding" href={`#finding=${card.id}`}>
+                    {t('sampleOpenFinding')} <code>{`#finding=${card.id}`}</code>
+                  </a>
+                </p>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
@@ -990,28 +1008,46 @@ export function App() {
               <code>{checksResult.digest}</code>
             </p>
 
+            <div className="reconciliation-group" data-testid="reconciliation-group">
+              <h3>{t('reconciliationHeading')}</h3>
+              <p className="muted small">{t('reconciliationIntro')}</p>
+            </div>
+
             <ol className="finding-list" data-testid="finding-list">
-              {shownFindings.map((finding) => (
-                <li key={finding.id}>
-                  <button
-                    type="button"
-                    className={`finding-row severity-${finding.severity}${
-                      finding.id === selectedFindingId ? ' is-selected' : ''
-                    }`}
-                    data-testid={`finding-row-${finding.id}`}
-                    data-finding-id={finding.id}
-                    onClick={() => openFinding(finding.id)}
-                  >
-                    <span className={`severity-badge severity-${finding.severity}`}>
-                      {t(SEVERITY_LABEL_KEYS[finding.severity])}
-                    </span>{' '}
-                    <span className="finding-row-summary">
-                      {summaryLine(finding, lang)}
-                    </span>{' '}
-                    <code className="finding-row-id">{finding.id}</code>
-                  </button>
-                </li>
-              ))}
+              {shownFindings.map((finding) => {
+                const categoryKey = reconciliationCategoryKey(finding.rule);
+                return (
+                  <li key={finding.id}>
+                    <button
+                      type="button"
+                      className={`finding-row severity-${finding.severity}${
+                        finding.id === selectedFindingId ? ' is-selected' : ''
+                      }`}
+                      data-testid={`finding-row-${finding.id}`}
+                      data-finding-id={finding.id}
+                      onClick={() => openFinding(finding.id)}
+                    >
+                      <span className={`severity-badge severity-${finding.severity}`}>
+                        {t(SEVERITY_LABEL_KEYS[finding.severity])}
+                      </span>{' '}
+                      {categoryKey !== null && (
+                        <>
+                          <span
+                            className="reconciliation-badge"
+                            data-testid={`reconciliation-category-${finding.rule}`}
+                          >
+                            {t(categoryKey)}
+                          </span>{' '}
+                        </>
+                      )}
+                      <span className="finding-row-summary">
+                        {summaryLine(finding, lang)}
+                      </span>{' '}
+                      <code className="finding-row-id">{finding.id}</code>
+                    </button>
+                  </li>
+                );
+              })}
             </ol>
           </>
         )}
@@ -1033,13 +1069,35 @@ export function App() {
           <p className="finding-summary" data-testid="finding-summary">
             {summaryLine(selectedFinding, lang)}
           </p>
+          {selectedFinding.rule === 'R1' && (
+            <p className="note" data-testid="reconciliation-r1-note">
+              {t('reconciliationR1Note')}
+            </p>
+          )}
           <dl className="farmbot-meta">
             <dt>{t('findingIdLabel')}</dt>
             <dd>
               <code data-testid="finding-open-id">{selectedFinding.id}</code>
             </dd>
             <dt>{t('ruleLabel')}</dt>
-            <dd>{selectedFinding.rule}</dd>
+            <dd>
+              {CHECK_RULE_LABEL_KEYS[selectedFinding.rule] !== undefined
+                ? t(CHECK_RULE_LABEL_KEYS[selectedFinding.rule])
+                : selectedFinding.rule}
+            </dd>
+            {selectedCategoryKey !== null && (
+              <>
+                <dt>{t('reconciliationCategoryLabel')}</dt>
+                <dd>
+                  <span
+                    className="reconciliation-badge"
+                    data-testid={`reconciliation-category-${selectedFinding.rule}`}
+                  >
+                    {t(selectedCategoryKey)}
+                  </span>
+                </dd>
+              </>
+            )}
             <dt>{t('severityLabel')}</dt>
             <dd>
               <span className={`severity-badge severity-${selectedFinding.severity}`}>

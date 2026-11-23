@@ -89,8 +89,8 @@ test('the rejection labels are present in both i18n blocks', () => {
   const expected = {
     checkRejectionDemoButton: ['Show a rejected routing output', '拒否されるルーティング出力を表示'],
     checkRejectionDemoHint: [
-      'Fixed sample, not a model result: this feeds a Cypher-like text through the same validator that checks model output. Nothing is compiled or executed.',
-      '固定のサンプルであり、モデルの出力ではありません。Cypher に見えるテキストを、モデル出力と同じ検証に通します。コンパイルも実行もしません。',
+      'Fixed sample, not a model result. Nothing is compiled or executed.',
+      '固定サンプルであり、モデルの出力ではありません。コンパイルも実行もしません。',
     ],
     checkRejectionDemoSampleLabel: [
       'Fixed sample input (not a model result)',

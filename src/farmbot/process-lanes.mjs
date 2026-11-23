@@ -489,11 +489,15 @@ function clipMax(nodeWidth, charWidth) {
   return Math.max(6, Math.floor((nodeWidth - 16) / charWidth));
 }
 
-/** Cut text to the node width; the full value stays in the `<title>`. */
+/** Cut text to the node width at a word boundary; the full value stays in the `<title>`. */
 export function clip(value, nodeWidth, charWidth) {
   const max = clipMax(nodeWidth, charWidth);
   if (value.length <= max) return value;
-  return `${value.slice(0, Math.max(1, max - 1))}…`;
+  const room = Math.max(1, max - 1);
+  const head = value.slice(0, room);
+  const boundary = head.lastIndexOf(' ');
+  if (boundary > 0) return `${value.slice(0, boundary)}…`;
+  return `${head}…`;
 }
 
 /**
@@ -503,8 +507,12 @@ export function clip(value, nodeWidth, charWidth) {
  * segments are dropped from the left until what is left fits, so a long path
  * degrades to its readable file name (`electronics.md:146`) instead of a
  * left-truncated chain (`v1.7/assembly/elect...`) that identifies nothing. A
- * value that is still too long is cut by `clip`, keeping its `:line` suffix,
- * so usage cards of one long-named page stay distinguishable by line.
+ * file name that is still too long keeps its readable `*.md:line` suffix:
+ * the visible window cuts after the name's last `-`, so
+ * `storing-farmbot-for-winter.md:15` reads as `…winter.md:15`, never as a
+ * mid-name cut such as `storing-farmbot-…:15`. A value with no file extension
+ * falls back to `clip`, keeping its `:line` suffix, so usage cards of one
+ * long-named page stay distinguishable by line.
  *
  * @param {string} value
  * @param {number} nodeWidth
@@ -520,11 +528,23 @@ export function fitMeta(value, nodeWidth, charWidth = META_SIZE) {
     if (candidate.length <= max) return candidate;
   }
   const lineAt = candidate.lastIndexOf(':');
-  if (lineAt !== -1) {
-    const line = candidate.slice(lineAt);
-    if (line.length + 2 <= max) {
-      return `${candidate.slice(0, Math.max(1, max - line.length - 1))}…${line}`;
+  const hasLine = lineAt !== -1 && /^\d+$/.test(candidate.slice(lineAt + 1));
+  const name = hasLine ? candidate.slice(0, lineAt) : candidate;
+  const line = hasLine ? candidate.slice(lineAt) : '';
+  const extensionAt = name.lastIndexOf('.');
+  if (extensionAt > 0) {
+    const head = name.slice(0, extensionAt);
+    const tail = `${name.slice(extensionAt)}${line}`;
+    const room = max - 1 - tail.length;
+    if (room >= 1) {
+      let window = head.slice(Math.max(0, head.length - room));
+      const dash = window.lastIndexOf('-');
+      if (dash > 0 && dash < window.length - 1) window = window.slice(dash + 1);
+      return `…${window}${tail}`;
     }
+  }
+  if (hasLine && line.length + 2 <= max) {
+    return `${candidate.slice(0, Math.max(1, max - line.length - 1))}…${line}`;
   }
   return clip(candidate, nodeWidth, charWidth);
 }

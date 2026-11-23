@@ -3,10 +3,12 @@
 // Each card is a display citation: its id, rule and severity must come from
 // farmbot/dist/farmbot.findings.json, and every card must sit in the scenario
 // group its rule's `direction` belongs to. The localized summary strings in
-// src/farmbot/i18n.ts must stay byte-identical to summaryLine output for the
-// cited finding in each language, so a regenerated findings file or a changed
-// template cannot leave stale sample text; the browser smoke additionally
-// compares the rendered cards with the same committed document.
+// src/farmbot/i18n.ts must stay byte-identical to displaySummaryLine output
+// for the cited finding in each language (the on-screen summary drops full
+// paths for kind labels and file basenames; the stored `summary` keeps the
+// path catalogue), so a regenerated findings file or a changed template cannot
+// leave stale sample text; the browser smoke additionally compares the
+// rendered cards with the same committed document.
 //
 // The R1 and R3 cards carry their EBOM / MBOM reconciliation category label
 // (issue #124), so the tests below pin that grouping's heading, its three
@@ -20,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import { CHECKS } from '../../src/farmbot/agent/checks.mjs';
-import { summaryLine } from '../../src/farmbot/findings-view.mjs';
+import { displaySummaryLine } from '../../src/farmbot/findings-view.mjs';
 import { messages } from '../../src/farmbot/i18n.ts';
 import {
   SAMPLE_NOTIFICATIONS,
@@ -93,7 +95,7 @@ test('no two sample notifications cite the same finding or scenario', () => {
   );
 });
 
-test('every sample notification summary equals summaryLine for its finding', () => {
+test('every sample notification summary equals displaySummaryLine for its finding', () => {
   for (const card of SAMPLE_NOTIFICATIONS) {
     const finding = findingsDocument.findings.find(
       (candidate) => candidate.id === card.id,
@@ -101,15 +103,93 @@ test('every sample notification summary equals summaryLine for its finding', () 
     assert.ok(finding, `sample notification cites unknown finding id ${card.id}`);
     for (const lang of ['en', 'ja']) {
       const actual = messages[lang][card.summaryKey];
-      const expected = summaryLine(finding, lang);
+      const expected = displaySummaryLine(finding, lang);
       assert.equal(
         actual,
         expected,
-        `sample notification ${card.id} ${lang} summary differs from summaryLine\n` +
+        `sample notification ${card.id} ${lang} summary differs from displaySummaryLine\n` +
           `  expected: ${expected}\n  actual:   ${actual}`,
       );
     }
   }
+});
+
+test('displaySummaryLine keeps the facts and drops the full paths', () => {
+  // The stored summary keeps the path catalogue, so a regenerated findings
+  // document cannot drift past this comparison unnoticed.
+  for (const finding of findingsDocument.findings) {
+    const line = displaySummaryLine(finding, 'en');
+    assert.ok(line.length > 0, `${finding.id} has an empty display summary`);
+    assert.ok(
+      !line.includes('v1.7/'),
+      `${finding.id} display summary still shows a full directory path: ${line}`,
+    );
+  }
+
+  // The four sample cards keep every fact of the stored summary: part names,
+  // deltas, variants and the rule's meaning.
+  const hero = findingsDocument.findings.find(
+    (candidate) => candidate.id === 'R6-power-supply',
+  );
+  assert.ok(hero, 'the committed file has no R6-power-supply finding');
+  assert.equal(
+    displaySummaryLine(hero, 'en'),
+    'The Change Log links "Power Supply", but assembly, packing, and service ' +
+      'pages still list it.',
+    'the R6 hero display summary changed wording',
+  );
+  assert.equal(
+    displaySummaryLine(hero, 'ja'),
+    '変更ログは "Power Supply" を挙げていますが、組立・梱包・サービスページにも残っています。',
+    'the R6 hero Japanese display summary changed wording',
+  );
+
+  // A single packing downstream file keeps singular grammar and a kind label.
+  const packingOnly = findingsDocument.findings.find((candidate) => {
+    if (candidate.rule !== 'R6') return false;
+    const roles = new Set(candidate.evidence.map((row) => row.role));
+    return roles.has('packing-structure') && !roles.has('service') && !roles.has('structure');
+  });
+  assert.ok(packingOnly, 'the committed file has no R6 finding with a single packing file');
+  assert.match(
+    displaySummaryLine(packingOnly, 'en'),
+    /^The Change Log (?:links|removal statement names) ".+", but the packing page still lists it\.$/,
+    `the single-packing R6 display summary lost its kind label or grammar: ` +
+      displaySummaryLine(packingOnly, 'en'),
+  );
+
+  // The inferred verb stays a fact of the finding.
+  const inferred = findingsDocument.findings.find(
+    (candidate) => candidate.rule === 'R6' && candidate.inferred === true,
+  );
+  assert.ok(inferred, 'the committed file has no inferred R6 finding');
+  assert.match(
+    displaySummaryLine(inferred, 'en'),
+    /^The Change Log removal statement names /,
+    'the inferred R6 display summary lost its removal-statement verb',
+  );
+
+  // R1 names the packing file, not its directory chain.
+  const nutBar = findingsDocument.findings.find(
+    (candidate) => candidate.id === 'R1-40mm-nut-bar-standard',
+  );
+  assert.ok(nutBar, 'the committed file has no R1-40mm-nut-bar-standard finding');
+  assert.equal(
+    displaySummaryLine(nutBar, 'en'),
+    'The hardware-kit packing list and the 40mm Nut Bar part page disagree by ' +
+      '4 for standard.',
+    'the R1 display summary changed beyond the packing-file basename',
+  );
+  assert.equal(
+    displaySummaryLine(nutBar, 'ja'),
+    'hardware-kit の梱包リストと 40mm Nut Bar の部品ページでは、standard の数量が ' +
+      '4 だけ異なります。',
+    'the R1 Japanese display summary changed beyond the packing-file basename',
+  );
+
+  // An unsupported language is rejected like summaryLine.
+  assert.throws(() => displaySummaryLine(nutBar, 'fr'), /lang ja or en/);
+  assert.throws(() => displaySummaryLine(null, 'en'), /needs a finding/);
 });
 
 test('the reconciliation group heading and category labels stay exact in both languages', () => {
@@ -209,24 +289,24 @@ test('the sample cards that cite a reconciliation rule are the R1 and R3 cards',
   assert.ok(r1Card, 'the sample catalog cites no R1 card');
   assert.equal(
     messages.en[r1Card.scenarioKey],
-    'Reconciliation: part page versus packing list',
+    'Part page vs packing list',
     'the R1 card scenario must keep the part page versus packing list wording',
   );
   assert.equal(
     messages.ja[r1Card.scenarioKey],
-    '照合: 部品ページと梱包リストの比較',
+    '部品ページと梱包リスト',
     'the R1 card Japanese scenario must keep the same comparison',
   );
   const r3Card = SAMPLE_NOTIFICATIONS.find((card) => card.rule === 'R3');
   assert.ok(r3Card, 'the sample catalog cites no R3 card');
-  assert.match(
+  assert.equal(
     messages.en[r3Card.scenarioKey],
-    /^Reconciliation: /,
-    'the R3 card scenario must name the reconciliation group',
+    'Process coverage gaps',
+    'the R3 card scenario must name the coverage-gap case',
   );
-  assert.match(
+  assert.equal(
     messages.ja[r3Card.scenarioKey],
-    /^照合: /,
-    'the R3 card Japanese scenario must name the reconciliation group',
+    '工程カバレッジの欠落',
+    'the R3 card Japanese scenario must name the coverage-gap case',
   );
 });

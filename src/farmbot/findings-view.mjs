@@ -376,6 +376,194 @@ export function summaryLine(finding, lang) {
 }
 
 /**
+ * The last path segment of a citation, `.md` stripped: `hardware-kit`.
+ *
+ * @param {string} path
+ * @returns {string}
+ */
+function baseNameNoMd(path) {
+  const last = text(path).split('/').pop() ?? '';
+  return last.replace(/\.md$/, '');
+}
+
+/**
+ * The last path segment of a citation, extension kept: `cable-carrier.md`.
+ *
+ * @param {string} path
+ * @returns {string}
+ */
+function baseName(path) {
+  return text(path).split('/').pop() ?? '';
+}
+
+/** Drawn order of the R6 downstream kind labels. */
+const R6_KIND_ORDER = Object.freeze(['assembly', 'pre-assembly', 'packing', 'service']);
+
+const R6_KIND_BY_ROLE = Object.freeze({
+  structure: 'assembly',
+  'packing-structure': 'packing',
+  service: 'service',
+});
+
+/**
+ * The R6 kind labels this finding's downstream files classify into: an
+ * assembly chapter, a pre-assembly page, a packing list, a service page. The
+ * label order is fixed, so the sentence depends only on the evidence set.
+ *
+ * @param {Record<string, any>} finding
+ * @returns {string[]}
+ */
+function r6Kinds(finding) {
+  const kinds = new Set();
+  for (const row of Array.isArray(finding.evidence) ? finding.evidence : []) {
+    if (!row) continue;
+    if (row.role === 'structure' && text(fact(row, 'structureKind')) === 'pre-assembly') {
+      kinds.add('pre-assembly');
+      continue;
+    }
+    const kind = R6_KIND_BY_ROLE[row.role];
+    if (kind !== undefined) kinds.add(kind);
+  }
+  return R6_KIND_ORDER.filter((kind) => kinds.has(kind));
+}
+
+/**
+ * `assembly, packing, and service` - the kind labels joined for a sentence.
+ *
+ * @param {string[]} kinds
+ * @returns {string}
+ */
+function joinAnd(kinds) {
+  if (kinds.length === 1) return kinds[0];
+  if (kinds.length === 2) return `${kinds[0]} and ${kinds[1]}`;
+  return `${kinds.slice(0, -1).join(', ')}, and ${kinds[kinds.length - 1]}`;
+}
+
+const R6_KIND_JA = Object.freeze({
+  assembly: '組立',
+  'pre-assembly': 'プリ組立',
+  packing: '梱包',
+  service: 'サービス',
+});
+
+/**
+ * The on-screen summary line: the same facts as `summaryLine` (part names,
+ * deltas, variants, rule meaning) with full directory paths replaced by short
+ * kind labels or file basenames. The evidence rows and the diagram still name
+ * every file; the stored `summary` keeps the path catalogue.
+ *
+ * @param {Record<string, any>} finding
+ * @param {'ja' | 'en'} lang
+ * @returns {string}
+ */
+export function displaySummaryLine(finding, lang) {
+  if (!finding || typeof finding !== 'object') {
+    throw new Error('displaySummaryLine needs a finding');
+  }
+  if (lang !== 'ja' && lang !== 'en') {
+    throw new Error(`displaySummaryLine needs lang ja or en, got ${lang}`);
+  }
+  const values = summaryValues(finding);
+  const rule = text(finding.rule);
+
+  if (lang === 'ja') {
+    if (rule === 'R1') {
+      const file = baseNameNoMd(values.file);
+      const filePart = file === '' ? '梱包リスト' : `${file} の梱包リスト`;
+      return (
+        `${filePart}と ${values.partName} の部品ページでは、` +
+        `${values.variant} の数量が ${values.delta} だけ異なります。`
+      );
+    }
+    if (rule === 'R2') {
+      return `${values.displayName} は参照行 ${values.lines} 件に現れ、どの部品にも解決しません。`;
+    }
+    if (rule === 'R3') {
+      return (
+        `${values.partName} は組立チャプタ、プリ組立、バッグ、梱包リストの` +
+        'いずれからも参照されていません。'
+      );
+    }
+    if (rule === 'R4') {
+      return (
+        `${values.partName} は ${values.files.map(baseName).join('、')} で梱包されていますが、` +
+        '組立チャプタからもプリ組立からも参照されていません。'
+      );
+    }
+    if (rule === 'R5') {
+      return `プリ組立ページ ${baseName(values.path)} には機械可読な部品表がありません。`;
+    }
+    if (rule === 'R6') {
+      const kinds = r6Kinds(finding);
+      const kindPart =
+        kinds.length === 0
+          ? 'どこにも'
+          : `${kinds.map((kind) => R6_KIND_JA[kind]).join('・')}ページにも`;
+      return `変更ログは "${values.name}" を挙げていますが、${kindPart}残っています。`;
+    }
+    if (rule === 'R7') {
+      return (
+        `${values.partName} は変更ログで変更されましたが、組立チャプタ、プリ組立、` +
+        '梱包リスト、サービスページのいずれにも現れません。'
+      );
+    }
+    if (rule === 'R8') {
+      return (
+        `${values.partName} はサービスページで名前が挙がっていますが、` +
+        '組立チャプタからもプリ組立からも参照されていません。'
+      );
+    }
+    if (rule === 'R9') {
+      return `"${values.displayName}" はサービスページに現れ、どの部品にも解決しません。`;
+    }
+    return `${values.subject} に関する検出です。`;
+  }
+
+  if (rule === 'R1') {
+    const file = baseNameNoMd(values.file);
+    const filePart = file === '' ? 'The packing list' : `The ${file} packing list`;
+    return (
+      `${filePart} and the ${values.partName} part page ` +
+      `disagree by ${values.delta} for ${values.variant}.`
+    );
+  }
+  if (rule === 'R2') {
+    return `"${values.displayName}" appears on ${values.lines} reference line(s) and resolves to no part.`;
+  }
+  if (rule === 'R3') {
+    return `${values.partName} is referenced by no assembly chapter, pre-assembly, bag or packing list.`;
+  }
+  if (rule === 'R4') {
+    return `${values.partName} is packed on ${values.files.map(baseName).join(', ')} but no assembly chapter or pre-assembly references it.`;
+  }
+  if (rule === 'R5') {
+    return `The pre-assembly page ${baseName(values.path)} has no machine-readable parts table.`;
+  }
+  if (rule === 'R6') {
+    const verb = values.inferred ? 'Change Log removal statement names' : 'Change Log links';
+    const kinds = r6Kinds(finding);
+    const still =
+      kinds.length === 1
+        ? `the ${kinds[0]} page still lists it`
+        : `${joinAnd(kinds)} pages still list it`;
+    return `The ${verb} "${values.name}", but ${still}.`;
+  }
+  if (rule === 'R7') {
+    return `${values.partName} changed in the Change Log but reaches no assembly chapter, pre-assembly, packing list or service page.`;
+  }
+  if (rule === 'R8') {
+    const pages = values.servicePages.length === 1 ? 'a service page' : 'service pages';
+    return `${values.partName} is named on ${pages}, but no assembly chapter or pre-assembly references it.`;
+  }
+  if (rule === 'R9') {
+    const pages = values.pages.length === 1 ? 'a service page' : 'service pages';
+    return `"${values.displayName}" appears on ${pages} and resolves to no part.`;
+  }
+  return `Finding about ${values.subject}.`;
+}
+
+
+/**
  * Pair every evidence row with the queries of its rule, dropping repeated
  * rows. A row's identity is (role, node id, source file, line): within one
  * finding, two rows with the same identity are the same citation.

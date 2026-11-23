@@ -75,33 +75,33 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   3. Keep the viewport scrolled to the top (`y = 0`): at `1280x800` the header, the flow strip, and every sample card with its `sampleOpenFinding` link are fully visible, with no link clipped at the bottom edge.
   4. Hover or place cursor near the sample notification cards, specifically the second card citing `R6-power-supply`.
 - **On-Screen Requirements:**
-  - Section heading: `sampleHeading` ("Sample notification emails").
-  - Explanation: `sampleIntro` ("Each card is a sample of a notification email, not a sent one...").
+  - Section heading: `sampleHeading` ("Sample emails").
+  - Explanation: `sampleIntro` ("Sample emails, not sent. Opening a link runs the checks in this tab.").
   - Four visible sample notification cards (`R1-40mm-nut-bar-standard`, `R6-power-supply`, `R8-shaft-coupler`, `R3-fuse`).
-  - Each card displays badge `sampleCardLabel` ("Sample"), scenario label `sampleScenarioLabel`, and open link `sampleOpenFinding` ("Open the finding").
-  - Card 2 displays `sampleSummaryR6PowerSupply` ("The Change Log links 'Power Supply', but v1.7/assembly/electronics.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it.").
+  - Each card displays badge `sampleCardLabel` ("Sample"), its scenario line (for example `sampleScenarioDesignChange`, "Design change downstream"), and open link `sampleOpenFinding` ("Open" plus the finding id).
+  - Card 2 displays `sampleSummaryR6PowerSupply` ("The Change Log links 'Power Supply', but assembly, packing, and service pages still list it.").
 - **English Voiceover Line:**
   > "A reviewer can start from a notification and go straight to the evidence, without leaving the tab."
 - **Target Timing:** 12 seconds
-- **Cut Point:** Immediately after the narrator finishes speaking, right as the cursor moves to click "Open the finding" on the `R6-power-supply` card.
+- **Cut Point:** Immediately after the narrator finishes speaking, right as the cursor moves to click the "Open R6-power-supply" link on the `R6-power-supply` card.
 
 ---
 
 ### Beat 2: Deep Link and Downstream Evidence (`R6-power-supply`)
 - **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/#finding=R6-power-supply`
 - **Click Sequence:**
-  1. Click "Open the finding" on the `R6-power-supply` sample card (or navigate directly to `#finding=R6-power-supply`).
+  1. Click the "Open R6-power-supply" link on the `R6-power-supply` sample card (or navigate directly to `#finding=R6-power-supply`).
   2. The tab executes in-memory checks and automatically scrolls down to the highlighted `R6-power-supply` finding container.
-  3. Cursor points to the finding header, rule description, and the downstream evidence table.
+  3. Cursor points to the compact finding header (id, severity badge, score, subject) and the downstream evidence table.
 - **On-Screen Requirements:**
-  - Finding heading: `findingHeading` ("Finding"), `findingIdLabel` ("Finding ID: R6-power-supply").
-  - Rule details: `ruleLabel` ("Rule"), severity badge `severityReview` ("Check"), and rule title `checkR6Label` ("R6 · A name changed or removed in the Change Log still appears in an assembly chapter, packing list or service page").
+  - Finding heading: `findingHeading` ("Finding") with the compact id `R6-power-supply`, severity badge `severityReview` ("Check"), score and subject; the full rule title stays on the rule-chip panel, not on this header.
+  - The sample card's scenario line (for example `sampleScenarioDesignChange`, "Design change downstream") and its severity badge name the case the finding header's compact id opens.
   - Findings verification notice: `findingsMatch` ("The browser result matches the committed findings").
   - Evidence table (`evidenceHeading`: "Evidence") displaying rows with roles: `design-change`, `part`, `structure`, `reference`, `packing-line`, `packing-structure`, and `service`.
-  - Column headers: `evidenceRoleLabel` ("Role"), `evidenceNodeLabel` ("Seed node"), `evidenceSourceLabel` ("Source file"), `evidenceLineLabel` ("Line").
-  - Exact source files visible: `v1.7/assembly/electronics.md`, `v1.7/extras/maintenance/storing-farmbot-for-winter.md`, and `v1.7/manufacturing/packing/power-supply.md`.
+  - Each evidence row shows its role plus the source file and line on one line (for example `electronics.md:146`); the exact path, the seed node and the facts sit behind the row's `evidenceFactsLabel` ("Facts") disclosure.
+  - Exact source files cited by the rows: `electronics.md`, `storing-farmbot-for-winter.md`, and `power-supply.md`, with each row's Facts disclosure carrying the exact path.
 - **English Voiceover Line:**
-  > "The Change Log changed this part. The checks do not take the Change Log's word for it: the finding starts in the design-change lane and asks where the changed part still appears. The changed part still appears in an assembly chapter, in a packing list and on a service page. Each evidence row names the source file and, where the source has one, the line."
+  > "The Change Log changed this part. The checks do not take the Change Log's word for it: the finding starts in the design-change lane and asks where the changed part still appears. The changed part still appears in the BOP (instructions) lane, in a packing list and on a service page. Each evidence row names the source file and, where the source has one, the line."
 - **Target Timing:** 18 seconds
 - **Cut Point:** Right after the camera showcases the source file path and line numbers in the evidence table.
 
@@ -168,21 +168,21 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   - On `R5-v1-7-manufacturing-pre-assembly-cable-carrier-md`:
     - Finding `R5-v1-7-manufacturing-pre-assembly-cable-carrier-md` (`checkR5Label`: "R5 · A pre-assembly page has no machine-readable parts table").
     - Visible lane: `laneBop` ("BOP (instructions)").
-    - PDF-only marker visible on the node (`lanesNodePdfOnly`: "PDF only (no machine-readable steps)", element `[data-testid="process-node-pdf-only"]`).
+    - PDF-only marker visible on the node (drawn label "PDF only", `lanesNodePdfOnlyShort`; the long explanation stays on the SVG title, element `[data-testid="process-node-pdf-only"]`).
 - **English Voiceover Lines:**
   - *On R2-barb (approx. 5 to 6 seconds):*
     > "The BOP (instructions) lane shows the documented instruction structure the evidence cites, not a factory routing."
   - *On R5-cable-carrier (approx. 9 to 10 seconds):*
     > "A pre-assembly page whose steps are only in a PDF gets this marker. It records that the page has no machine-readable component list; it is not a claim that the PDF was parsed."
 - **Target Timing:** 15 seconds total across both findings
-- **Cut Point:** Right after the camera highlights the "PDF only (no machine-readable steps)" badge.
+- **Cut Point:** Right after the camera highlights the "PDF only" badge.
 
 ---
 
 ### Beat 6: Deterministic Cypher-Output Rejection Demo
 - **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
 - **Click Sequence:**
-  1. Scroll to the "Free-text check routing" section (`checkFreeTextHeading`).
+  1. Open the `checkRoutingHeading` ("Check routing") disclosure, then scroll to the "Free-text check routing" section (`checkFreeTextHeading`).
   2. Confirm the consent card was declined off-camera or left unconsented (do not click Allow).
   3. Do not type in the input box (`checkInputLabel`).
   4. Click the labelled button: `Show a rejected routing output` (`checkRejectionDemoButton`, `[data-testid="check-rejection-demo-button"]`).
@@ -191,7 +191,7 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   - Fixed sample input label: `checkRejectionDemoSampleLabel` ("Fixed sample input (not a model result)").
   - Fixed sample text rendered: `MATCH (part:Part) RETURN part`.
   - Rejection alert banner: `checkRoutingRejected` ("The routing output was rejected.").
-  - Rejection body: `checkRoutingRejectedBody` ("Nothing new was compiled or executed. Use plain text or choose a rule chip instead.").
+  - Rejection body: `checkRoutingRejectedBody` ("Nothing new was compiled or executed.").
   - Validator rejection reason string displayed: `routing output contains Cypher or a markdown fence`.
   - Zero compilation or execution attempts triggered.
 - **English Voiceover Line:**
@@ -208,7 +208,7 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   2. Direct the cursor / zoom toward the permanently visible notice at the bottom of the section (`checkModelNoCypher`).
 - **On-Screen Requirements:**
   - The static boundary notice text (`checkModelNoCypher`):
-    `"The model never writes Cypher and never detects, explains, or scores a finding. Strict validation precedes Ontographia compilation."`
+    `"The model only routes; it never writes Cypher."`
   - Rule chips (`checkChipListLabel`) and committed artifact digests visible in the background, reinforcing deterministic execution.
 - **English Voiceover Line:**
   > "In short, the model only routes; it never writes Cypher."
@@ -224,7 +224,7 @@ Use this checklist between recording takes to reset the environment cleanly:
 
 1. **URL & Navigation Reset:**
    - Reload `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/` in the fresh tab.
-   - Verify page title reads `"Cross-document inconsistencies in FarmBot Genesis documentation, traced to evidence"`.
+   - Verify page title reads `"FarmBot doc inconsistencies, traced to evidence"`.
 2. **Language Toggle:**
    - Verify `data-testid="lang-toggle"` is set to English (`en`).
 3. **Local Model Consent State:**

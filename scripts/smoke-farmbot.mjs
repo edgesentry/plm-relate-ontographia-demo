@@ -19,9 +19,9 @@ import { chromium } from 'playwright';
 
 import { CHECK_CATALOG } from '../src/farmbot/check-catalog.mjs';
 import {
+  displaySummaryLine,
   orderFindings,
   splitEvidenceQueries,
-  summaryLine,
 } from '../src/farmbot/findings-view.mjs';
 import { messages } from '../src/farmbot/i18n.ts';
 import { layoutFinding, orderEvidenceRows } from '../src/farmbot/process-lanes.mjs';
@@ -423,6 +423,50 @@ async function readChecksRuns(page) {
   }));
 }
 
+/**
+ * Open the preset-questions disclosure (issue #128): its chips, selectors and
+ * Run control sit behind the closed summary on the landing fold, so a fixture
+ * that operates them opens the disclosure first, exactly like a user would.
+ *
+ * @param {import('playwright').Page} page
+ */
+async function openPresetQuestions(page) {
+  await page.waitForSelector('[data-testid="preset-questions"]', { timeout: 30000 });
+  await page.evaluate(() => {
+    const details = document.querySelector('[data-testid="preset-questions"]');
+    if (details instanceof HTMLDetailsElement) details.open = true;
+  });
+}
+
+/**
+ * Open the check-routing disclosure (issue #128): the rule chips and the
+ * free-text panel sit behind the closed summary on the landing fold.
+ *
+ * @param {import('playwright').Page} page
+ */
+async function openCheckRouting(page) {
+  await page.waitForSelector('[data-testid="check-routing"]', { timeout: 30000 });
+  await page.evaluate(() => {
+    const details = document.querySelector('[data-testid="check-routing"]');
+    if (details instanceof HTMLDetailsElement) details.open = true;
+  });
+}
+
+/**
+ * Open the findings disclosure before a manual Run checks. A completed run
+ * opens it on its own, so only the fixtures that click the control first
+ * need this.
+ *
+ * @param {import('playwright').Page} page
+ */
+async function openFindingsPanel(page) {
+  await page.waitForSelector('[data-testid="findings-panel"]', { timeout: 30000 });
+  await page.evaluate(() => {
+    const details = document.querySelector('[data-testid="findings-panel"]');
+    if (details instanceof HTMLDetailsElement) details.open = true;
+  });
+}
+
 const budgetRecords = [];
 
 function checkBudget(label, measuredMs, budgetMs) {
@@ -490,6 +534,97 @@ async function readDiagram(page) {
   });
 }
 
+// --- filming-viewport visible-character budget (#128) ------------------------
+//
+// The demo-script beats are filmed at 1280x800 English, and each beat's
+// on-screen text stays under a committed cap. A character counts when its
+// glyph box intersects the viewport; hidden nodes, closed `<details>` bodies
+// and ancestor overflow clips keep their text out of the count, and
+// whitespace collapses, so the number is the filming text, not the page.
+
+async function readViewportChars(page) {
+  return page.evaluate(() => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const viewportBox = { left: 0, top: 0, right: vw, bottom: vh, width: vw, height: vh };
+    const intersect = (a, b) => {
+      const x = Math.max(a.left, b.left);
+      const y = Math.max(a.top, b.top);
+      const right = Math.min(a.right, b.right);
+      const bottom = Math.min(a.bottom, b.bottom);
+      if (right <= x || bottom <= y) return null;
+      return { left: x, top: y, right, bottom, width: right - x, height: bottom - y };
+    };
+    const clipBox = (element) => {
+      let box = viewportBox;
+      let node = element;
+      while (node && node !== document.body && node !== document.documentElement) {
+        const style = getComputedStyle(node);
+        if (style.overflowX !== 'visible' || style.overflowY !== 'visible') {
+          const next = intersect(box, node.getBoundingClientRect());
+          if (!next) return null;
+          box = next;
+        }
+        node = node.parentElement;
+      }
+      return box;
+    };
+    const skipTag = (element) =>
+      ['SCRIPT', 'STYLE', 'NOSCRIPT', 'HEAD'].includes(element.tagName);
+    const isHidden = (element) => {
+      const style = getComputedStyle(element);
+      if (
+        style.display === 'none' ||
+        style.visibility === 'hidden' ||
+        Number(style.opacity) === 0
+      ) {
+        return true;
+      }
+      if (element.closest('[hidden]')) return true;
+      // A closed details hides its body: only that details' own summary
+      // stays on screen, so a summary nested inside another closed details
+      // is part of that hidden body and counts for no beat.
+      for (let node = element; node instanceof Element; node = node.parentElement) {
+        if (node.tagName !== 'DETAILS' || node.open) continue;
+        const ownSummary = node.querySelector(':scope > summary');
+        if (ownSummary && (element === ownSummary || ownSummary.contains(element))) {
+          continue;
+        }
+        return true;
+      }
+      return false;
+    };
+    let viewportChars = 0;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent || skipTag(parent) || isHidden(parent)) continue;
+      const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+      if (!text) continue;
+      const box = clipBox(parent);
+      if (!box) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      let visibleArea = 0;
+      let totalArea = 0;
+      for (const rect of range.getClientRects()) {
+        if (rect.width <= 0 || rect.height <= 0) continue;
+        totalArea += rect.width * rect.height;
+        const hit = intersect(rect, box);
+        if (hit) visibleArea += hit.width * hit.height;
+      }
+      if (visibleArea <= 0) continue;
+      viewportChars += Math.round(text.length * Math.min(1, visibleArea / (totalArea || 1)));
+    }
+    return {
+      viewportChars,
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    };
+  });
+}
+
 /** The diagram the layout function says a finding has. */
 function expectedDiagram(finding) {
   const layout = layoutFinding(finding);
@@ -507,32 +642,24 @@ function expectedDiagram(finding) {
 }
 
 /**
- * The reconciliation presentation inside the finding view: the rule dd's
- * text, the category badge's data-testid and text, and whether the
- * reconciliation category dt is rendered at all.
+ * The compact finding header (issue #128): the finding id line plus the
+ * reconciliation category badge. The six-cell meta grid is gone, so these
+ * checks anchor on the id the header shows.
  *
  * @param {import('playwright').Page} page
- * @param {string} ruleDtText the localized rule dt text
- * @param {string} categoryDtText the localized category dt text
  */
-async function readFindingViewMeta(page, ruleDtText, categoryDtText) {
-  return page.evaluate(([ruleDt, categoryDt]) => {
+async function readFindingViewMeta(page) {
+  return page.evaluate(() => {
     const view = document.querySelector('[data-testid="finding-view"]');
-    const dts = [...(view?.querySelectorAll('.farmbot-meta dt') ?? [])].map(
-      (dt) => (dt.textContent ?? '').replace(/\s+/g, ' ').trim(),
-    );
-    const dds = [...(view?.querySelectorAll('.farmbot-meta dd') ?? [])].map(
-      (dd) => (dd.textContent ?? '').replace(/\s+/g, ' ').trim(),
-    );
-    const ruleIndex = dts.findIndex((text) => text === ruleDt);
     const badge = view?.querySelector('[data-testid^="reconciliation-category-"]') ?? null;
     return {
-      ruleText: ruleIndex === -1 ? null : (dds[ruleIndex] ?? null),
+      id:
+        view?.querySelector('[data-testid="finding-open-id"]')?.textContent?.replace(/\s+/g, ' ').trim() ??
+        null,
       categoryTestid: badge?.getAttribute('data-testid') ?? null,
       categoryLabel: badge ? (badge.textContent ?? '').replace(/\s+/g, ' ').trim() : null,
-      hasCategoryDt: dts.includes(categoryDt),
     };
-  }, [ruleDtText, categoryDtText]);
+  });
 }
 
 async function main() {
@@ -609,6 +736,7 @@ async function main() {
     deepLink: null,
     sampleEmails: null,
     landingFold: null,
+    filmingViewport: null,
     processLanes: null,
     reconciliationView: null,
     unknownFinding: null,
@@ -667,8 +795,14 @@ async function main() {
       );
     }
     summary.cspHeader = documentCsp || null;
-    await page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="run"]:not([disabled])', { timeout: 30000 });
+    // The engine-ready ABI line sits inside the closed How it works
+    // disclosure, so its presence is the readiness signal, not its paint.
+    await page.waitForSelector('[data-testid="abi"]', { timeout: 30000, state: 'attached' });
+    await page.waitForSelector('[data-testid="run"]:not([disabled])', {
+      timeout: 30000,
+      state: 'attached',
+    });
+    await openPresetQuestions(page);
 
     const chips = await page.evaluate(() =>
       ['q1', 'q2', 'q3', 'q4', 'q5'].map((id) => {
@@ -773,6 +907,9 @@ async function main() {
 
     // Notification panel: run the checks in the same page and compare the
     // panel and the debug hook with the committed findings document.
+    // Run checks: the findings panel sits behind its closed summary until a
+    // run finishes, so the manual click opens it first, like a user would.
+    await openFindingsPanel(page);
     await page.click('[data-testid="run-checks"]');
     await page.waitForSelector('[data-testid="findings-count"]', { timeout: 180000 });
     const panel = await page.evaluate(() => {
@@ -1095,11 +1232,16 @@ async function main() {
       });
     });
     await consentFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    // The check routing panel sits behind its closed summary on the landing
+    // fold; this fixture drives its chips and free-text controls, so it opens
+    // the disclosure first, exactly like a user would.
+    await openCheckRouting(consentFixture.page);
     await consentFixture.page.waitForSelector('[data-testid="farmbot-free-text-consent"]', {
       timeout: 30000,
     });
     await consentFixture.page.waitForSelector('[data-testid="run"]:not([disabled])', {
       timeout: 30000,
+      state: 'attached',
     });
     await consentFixture.page.fill(
       '[data-testid="farmbot-free-text-input"]',
@@ -1160,11 +1302,13 @@ async function main() {
       Object.defineProperty(navigator, 'gpu', { configurable: true, value: undefined });
     });
     await noGpuFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await openCheckRouting(noGpuFixture.page);
     await noGpuFixture.page.waitForSelector('[data-testid="farmbot-webgpu-notice"]', {
       timeout: 30000,
     });
     await noGpuFixture.page.waitForSelector('[data-testid="run"]:not([disabled])', {
       timeout: 30000,
+      state: 'attached',
     });
     assert(
       !(await noGpuFixture.page.locator('[data-testid="farmbot-free-text-consent"]').count()),
@@ -1226,9 +1370,11 @@ async function main() {
       queryResults === parameterizedCheck.intents.length,
       `R8 produced ${queryResults} query result areas, expected ${parameterizedCheck.intents.length}`,
     );
+    // The preset questions sit behind their closed disclosure; this fixture
+    // runs one, so it opens the disclosure first.
+    await openPresetQuestions(noGpuFixture.page);
     await noGpuFixture.page.click('[data-testid="question-q1"]');
-    await noGpuFixture.page.click('[data-testid="run"]');
-    await noGpuFixture.page.waitForFunction(
+    await noGpuFixture.page.click('[data-testid="run"]');    await noGpuFixture.page.waitForFunction(
       (rowCount) =>
         document.querySelector('[data-testid="result"]')?.textContent?.includes(
           'q1-packing-differences.json',
@@ -1236,6 +1382,7 @@ async function main() {
       gold.questions[0].rowCount,
       { timeout: 60000 },
     );
+    await openFindingsPanel(noGpuFixture.page);
     await noGpuFixture.page.click('[data-testid="run-checks"]');
     await noGpuFixture.page.waitForSelector('[data-testid="findings-count"]', {
       timeout: 180000,
@@ -1265,6 +1412,7 @@ async function main() {
     const demoButton = '[data-testid="farmbot-rejection-demo-button"]';
     const errorSelector = '[data-testid="farmbot-free-text-error"]';
     await rejectionFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await openCheckRouting(rejectionFixture.page);
     await rejectionFixture.page.waitForSelector(demoButton, { timeout: 30000 });
     assert(
       !(await rejectionFixture.page.locator(demoButton).isDisabled()),
@@ -1377,6 +1525,7 @@ async function main() {
         route.fulfill({ status: 200, contentType: 'text/javascript', body: stubSource }),
       );
       await invalidFixture.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+      await openCheckRouting(invalidFixture.page);
       await invalidFixture.page.click('[data-testid="farmbot-free-text-consent-button"]');
       await invalidFixture.page.fill(
         '[data-testid="farmbot-free-text-input"]',
@@ -1466,10 +1615,12 @@ async function main() {
         }),
     );
     await tamper.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
-    await tamper.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+    await tamper.page.waitForSelector('[data-testid="abi"]', { timeout: 30000, state: 'attached' });
     await tamper.page.waitForSelector('[data-testid="run"]:not([disabled])', {
       timeout: 30000,
+      state: 'attached',
     });
+    await openPresetQuestions(tamper.page);
     const relateBeforeTamperedRun = tamper.requests.filter((url) =>
       isRelateAssetUrl(url, entryInfo),
     );
@@ -1528,6 +1679,7 @@ async function main() {
       `the tampered-seed context shows ${questionErrorsBeforeChecks} question error ` +
         'banner(s) before Run checks, expected 1',
     );
+    await openFindingsPanel(tamper.page);
     await tamper.page.click('[data-testid="run-checks"]');
     await tamper.page.waitForSelector('[data-testid="checks-error"]', { timeout: 30000 });
     const tamperChecksState = await tamper.page.evaluate(() => {
@@ -1592,7 +1744,7 @@ async function main() {
 
     // Deep link: a well-formed hash runs the checks and opens the finding.
     const deep = await prepareContext(browser, 'deep-link');
-    const deepExpectedSummary = summaryLine(deepLinkFinding, 'en');
+    const deepExpectedSummary = displaySummaryLine(deepLinkFinding, 'en');
     await deep.page.goto(`${entryUrl}#finding=${encodeURIComponent(deepLinkFinding.id)}`, {
       waitUntil: 'load',
       timeout: 60000,
@@ -1804,25 +1956,25 @@ async function main() {
     // This is the idle `hashchange` path, not a fresh load with a hash.
     const sample = await prepareContext(browser, 'sample-email');
     await sample.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
-    await sample.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+    await sample.page.waitForSelector('[data-testid="abi"]', { timeout: 30000, state: 'attached' });
     await sample.page.waitForSelector('[data-testid="sample-notifications"]', {
       timeout: 30000,
     });
 
     const titleEn = await sample.page.title();
     assert(
-      /Cross-document inconsistencies in FarmBot Genesis documentation/i.test(titleEn),
+      /FarmBot doc inconsistencies, traced to evidence/i.test(titleEn),
       `the document title is ${JSON.stringify(titleEn)}`,
     );
     await sample.page.selectOption('[data-testid="lang-toggle"]', 'ja');
     await sample.page.waitForFunction(
-      () => /FarmBot Genesis ドキュメントの文書間不一致/.test(document.title),
+      () => /FarmBot ドキュメントの不一致とその根拠/.test(document.title),
       undefined,
       { timeout: 30000 },
     );
     // While the UI is in Japanese, every rendered card summary must equal
-    // summaryLine(finding, 'ja') for the committed findings document, and the
-    // R1 and R3 cards must show their Japanese reconciliation category badge.
+    // displaySummaryLine(finding, 'ja') for the committed findings document,
+    // and the R1 and R3 cards must show their Japanese reconciliation badge.
     const jaCards = await sample.page.evaluate(() =>
       [...document.querySelectorAll('[data-testid="sample-card"]')].map((card) => ({
         id: card.getAttribute('data-finding-id') ?? '',
@@ -1848,7 +2000,7 @@ async function main() {
     for (const card of jaCards) {
       const finding = findings.find((candidate) => candidate.id === card.id);
       assert(finding, `a sample card cites unknown finding id ${card.id}`);
-      const expectedJaSummary = summaryLine(finding, 'ja').replace(/\s+/g, ' ').trim();
+      const expectedJaSummary = displaySummaryLine(finding, 'ja').replace(/\s+/g, ' ').trim();
       assert(
         card.summary === expectedJaSummary,
         `sample card ${card.id} does not show the committed Japanese summary\n` +
@@ -1881,7 +2033,7 @@ async function main() {
     }
     await sample.page.selectOption('[data-testid="lang-toggle"]', 'en');
     await sample.page.waitForFunction(
-      () => /Cross-document inconsistencies in FarmBot Genesis documentation/i.test(document.title),
+      () => /FarmBot doc inconsistencies, traced to evidence/i.test(document.title),
       undefined,
       { timeout: 30000 },
     );
@@ -1937,7 +2089,7 @@ async function main() {
         card.badge === 'Sample',
         `sample card ${card.id} is not labelled as a sample: ${card.badge}`,
       );
-      const expectedSummary = summaryLine(finding, 'en').replace(/\s+/g, ' ').trim();
+      const expectedSummary = displaySummaryLine(finding, 'en').replace(/\s+/g, ' ').trim();
       assert(
         card.summary === expectedSummary,
         `sample card ${card.id} does not show the committed summary\n` +
@@ -2219,7 +2371,9 @@ async function main() {
     await manual.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
     await manual.page.waitForSelector('[data-testid="run-checks"]:not([disabled])', {
       timeout: 30000,
+      state: 'attached',
     });
+    await openFindingsPanel(manual.page);
     await manual.page.click('[data-testid="run-checks"]');
     await manual.page.waitForSelector('[data-testid="findings-count"]', {
       timeout: 180000,
@@ -2299,7 +2453,7 @@ async function main() {
       height: 800,
     });
     await fold.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
-    await fold.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+    await fold.page.waitForSelector('[data-testid="abi"]', { timeout: 30000, state: 'attached' });
     const readFoldState = () =>
       fold.page.evaluate(() => ({
         scrollY: window.scrollY,
@@ -2370,7 +2524,7 @@ async function main() {
     const foldEn = assertFoldState(await readFoldState(), 'landing fold en');
     await fold.page.selectOption('[data-testid="lang-toggle"]', 'ja');
     await fold.page.waitForFunction(
-      () => /FarmBot Genesis ドキュメントの文書間不一致/.test(document.title),
+      () => /FarmBot ドキュメントの不一致とその根拠/.test(document.title),
       undefined,
       { timeout: 30000 },
     );
@@ -2443,20 +2597,13 @@ async function main() {
         `${finding.rule}: the deep-linked finding has no row in the filtered list`,
       );
       // Reconciliation presentation (issue #124): every finding view shows the
-      // full localized rule label; R1, R3 and R4 add the category badge with
-      // its own testid and the category dt, and no ungrouped rule gains
-      // either.
-      const viewMeta = await readFindingViewMeta(
-        fixture.page,
-        messages.en.ruleLabel,
-        messages.en.reconciliationCategoryLabel,
-      );
-      const ruleLabelKey = `check${finding.rule}Label`;
+      // compact id line; R1, R3 and R4 add the category badge with its own
+      // testid, and no ungrouped rule gains one.
+      const viewMeta = await readFindingViewMeta(fixture.page);
       assert(
-        viewMeta.ruleText === messages.en[ruleLabelKey],
-        `${finding.rule}: the finding view shows rule label ` +
-          `${JSON.stringify(viewMeta.ruleText)}, expected ` +
-          `${JSON.stringify(messages.en[ruleLabelKey])}`,
+        viewMeta.id === finding.id,
+        `${finding.rule}: the finding view shows id ${JSON.stringify(viewMeta.id)}, ` +
+          `expected ${JSON.stringify(finding.id)}`,
       );
       const findingCategoryKey = reconciliationCategoryKey(finding.rule);
       if (findingCategoryKey === null) {
@@ -2464,10 +2611,6 @@ async function main() {
           viewMeta.categoryTestid === null,
           `${finding.rule}: the ungrouped finding view carries a reconciliation badge: ` +
             `${viewMeta.categoryTestid}`,
-        );
-        assert(
-          !viewMeta.hasCategoryDt,
-          `${finding.rule}: the ungrouped finding view shows a reconciliation category dt`,
         );
       } else {
         assert(
@@ -2481,10 +2624,6 @@ async function main() {
           `${finding.rule}: the finding view shows category ` +
             `${JSON.stringify(viewMeta.categoryLabel)}, expected ` +
             `${JSON.stringify(messages.en[findingCategoryKey])}`,
-        );
-        assert(
-          viewMeta.hasCategoryDt,
-          `${finding.rule}: the finding view shows no reconciliation category dt`,
         );
       }
       const diagram = await readDiagram(fixture.page);
@@ -3489,8 +3628,8 @@ async function main() {
     // Reconciliation presentation (issue #124): Beat 4 of the recording guide
     // opens this same deep link, so the R1 finding view must carry the
     // quantity-difference category badge, the part-page versus packing-list
-    // comparison note and the full rule label, and its row in the findings
-    // list must carry the same category badge. The SBOM lane assertions above
+    // comparison note and the compact id, and its row in the findings list
+    // must carry the same category badge. The SBOM lane assertions above
     // stay unchanged.
     assert(
       materialFinding.rule === 'R1' && materialFinding.id === 'R1-40mm-nut-bar-standard',
@@ -3515,10 +3654,11 @@ async function main() {
           )
           ?.textContent?.replace(/\s+/g, ' ')
           .trim() ?? '',
-      ruleText:
-        [...document.querySelectorAll('[data-testid="finding-view"] .farmbot-meta dd')]
-          .map((cell) => (cell.textContent ?? '').replace(/\s+/g, ' ').trim())
-          .find((text) => text.startsWith('R1 ·')) ?? '',
+      openId:
+        document
+          .querySelector('[data-testid="finding-open-id"]')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim() ?? '',
     }));
     assert(
       r1Reconciliation.categoryBadge === messages.en.reconciliationCategoryR1,
@@ -3539,10 +3679,10 @@ async function main() {
         `${JSON.stringify(messages.en.reconciliationCategoryR1)}`,
     );
     assert(
-      r1Reconciliation.ruleText === messages.en.checkR1Label,
-      `the R1 finding view shows rule label ` +
-        `${JSON.stringify(r1Reconciliation.ruleText)}, expected ` +
-        `${JSON.stringify(messages.en.checkR1Label)}`,
+      r1Reconciliation.openId === materialFinding.id,
+      `the R1 finding view shows compact id ` +
+        `${JSON.stringify(r1Reconciliation.openId)}, expected ` +
+        `${JSON.stringify(materialFinding.id)}`,
     );
     const sbomClean = await assertContextClean(materialFixture);
     processLaneFixtures.push({ fixture: materialFixture, clean: sbomClean });
@@ -3574,15 +3714,16 @@ async function main() {
         `[data-testid="finding-row-${finding.id}"]`,
         { timeout: 30000 },
       );
-      const viewMeta = await readFindingViewMeta(
-        groupedViewFixture.page,
-        messages.en.ruleLabel,
-        messages.en.reconciliationCategoryLabel,
-      );
+      const viewMeta = await readFindingViewMeta(groupedViewFixture.page);
       const viewCategoryKey = reconciliationCategoryKey(finding.rule);
       assert(
         viewCategoryKey !== null,
         `${finding.id} is not a reconciliation-rule finding`,
+      );
+      assert(
+        viewMeta.id === finding.id,
+        `${finding.id}: the finding view shows compact id ` +
+          `${JSON.stringify(viewMeta.id)}, expected ${JSON.stringify(finding.id)}`,
       );
       assert(
         viewMeta.categoryTestid === `reconciliation-category-${finding.rule}`,
@@ -3596,21 +3737,10 @@ async function main() {
           `${JSON.stringify(viewMeta.categoryLabel)}, expected ` +
           `${JSON.stringify(messages.en[viewCategoryKey])}`,
       );
-      assert(
-        viewMeta.hasCategoryDt,
-        `${finding.id}: the finding view shows no reconciliation category dt`,
-      );
-      assert(
-        viewMeta.ruleText === messages.en[`check${finding.rule}Label`],
-        `${finding.id}: the finding view shows rule label ` +
-          `${JSON.stringify(viewMeta.ruleText)}, expected ` +
-          `${JSON.stringify(messages.en[`check${finding.rule}Label`])}`,
-      );
       groupedViewStates[finding.rule] = {
         id: finding.id,
         categoryTestid: viewMeta.categoryTestid,
         category: viewMeta.categoryLabel,
-        ruleLabel: viewMeta.ruleText,
       };
     }
     const groupedViewClean = await assertContextClean(groupedViewFixture);
@@ -3656,7 +3786,7 @@ async function main() {
           category: r1Reconciliation.categoryBadge,
           note: r1Reconciliation.comparisonNote,
           rowBadge: r1Reconciliation.rowBadge,
-          ruleLabel: r1Reconciliation.ruleText,
+          openId: r1Reconciliation.openId,
         },
         ...sbomClean,
       },
@@ -3819,6 +3949,465 @@ async function main() {
       ...pdfOnlyClean,
     };
 
+    // Filming-viewport text budget (#128): each demo-script beat at
+    // 1280x800 English stays inside its visible-character cap, and the
+    // walkthrough layout contracts hold: the compact Close button, whole
+    // lane titles, word-boundary label cuts with readable `.md:line`
+    // metas, the open query block beside the selected node, the closed
+    // Cause / Countermeasure disclosures, and the free-text rejection
+    // button with the model bound fully in frame on the WebGPU-unsupported
+    // path. The deep-link waits reuse the 180s Relate/WASM budget.
+    const FILMING_CAPS = {
+      landing: 950,
+      r6Finding: 850,
+      r6Queries: 880,
+      r1Sbom: 700,
+      r2Bop: 650,
+      r5Pdf: 850,
+      freeText: 700,
+    };
+    const filming = await prepareContext(browser, 'filming-viewport-1280x800', {
+      width: 1280,
+      height: 800,
+    });
+    // Beats 6 and 7 film the WebGPU-unsupported path, so the context pins it.
+    await filming.context.addInitScript(() => {
+      Object.defineProperty(navigator, 'gpu', { configurable: true, value: undefined });
+    });
+    const filmingBeats = [];
+    const recordFilmingBeat = (name, cap, measured) => {
+      assert(
+        measured.viewportChars <= cap,
+        `filming beat ${name}: ${measured.viewportChars} visible characters at 1280x800, ` +
+          `cap ${cap}`,
+      );
+      filmingBeats.push({ name, viewportChars: measured.viewportChars, cap });
+    };
+    const settleFilmingScroll = async () => {
+      await filming.page
+        .waitForFunction(
+          () => {
+            const y = window.scrollY;
+            return new Promise((resolve) => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => resolve(Math.abs(window.scrollY - y) < 1));
+              });
+            });
+          },
+          undefined,
+          { timeout: 5000 },
+        )
+        .catch(() => {});
+      await delay(300);
+    };
+    const openFilmingFinding = async (id) => {
+      await filming.page.goto(`${entryUrl}#finding=${encodeURIComponent(id)}`, {
+        waitUntil: 'load',
+        timeout: 60000,
+      });
+      await filming.page.waitForSelector('[data-testid="finding-view"]', { timeout: 180000 });
+      await filming.page.waitForSelector('[data-testid="process-lanes"] [data-node-id]', {
+        timeout: 180000,
+      });
+      await filming.page.waitForSelector(`[data-testid="finding-row-${id}"]`, {
+        timeout: 30000,
+      });
+      await filming.page.evaluate(() => {
+        document
+          .querySelector('[data-testid="finding-view"]')
+          ?.scrollIntoView({ block: 'start', behavior: 'instant' });
+      });
+      await settleFilmingScroll();
+    };
+
+    // Beats 0 / 1: the landing holds with the How it works disclosure closed.
+    await filming.page.goto(entryUrl, { waitUntil: 'load', timeout: 60000 });
+    await filming.page.waitForSelector('[data-testid="abi"]', { timeout: 60000, state: 'attached' });
+    await filming.page.waitForSelector('[data-testid="sample-notifications"]', {
+      timeout: 30000,
+    });
+    await delay(300);
+    const landingFrame = await filming.page.evaluate(() => ({
+      scrollY: window.scrollY,
+      disclosureOpen: document.querySelector('[data-testid="how-it-works"]')?.open ?? null,
+      stripSteps: [
+        ...document.querySelectorAll('[data-testid="flow-strip"] [data-testid^="flow-step-"]'),
+      ].map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          label: (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+          top: rect.top,
+          bottom: rect.bottom,
+        };
+      }),
+      summaries: [...document.querySelectorAll('[data-testid="sample-summary"]')].map(
+        (element) => ({ scrollHeight: element.scrollHeight, clientHeight: element.clientHeight }),
+      ),
+    }));
+    assert(landingFrame.scrollY === 0, 'the filming landing scrolled away from y = 0');
+    assert(
+      landingFrame.disclosureOpen === false,
+      'the How it works disclosure is open on the filming landing',
+    );
+    assert(
+      landingFrame.stripSteps.length === 3,
+      `the filming flow strip shows ${landingFrame.stripSteps.length} steps, expected 3`,
+    );
+    for (const step of landingFrame.stripSteps) {
+      assert(
+        step.top >= 0 && step.bottom <= 800,
+        `a flow strip step left the 0..800 frame (top ${step.top}, bottom ${step.bottom})`,
+      );
+    }
+    assert(
+      new Set(landingFrame.stripSteps.map((step) => Math.round(step.top))).size === 1,
+      'the filming flow strip wrapped onto more than one line',
+    );
+    for (const [index, summary] of landingFrame.summaries.entries()) {
+      assert(
+        summary.scrollHeight <= summary.clientHeight + 1,
+        `sample summary ${index} is still clamped (scrollHeight ${summary.scrollHeight}, ` +
+          `clientHeight ${summary.clientHeight})`,
+      );
+    }
+    const landingMeasured = await readViewportChars(filming.page);
+    assert(
+      landingMeasured.scrollWidth <= 1280 + 1,
+      `the filming landing scrolls horizontally (${landingMeasured.scrollWidth}px)`,
+    );
+    recordFilmingBeat('landing-0-1', FILMING_CAPS.landing, landingMeasured);
+
+    // Beat 2: the R6 hero finding, scrolled to the start of the view.
+    await openFilmingFinding('R6-power-supply');
+    const r6Frame = await filming.page.evaluate(() => {
+      const close = document.querySelector('[data-testid="close-finding"]');
+      const closeRect = close?.getBoundingClientRect() ?? null;
+      return {
+        close:
+          close && closeRect
+            ? { width: closeRect.width, className: String(close.className) }
+            : null,
+        laneTitles: [
+          ...document.querySelectorAll('[data-testid="process-lanes"] .process-lane-title'),
+        ].map((element) => (element.textContent ?? '').replace(/\s+/g, ' ').trim()),
+        quantityLegend: Boolean(document.querySelector('.lane-legend-quantity')),
+        nodes: [
+          ...document.querySelectorAll('[data-testid="process-lanes"] [data-node-id]'),
+        ].map((group) => ({
+          id: group.getAttribute('data-node-id') ?? '',
+          label: group.querySelector('.process-node-label')?.textContent ?? '',
+          meta: group.querySelector('.process-node-meta')?.textContent ?? '',
+          title: group.querySelector('title')?.textContent ?? '',
+        })),
+      };
+    });
+    assert(r6Frame.close, 'the R6 finding view shows no close button');
+    assert(
+      r6Frame.close.width <= 120,
+      `the close button is ${r6Frame.close.width}px wide, cap 120`,
+    );
+    assert(
+      !/\bchip\b/.test(r6Frame.close.className),
+      `the close button kept the chip class: ${r6Frame.close.className}`,
+    );
+    assert(
+      JSON.stringify(r6Frame.laneTitles) ===
+        JSON.stringify([
+          messages.en.laneDesignChange,
+          messages.en.laneEbomPart,
+          messages.en.laneBop,
+          messages.en.lanePacking,
+          messages.en.laneService,
+        ]),
+      `the R6 hero lane titles are ${JSON.stringify(r6Frame.laneTitles)}`,
+    );
+    assert(
+      !r6Frame.quantityLegend,
+      'the quantity legend shows on a finding that draws no quantity node',
+    );
+    for (const node of r6Frame.nodes) {
+      if (node.label.includes('…')) {
+        const prefix = node.label.slice(0, -1);
+        const full = node.title.slice(0, node.title.lastIndexOf(' ('));
+        assert(
+          full.startsWith(prefix) && full.charAt(prefix.length) === ' ',
+          `the node ${node.id} label ${JSON.stringify(node.label)} cuts mid-word`,
+        );
+      }
+      if (node.meta.includes('…')) {
+        assert(
+          /^…[\w.-]+\.md(?::\d+)?$/.test(node.meta),
+          `the node ${node.id} meta ${JSON.stringify(node.meta)} drops its readable .md:line`,
+        );
+      }
+    }
+    recordFilmingBeat(
+      'r6-finding-2',
+      FILMING_CAPS.r6Finding,
+      await readViewportChars(filming.page),
+    );
+
+    // Beat 3: click a node, then open the first evidence query block; the
+    // Intent, the executed Cypher and the bound parameters share the frame
+    // with the selected node, and the open Cypher wraps instead of clipping.
+    await filming.page
+      .locator('[data-testid="process-lanes"] [data-node-id]')
+      .first()
+      .click();
+    await filming.page
+      .locator('[data-testid="finding-evidence"] details.evidence-queries')
+      .first()
+      .locator(':scope > summary')
+      .click();
+    await settleFilmingScroll();
+    const r6QueryFrame = await filming.page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="process-lanes"]');
+      const node = pane?.querySelector('.process-node.is-selected') ?? null;
+      const primary = document.querySelector('[data-testid="evidence-query-primary"]');
+      const intent = primary?.querySelector('p code') ?? null;
+      const pres = primary ? [...primary.querySelectorAll('pre')] : [];
+      const rectOf = (element) => {
+        const rect = element?.getBoundingClientRect() ?? null;
+        return rect ? { top: rect.top, bottom: rect.bottom } : null;
+      };
+      return {
+        node: rectOf(node),
+        intent: rectOf(intent),
+        cypher: pres[0]
+          ? { rect: rectOf(pres[0]), scrollWidth: pres[0].scrollWidth, clientWidth: pres[0].clientWidth }
+          : null,
+        params: rectOf(pres[1]),
+      };
+    });
+    const inFilmingFrame = (rect, label) => {
+      assert(rect, `filming beat 3: ${label} is missing from the open query block`);
+      assert(
+        rect.top >= 0 && rect.bottom <= 800,
+        `filming beat 3: ${label} left the 0..800 frame (top ${rect.top}, bottom ${rect.bottom})`,
+      );
+    };
+    inFilmingFrame(r6QueryFrame.node, 'the selected node');
+    inFilmingFrame(r6QueryFrame.intent, 'the Intent');
+    inFilmingFrame(r6QueryFrame.cypher?.rect ?? null, 'the executed Cypher');
+    inFilmingFrame(r6QueryFrame.params, 'the bound parameters');
+    assert(
+      r6QueryFrame.cypher.scrollWidth <= r6QueryFrame.cypher.clientWidth + 1,
+      'the open Cypher block still clips horizontally',
+    );
+    recordFilmingBeat(
+      'r6-queries-3',
+      FILMING_CAPS.r6Queries,
+      await readViewportChars(filming.page),
+    );
+
+    // Beat 4: the R1 SBOM shot keeps its on-screen reconciliation labels.
+    await openFilmingFinding('R1-40mm-nut-bar-standard');
+    const r1Frame = await filming.page.evaluate(() => ({
+      categoryBadge:
+        document
+          .querySelector('[data-testid="finding-view"] [data-testid="reconciliation-category-R1"]')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim() ?? '',
+      comparisonNote:
+        document
+          .querySelector('[data-testid="reconciliation-r1-note"]')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim() ?? '',
+      nodeLabels: [
+        ...document.querySelectorAll('[data-testid="process-lanes"] .process-node-label'),
+      ].map((element) => (element.textContent ?? '').replace(/\s+/g, ' ').trim()),
+      quantityLegend: Boolean(document.querySelector('.lane-legend-quantity')),
+    }));
+    assert(
+      r1Frame.categoryBadge === messages.en.reconciliationCategoryR1,
+      `the filming R1 frame shows category badge ${JSON.stringify(r1Frame.categoryBadge)}`,
+    );
+    assert(
+      r1Frame.comparisonNote === messages.en.reconciliationR1Note,
+      `the filming R1 frame shows comparison note ${JSON.stringify(r1Frame.comparisonNote)}`,
+    );
+    assert(
+      r1Frame.nodeLabels.includes('Stainless Steel'),
+      'the filming R1 frame draws no Stainless Steel SBOM node',
+    );
+    assert(
+      r1Frame.quantityLegend,
+      'the quantity legend is missing on the R1 finding that draws a quantity node',
+    );
+    recordFilmingBeat('r1-sbom-4', FILMING_CAPS.r1Sbom, await readViewportChars(filming.page));
+
+    // Beat 5a: the R2 BOP shot shows no PDF-only marker.
+    await openFilmingFinding('R2-barb');
+    assert(
+      (await filming.page.locator('[data-testid="process-node-pdf-only"]').count()) === 0,
+      'the R2 filming frame shows a PDF-only marker',
+    );
+    recordFilmingBeat('r2-bop-5a', FILMING_CAPS.r2Bop, await readViewportChars(filming.page));
+
+    // Beat 5b: the R5 PDF-only shot keeps its marker in frame and its
+    // Cause / Countermeasure bodies behind closed disclosures.
+    await openFilmingFinding('R5-v1-7-manufacturing-pre-assembly-cable-carrier-md');
+    const r5Frame = await filming.page.evaluate(() => {
+      const marker = document.querySelector('[data-testid="process-node-pdf-only"]');
+      const markerRect = marker?.getBoundingClientRect() ?? null;
+      const causes = document.querySelector('[data-testid="finding-causes"]');
+      const countermeasures = document.querySelector('[data-testid="finding-countermeasures"]');
+      return {
+        marker: markerRect
+          ? {
+              top: markerRect.top,
+              bottom: markerRect.bottom,
+              text: (marker.textContent ?? '').replace(/\s+/g, ' ').trim(),
+            }
+          : null,
+        causes: causes
+          ? { open: causes.closest('details')?.open ?? null, visible: causes.checkVisibility() === true }
+          : null,
+        countermeasures: countermeasures
+          ? {
+              open: countermeasures.closest('details')?.open ?? null,
+              visible: countermeasures.checkVisibility() === true,
+            }
+          : null,
+      };
+    });
+    assert(r5Frame.marker, 'the R5 filming frame shows no PDF-only marker');
+    assert(
+      r5Frame.marker.top >= 0 && r5Frame.marker.bottom <= 800,
+      `the PDF-only marker left the 0..800 frame (top ${r5Frame.marker.top}, ` +
+        `bottom ${r5Frame.marker.bottom})`,
+    );
+    assert(
+      r5Frame.marker.text === messages.en.lanesNodePdfOnlyShort,
+      `the PDF-only marker shows ${JSON.stringify(r5Frame.marker.text)}`,
+    );
+    for (const [name, list] of [
+      ['cause candidates', r5Frame.causes],
+      ['countermeasures', r5Frame.countermeasures],
+    ]) {
+      assert(list, `the R5 filming frame lost its ${name} list`);
+      assert(list.open === false, `the ${name} disclosure starts open`);
+      assert(
+        !list.visible,
+        `the ${name} body is visible while its disclosure is closed`,
+      );
+    }
+    recordFilmingBeat('r5-pdf-5b', FILMING_CAPS.r5Pdf, await readViewportChars(filming.page));
+
+    // Beats 6 / 7: the free-text heading at the top of the frame keeps the
+    // rejection button and the model bound fully inside the viewport on the
+    // WebGPU-unsupported path, and the fixed sample plus the validator
+    // reason stay in frame after the click.
+    await openCheckRouting(filming.page);
+    await filming.page.evaluate(() => {
+      document
+        .querySelector('[data-testid="farmbot-free-text-panel"] h3')
+        ?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    });
+    await settleFilmingScroll();
+    const freeTextFrame = await filming.page.evaluate(() => {
+      const button = document.querySelector('[data-testid="farmbot-rejection-demo-button"]');
+      const noCypher = [
+        ...document.querySelectorAll('[data-testid="farmbot-free-text-panel"] p'),
+      ].find((paragraph) => (paragraph.textContent ?? '').includes('never writes Cypher'));
+      const rectOf = (element) => {
+        const rect = element?.getBoundingClientRect() ?? null;
+        return rect
+          ? {
+              top: rect.top,
+              bottom: rect.bottom,
+              text: (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+            }
+          : null;
+      };
+      return {
+        unsupported: Boolean(document.querySelector('[data-testid="farmbot-webgpu-notice"]')),
+        button: rectOf(button),
+        noCypher: rectOf(noCypher),
+      };
+    });
+    assert(
+      freeTextFrame.unsupported,
+      'the filming free-text frame is not on the WebGPU-unsupported path',
+    );
+    assert(freeTextFrame.button, 'the filming frame shows no rejection button');
+    assert(
+      freeTextFrame.button.top >= 0 && freeTextFrame.button.bottom <= 800,
+      `the rejection button left the 0..800 frame (top ${freeTextFrame.button.top}, ` +
+        `bottom ${freeTextFrame.button.bottom})`,
+    );
+    assert(
+      freeTextFrame.button.text === messages.en.checkRejectionDemoButton,
+      `the rejection button shows ${JSON.stringify(freeTextFrame.button.text)}`,
+    );
+    assert(freeTextFrame.noCypher, 'the filming frame shows no model bound paragraph');
+    assert(
+      freeTextFrame.noCypher.top >= 0 && freeTextFrame.noCypher.bottom <= 800,
+      `the model bound left the 0..800 frame (top ${freeTextFrame.noCypher.top}, ` +
+        `bottom ${freeTextFrame.noCypher.bottom})`,
+    );
+    assert(
+      freeTextFrame.noCypher.text === messages.en.checkModelNoCypher,
+      `the model bound shows ${JSON.stringify(freeTextFrame.noCypher.text)}`,
+    );
+    recordFilmingBeat(
+      'free-text-6-7',
+      FILMING_CAPS.freeText,
+      await readViewportChars(filming.page),
+    );
+
+    await filming.page.click('[data-testid="farmbot-rejection-demo-button"]');
+    await filming.page.waitForSelector('[data-testid="farmbot-free-text-error"]', {
+      timeout: 15000,
+    });
+    const rejectionFrame = await filming.page.evaluate(() => {
+      const error = document.querySelector('[data-testid="farmbot-free-text-error"]');
+      const sample = document.querySelector('[data-testid="farmbot-rejection-demo-sample"] pre');
+      const reason = [...(error?.querySelectorAll('pre') ?? [])].pop() ?? null;
+      const rectOf = (element) => {
+        const rect = element?.getBoundingClientRect() ?? null;
+        return rect
+          ? {
+              top: rect.top,
+              bottom: rect.bottom,
+              text: (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+            }
+          : null;
+      };
+      return { sample: rectOf(sample), reason: rectOf(reason) };
+    });
+    assert(rejectionFrame.sample, 'the rejection sample block is missing after the click');
+    assert(
+      rejectionFrame.sample.text.includes('MATCH (part:Part) RETURN part'),
+      `the rejection sample shows ${JSON.stringify(rejectionFrame.sample.text)}`,
+    );
+    assert(
+      rejectionFrame.sample.top >= 0 && rejectionFrame.sample.bottom <= 800,
+      `the fixed sample left the 0..800 frame after the click (top ` +
+        `${rejectionFrame.sample.top}, bottom ${rejectionFrame.sample.bottom})`,
+    );
+    assert(rejectionFrame.reason, 'the validator reason is missing after the click');
+    assert(
+      rejectionFrame.reason.text.includes('routing output contains Cypher or a markdown fence'),
+      `the validator reason shows ${JSON.stringify(rejectionFrame.reason.text)}`,
+    );
+    assert(
+      rejectionFrame.reason.top >= 0 && rejectionFrame.reason.bottom <= 800,
+      `the validator reason left the 0..800 frame after the click (top ` +
+        `${rejectionFrame.reason.top}, bottom ${rejectionFrame.reason.bottom})`,
+    );
+
+    const filmingClean = await assertContextClean(filming);
+    processLaneFixtures.push({ fixture: filming, clean: filmingClean });
+    summary.filmingViewport = {
+      viewport: '1280x800',
+      unsupportedPath: freeTextFrame.unsupported,
+      beats: filmingBeats,
+      capSum: Object.values(FILMING_CAPS).reduce((total, cap) => total + cap, 0),
+      ...filmingClean,
+    };
+    await filming.context.close();
+
     // A well-formed but unknown id may run the checks; it opens nothing and
     // shows no error.
     const unknown = await prepareContext(browser, 'unknown-finding');
@@ -3848,9 +4437,10 @@ async function main() {
     for (const hash of ['#finding=%E0%A4%A', '#foo']) {
       const malformed = await prepareContext(browser, `malformed-${hash}`);
       await malformed.page.goto(`${entryUrl}${hash}`, { waitUntil: 'load', timeout: 60000 });
-      await malformed.page.waitForSelector('[data-testid="abi"]', { timeout: 30000 });
+      await malformed.page.waitForSelector('[data-testid="abi"]', { timeout: 30000, state: 'attached' });
       await malformed.page.waitForSelector('[data-testid="run"]:not([disabled])', {
         timeout: 30000,
+        state: 'attached',
       });
       await delay(500);
       const malformedState = await malformed.page.evaluate(() => ({

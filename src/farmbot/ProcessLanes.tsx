@@ -94,6 +94,12 @@ export function ProcessLanes({
 }: ProcessLanesProps) {
   const layout = layoutFinding(finding) as unknown as LaneLayout;
   const selected = new Set(selectedEvidence);
+  // The quantity-difference legend explains a node only R1-style findings
+  // draw, so it stays off frames whose layout has no quantity node.
+  const hasQuantity = layout.nodes.some((node) => node.quantities.length > 0);
+  // The missing-link legend explains an edge only findings with a missing
+  // edge draw, so it stays off frames whose layout has none.
+  const hasMissing = layout.edges.some((edge) => edge.kind === 'missing');
 
   const isSelected = (node: DiagramNode) =>
     node.evidenceIndexes.some((index) => selected.has(index));
@@ -142,7 +148,6 @@ export function ProcessLanes({
     >
       <h3>{t('processLanesHeading')}</h3>
       <p className="muted small">{t('processLanesHelp')}</p>
-      <p className="muted small">{t('lanesSelectHint')}</p>
       <p className="process-lanes-legend">
         <span className="lane-legend-item">
           <span className="lane-legend lane-legend-problem" aria-hidden="true" />
@@ -152,16 +157,20 @@ export function ProcessLanes({
           <span className="lane-legend lane-legend-path" aria-hidden="true" />
           {t('lanesLegendPath')}
         </span>
-        <span className="lane-legend-item">
-          <span className="lane-legend lane-legend-missing" aria-hidden="true" />
-          {t('lanesLegendMissing')}
-        </span>
-        <span className="lane-legend-item">
-          <span className="lane-legend lane-legend-quantity" aria-hidden="true">
-            +4 −8
+        {hasMissing && (
+          <span className="lane-legend-item">
+            <span className="lane-legend lane-legend-missing" aria-hidden="true" />
+            {t('lanesLegendMissing')}
           </span>
-          {t('lanesLegendQuantity')}
-        </span>
+        )}
+        {hasQuantity && (
+          <span className="lane-legend-item">
+            <span className="lane-legend lane-legend-quantity" aria-hidden="true">
+              +4 −8
+            </span>
+            {t('lanesLegendQuantity')}
+          </span>
+        )}
       </p>
 
       {layout.nodes.length === 0 ? (
@@ -175,6 +184,7 @@ export function ProcessLanes({
           style={{ maxWidth: `${layout.width}px` }}
           role="group"
           aria-label={t('processLanesHeading')}
+          aria-description={t('lanesSelectHint')}
           data-width={layout.width}
           data-height={layout.height}
         >
@@ -290,7 +300,7 @@ export function ProcessLanes({
                     y={node.y + 42}
                     data-testid="process-node-pdf-only"
                   >
-                    {clip(t('lanesNodePdfOnly'), node.width, META_SIZE)}
+                    {clip(t('lanesNodePdfOnlyShort'), node.width, META_SIZE)}
                   </text>
                 )}
                 {node.quantities.map((quantity, index) => (

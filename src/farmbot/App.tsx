@@ -22,6 +22,7 @@ import { collectFindings } from './agent/index.mjs';
 import { findingSelection } from './finding-selection.mjs';
 import {
   countBySeverity,
+  displaySummaryLine,
   findingCauses,
   findingCountermeasures,
   orderFindings,
@@ -151,19 +152,6 @@ const SELECTOR_LABEL_KEYS: Record<SelectorDomain, MessageKey> = {
   category_slugs_in_kits: 'selectorCategory',
 };
 
-/** Localized rule label per check id, reused by the sample email cards. */
-const CHECK_RULE_LABEL_KEYS: Record<string, MessageKey> = {
-  R1: 'checkR1Label',
-  R2: 'checkR2Label',
-  R3: 'checkR3Label',
-  R4: 'checkR4Label',
-  R5: 'checkR5Label',
-  R6: 'checkR6Label',
-  R7: 'checkR7Label',
-  R8: 'checkR8Label',
-  R9: 'checkR9Label',
-};
-
 const ERROR_MESSAGE_KEYS: Record<ScreenError['kind'], MessageKey> = {
   compile: 'compileError',
   'seed-fetch': 'seedFetchError',
@@ -198,6 +186,24 @@ function cellText(value: unknown): string {
   return String(value);
 }
 
+/**
+ * The on-screen citation label for each source file of the open finding: the
+ * file's own name. Two files that share a name stay apart on the row by their
+ * role, and the exact path is always on the row inside its Facts disclosure,
+ * so a short citation never hides which file it is.
+ */
+function citationLabels(finding: Finding | null): Map<string, string> {
+  const labels = new Map<string, string>();
+  if (!finding || !Array.isArray(finding.evidence)) return labels;
+  for (const row of finding.evidence) {
+    const file = typeof row?.sourceFile === 'string' ? row.sourceFile : '';
+    if (file === '' || labels.has(file)) continue;
+    const segments = file.split('/');
+    labels.set(file, segments[segments.length - 1]);
+  }
+  return labels;
+}
+
 export function App() {
   const [lang, setLang] = useState<Lang>(() =>
     navigator.language.toLowerCase().startsWith('ja') ? 'ja' : 'en',
@@ -228,6 +234,9 @@ export function App() {
   const [selectedEvidence, dispatchFindingSelection] = useReducer(findingSelection, []);
   const [hashRevealCount, setHashRevealCount] = useState(0);
   const evidenceRowRefs = useRef<Map<number, HTMLLIElement | null>>(new Map());
+  // The findings panel sits behind its closed summary on the landing fold;
+  // a completed checks run opens it, so the requested results are on screen.
+  const findingsRef = useRef<HTMLDetailsElement | null>(null);
 
   const pendingRevealRef = useRef<string | null>(initialFindingId);
   // The finding id whose hash reveal still owes a scroll of the finding view.
@@ -282,6 +291,12 @@ export function App() {
     document.documentElement.lang = lang;
     document.title = messages[lang].title;
   }, [lang]);
+
+  // A finished checks run opens the findings panel once; a manual toggle of
+  // the summary afterwards is the user's own and is never overridden.
+  useEffect(() => {
+    if (checks.status === 'ready' && findingsRef.current) findingsRef.current.open = true;
+  }, [checks.status]);
 
   useEffect(
     () => () => {
@@ -714,6 +729,9 @@ export function App() {
   const selectedCountermeasures = selectedFinding
     ? findingCountermeasures(selectedFinding, lang)
     : [];
+  // Short on-screen citations per source file; the exact path stays in the
+  // row's Facts disclosure.
+  const citationLabelMap = useMemo(() => citationLabels(selectedFinding), [selectedFinding]);
   // Null when the open finding is not one of the reconciliation rules.
   const selectedCategoryKey = selectedFinding
     ? reconciliationCategoryKey(selectedFinding.rule)
@@ -784,6 +802,11 @@ export function App() {
         <summary className="muted small">{t('howItWorksLabel')}</summary>
         <p className="muted small">{t('explainSources')}</p>
         <p className="muted small">{t('explainEngine')}</p>
+        {engine.status === 'ready' && (
+          <p className="muted small" data-testid="abi">
+            {t('engineLabel')}: {engine.engine.abiVersion}
+          </p>
+        )}
       </details>
 
       {engine.status === 'loading' && (
@@ -800,11 +823,6 @@ export function App() {
             {t('retry')}
           </button>
         </div>
-      )}
-      {engine.status === 'ready' && (
-        <p className="muted small" data-testid="abi">
-          {t('engineLabel')}: {engine.engine.abiVersion}
-        </p>
       )}
 
       <section
@@ -847,10 +865,7 @@ export function App() {
                   <span className="sample-card-badge" data-testid="sample-badge">
                     {t('sampleCardLabel')}
                   </span>
-                  <span className="sample-card-scenario">
-                    <span className="muted">{t('sampleScenarioLabel')}:</span>{' '}
-                    {t(card.scenarioKey)}
-                  </span>
+                  <span className="sample-card-scenario">{t(card.scenarioKey)}</span>
                 </p>
                 <p className="sample-card-found">
                   <span
@@ -860,23 +875,20 @@ export function App() {
                     {t(SEVERITY_LABEL_KEYS[card.severity])}
                   </span>{' '}
                   {categoryKey !== null && (
-                    <>
-                      <span
-                        className="reconciliation-badge"
-                        data-testid={`reconciliation-category-${card.rule}`}
-                      >
-                        {t(categoryKey)}
-                      </span>{' '}
-                    </>
+                    <span
+                      className="reconciliation-badge"
+                      data-testid={`reconciliation-category-${card.rule}`}
+                    >
+                      {t(categoryKey)}
+                    </span>
                   )}
-                  {t(CHECK_RULE_LABEL_KEYS[card.rule])}
                 </p>
                 <p className="sample-card-summary" data-testid="sample-summary">
                   {t(card.summaryKey)}
                 </p>
                 <p className="sample-card-link-row">
                   <a data-testid="sample-open-finding" href={`#finding=${card.id}`}>
-                    {t('sampleOpenFinding')} <code>{`#finding=${card.id}`}</code>
+                    {t('sampleOpenFinding')} <code>{card.id}</code>
                   </a>
                 </p>
               </li>
@@ -885,8 +897,10 @@ export function App() {
         </ul>
       </section>
 
-      <section className="panel">
-        <h2>{t('questionsHeading')}</h2>
+      <details className="panel farmbot-questions" data-testid="preset-questions">
+        <summary>
+          <h2>{t('questionsHeading')}</h2>
+        </summary>
         <p className="muted small">{t('questionsHint')}</p>
         <p className="note">{t('quantityNote')}</p>
         <div className="chip-list">
@@ -937,7 +951,7 @@ export function App() {
             {relateStatus()}
           </span>
         </div>
-      </section>
+      </details>
 
       <CheckRoutingPanel
         engine={engine.status === 'ready' ? engine.engine : null}
@@ -946,8 +960,10 @@ export function App() {
         t={t}
       />
 
-      <section className="panel farmbot-findings" aria-labelledby="findings-heading">
-        <h2 id="findings-heading">{t('findingsHeading')}</h2>
+      <details className="panel farmbot-findings" data-testid="findings-panel" ref={findingsRef}>
+        <summary>
+          <h2 id="findings-heading">{t('findingsHeading')}</h2>
+        </summary>
         <p className="muted small">{t('findingsHint')}</p>
         <div className="farmbot-actions">
           <button
@@ -1008,10 +1024,12 @@ export function App() {
               <code>{checksResult.digest}</code>
             </p>
 
-            <div className="reconciliation-group" data-testid="reconciliation-group">
-              <h3>{t('reconciliationHeading')}</h3>
+            <details className="reconciliation-group" data-testid="reconciliation-group">
+              <summary>
+                <h3>{t('reconciliationHeading')}</h3>
+              </summary>
               <p className="muted small">{t('reconciliationIntro')}</p>
-            </div>
+            </details>
 
             <ol className="finding-list" data-testid="finding-list">
               {shownFindings.map((finding) => {
@@ -1051,7 +1069,7 @@ export function App() {
             </ol>
           </>
         )}
-      </section>
+      </details>
 
       {selectedFinding && (
         <section className="panel farmbot-finding" data-testid="finding-view">
@@ -1059,72 +1077,52 @@ export function App() {
             <h2>{t('findingHeading')}</h2>
             <button
               type="button"
-              className="chip"
+              className="finding-close"
               data-testid="close-finding"
               onClick={() => setSelectedFindingId(null)}
             >
               {t('closeFinding')}
             </button>
           </div>
+          <p className="finding-meta-line">
+            <code data-testid="finding-open-id">{selectedFinding.id}</code>{' '}
+            <span className={`severity-badge severity-${selectedFinding.severity}`}>
+              {t(SEVERITY_LABEL_KEYS[selectedFinding.severity])}
+            </span>{' '}
+            <span data-testid="finding-score">{selectedFinding.severityScore}</span>{' '}
+            {selectedCategoryKey !== null && (
+              <>
+                <span
+                  className="reconciliation-badge"
+                  data-testid={`reconciliation-category-${selectedFinding.rule}`}
+                >
+                  {t(selectedCategoryKey)}
+                </span>{' '}
+              </>
+            )}
+            {selectedFinding.rule === 'R6' && (
+              <>
+                <span
+                  className={`fact-label fact-label-${
+                    selectedFinding.inferred ? 'inference' : 'fact'
+                  }`}
+                  data-testid="finding-inferred"
+                  data-inferred={selectedFinding.inferred ? 'true' : 'false'}
+                >
+                  {t(selectedFinding.inferred ? 'inferenceLabel' : 'factLabel')}
+                </span>{' '}
+              </>
+            )}
+            <span>{selectedFinding.subject.label}</span>
+          </p>
           <p className="finding-summary" data-testid="finding-summary">
-            {summaryLine(selectedFinding, lang)}
+            {displaySummaryLine(selectedFinding, lang)}
           </p>
           {selectedFinding.rule === 'R1' && (
             <p className="note" data-testid="reconciliation-r1-note">
               {t('reconciliationR1Note')}
             </p>
           )}
-          <dl className="farmbot-meta">
-            <dt>{t('findingIdLabel')}</dt>
-            <dd>
-              <code data-testid="finding-open-id">{selectedFinding.id}</code>
-            </dd>
-            <dt>{t('ruleLabel')}</dt>
-            <dd>
-              {CHECK_RULE_LABEL_KEYS[selectedFinding.rule] !== undefined
-                ? t(CHECK_RULE_LABEL_KEYS[selectedFinding.rule])
-                : selectedFinding.rule}
-            </dd>
-            {selectedCategoryKey !== null && (
-              <>
-                <dt>{t('reconciliationCategoryLabel')}</dt>
-                <dd>
-                  <span
-                    className="reconciliation-badge"
-                    data-testid={`reconciliation-category-${selectedFinding.rule}`}
-                  >
-                    {t(selectedCategoryKey)}
-                  </span>
-                </dd>
-              </>
-            )}
-            <dt>{t('severityLabel')}</dt>
-            <dd>
-              <span className={`severity-badge severity-${selectedFinding.severity}`}>
-                {t(SEVERITY_LABEL_KEYS[selectedFinding.severity])}
-              </span>
-            </dd>
-            <dt>{t('severityScoreLabel')}</dt>
-            <dd data-testid="finding-score">{selectedFinding.severityScore}</dd>
-            {selectedFinding.rule === 'R6' && (
-              <>
-                <dt>{t('nameMatchLabel')}</dt>
-                <dd>
-                  <span
-                    className={`fact-label fact-label-${
-                      selectedFinding.inferred ? 'inference' : 'fact'
-                    }`}
-                    data-testid="finding-inferred"
-                    data-inferred={selectedFinding.inferred ? 'true' : 'false'}
-                  >
-                    {t(selectedFinding.inferred ? 'inferenceLabel' : 'factLabel')}
-                  </span>
-                </dd>
-              </>
-            )}
-            <dt>{t('subjectLabel')}</dt>
-            <dd>{selectedFinding.subject.label}</dd>
-          </dl>
 
           <div className="finding-live" data-testid="finding-live">
             <ProcessLanes
@@ -1151,6 +1149,7 @@ export function App() {
                   ]);
                   const rowSelected = selectedEvidence.includes(index);
                   const { primary, rest } = splitEvidenceQueries(row, row.queries);
+                  const citation = citationLabelMap.get(row.sourceFile ?? '');
                   return (
                     <li
                       key={identity}
@@ -1172,33 +1171,36 @@ export function App() {
                         selectEvidence([index], { focusRow: false });
                       }}
                     >
-                      <dl className="farmbot-meta">
-                        <dt>{t('evidenceRoleLabel')}</dt>
-                        <dd>{row.role}</dd>
-                        <dt>{t('evidenceNodeLabel')}</dt>
-                        <dd>
-                          <code>{row.nodeId}</code>
-                        </dd>
+                      <p className="evidence-citation">
+                        <span className="evidence-role">{row.role}</span>
                         {row.sourceFile !== null && (
                           <>
-                            <dt>{t('evidenceSourceLabel')}</dt>
-                            <dd>{row.sourceFile}</dd>
+                            {' '}
+                            <span className="evidence-file">
+                              {citation === '' ? row.sourceFile : citation}
+                              {row.line !== null ? `:${row.line}` : ''}
+                            </span>
                           </>
                         )}
-                        {row.line !== null && (
-                          <>
-                            <dt>{t('evidenceLineLabel')}</dt>
-                            <dd>{row.line}</dd>
-                          </>
+                      </p>
+                      <details className="evidence-facts">
+                        <summary>{t('evidenceFactsLabel')}</summary>
+                        <p className="evidence-node-id">
+                          {t('evidenceNodeLabel')}: <code>{row.nodeId}</code>
+                        </p>
+                        {row.sourceFile !== null && (
+                          <p className="evidence-source-path">
+                            {t('evidenceSourceLabel')}: <code>{row.sourceFile}</code>
+                          </p>
                         )}
-                      </dl>
-                      <ul className="fact-list">
-                        {Object.entries(row.facts ?? {}).map(([key, value]) => (
-                          <li key={key}>
-                            <code>{key}</code>: {cellText(value)}
-                          </li>
-                        ))}
-                      </ul>
+                        <ul className="fact-list">
+                          {Object.entries(row.facts ?? {}).map(([key, value]) => (
+                            <li key={key}>
+                              <code>{key}</code>: {cellText(value)}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
                       <details className="evidence-queries">
                         <summary>{t('evidenceQueriesLabel')}</summary>
                         {primary !== null && (
@@ -1255,27 +1257,30 @@ export function App() {
             </div>
           </div>
 
-          <h3>{t('causesHeading')}</h3>
-          <ul className="cause-list" data-testid="finding-causes">
-            {selectedCauses.map((cause, index) => (
-              <li key={index}>
-                <span className={`fact-label fact-label-${cause.kind}`}>
-                  {cause.kind === 'fact' ? t('factLabel') : t('inferenceLabel')}
-                </span>{' '}
-                <span>{cause.text}</span>
-                {cause.rule && <span className="muted small"> ({cause.rule})</span>}
-              </li>
-            ))}
-          </ul>
+          <details className="finding-section-details">
+            <summary>{t('causesHeading')}</summary>
+            <p className="muted small">{t('causeDataNote')}</p>
+            <ul className="cause-list" data-testid="finding-causes">
+              {selectedCauses.map((cause, index) => (
+                <li key={index}>
+                  <span className={`fact-label fact-label-${cause.kind}`}>
+                    {cause.kind === 'fact' ? t('factLabel') : t('inferenceLabel')}
+                  </span>{' '}
+                  <span>{cause.text}</span>
+                  {cause.rule && <span className="muted small"> ({cause.rule})</span>}
+                </li>
+              ))}
+            </ul>
+          </details>
 
-          <h3>{t('countermeasuresHeading')}</h3>
-          <ul className="countermeasure-list" data-testid="finding-countermeasures">
-            {selectedCountermeasures.map((countermeasure, index) => (
-              <li key={index}>{countermeasure}</li>
-            ))}
-          </ul>
-
-          <p className="muted small">{t('causeDataNote')}</p>
+          <details className="finding-section-details">
+            <summary>{t('countermeasuresHeading')}</summary>
+            <ul className="countermeasure-list" data-testid="finding-countermeasures">
+              {selectedCountermeasures.map((countermeasure, index) => (
+                <li key={index}>{countermeasure}</li>
+              ))}
+            </ul>
+          </details>
         </section>
       )}
 
@@ -1370,8 +1375,10 @@ export function App() {
         </section>
       )}
 
-      <section className="panel farmbot-about">
-        <h2>{t('aboutHeading')}</h2>
+      <details className="panel farmbot-about">
+        <summary>
+          <h2>{t('aboutHeading')}</h2>
+        </summary>
         <p className="small">{t('aboutBody')}</p>
         <dl className="farmbot-meta">
           <dt>{t('digestLabel')}</dt>
@@ -1406,7 +1413,7 @@ export function App() {
         <p className="small">
           <a href="../">{t('parentEntry')}</a>
         </p>
-      </section>
+      </details>
     </main>
   );
 }

@@ -1,10 +1,10 @@
 {
   "format": "farmbot-notify-v1",
-  "findingsDigest": "farmbot-findings-v1 sha256:cd1496f3e3708e4139ce2737b22bec73d58bbab323573319caf2109ff2b61fe0",
+  "findingsDigest": "farmbot-findings-v1 sha256:7bb1a0fd6c1f2a3fc645ce833c94346c32fc53b3514aff53b41cb47690fcdb28",
   "severityCounts": {
-    "action": 11,
-    "review": 6,
-    "info": 90
+    "action": 12,
+    "review": 10,
+    "info": 93
   },
   "findings": [
     {
@@ -610,18 +610,32 @@
       "summary": "The pre-assembly page v1.7/manufacturing/pre-assembly/z-axis.md has no machine-readable parts table."
     },
     {
-      "id": "R6-90-degree-barb",
+      "id": "R6-3-slot-toolbay",
       "rule": "R6",
       "severity": "info",
       "severityScore": 4,
-      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
+      "summary": "The Change Log links \"3-Slot Toolbay\", but v1.7/assembly/toolbays.md still lists it."
+    },
+    {
+      "id": "R6-60mm-horizontal-cable-carrier-support",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"60mm Horizontal Cable Carrier Support\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md still list it."
+    },
+    {
+      "id": "R6-90-degree-barb",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/manufacturing/packing/hardware-kit.md still list it."
     },
     {
       "id": "R6-belt-clip",
       "rule": "R6",
-      "severity": "review",
-      "severityScore": 6,
-      "summary": "The Change Log links \"Belt Clip\", but v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+      "severity": "action",
+      "severityScore": 10,
+      "summary": "The Change Log links \"Belt Clip\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md, v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
     },
     {
       "id": "R6-crop-stickers",
@@ -631,18 +645,39 @@
       "summary": "The Change Log removal statement names \"Crop Stickers\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
     },
     {
-      "id": "R6-gantry-column",
+      "id": "R6-cross-slide-plate",
       "rule": "R6",
       "severity": "info",
       "severityScore": 4,
-      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still lists it."
+      "summary": "The Change Log links \"Cross-Slide Plate\", but v1.7/assembly/cross-slide-and-z-axis.md still lists it."
+    },
+    {
+      "id": "R6-gantry-column",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"Gantry Column\", but v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+    },
+    {
+      "id": "R6-gantry-wheel-plate",
+      "rule": "R6",
+      "severity": "review",
+      "severityScore": 6,
+      "summary": "The Change Log links \"Gantry Wheel Plate\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md still list it."
+    },
+    {
+      "id": "R6-m5-x-4mm-setscrew",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log links \"M5 x 4mm Setscrew\", but v1.7/assembly/tracks.md still lists it."
     },
     {
       "id": "R6-power-supply",
       "rule": "R6",
       "severity": "review",
-      "severityScore": 6,
-      "summary": "The Change Log links \"Power Supply\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it."
+      "severityScore": 8,
+      "summary": "The Change Log links \"Power Supply\", but v1.7/assembly/electronics.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it."
     },
     {
       "id": "R6-ptfe-tape",
@@ -650,6 +685,27 @@
       "severity": "info",
       "severityScore": 2,
       "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
+    },
+    {
+      "id": "R6-right-gantry-corner-bracket",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log links \"Right Gantry Corner Bracket\", but v1.7/assembly/gantry.md still lists it."
+    },
+    {
+      "id": "R6-seed-tray",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 2,
+      "summary": "The Change Log removal statement names \"seed tray\", but v1.7/assembly/tools.md still lists it."
+    },
+    {
+      "id": "R6-t25-bit",
+      "rule": "R6",
+      "severity": "info",
+      "severityScore": 4,
+      "summary": "The Change Log links \"T25 Bit\", but v1.7/assembly/tracks.md still lists it."
     },
     {
       "id": "R6-tee-nuts",
@@ -661,16 +717,16 @@
     {
       "id": "R6-track-extrusion",
       "rule": "R6",
-      "severity": "info",
-      "severityScore": 4,
-      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still lists it."
+      "severity": "review",
+      "severityScore": 8,
+      "summary": "The Change Log links \"Track Extrusion\", but v1.7/assembly/gantry.md, v1.7/assembly/tracks.md, v1.7/manufacturing/packing/extrusion-kit.md still list it."
     },
     {
       "id": "R6-x-axis-cable-carrier",
       "rule": "R6",
       "severity": "review",
-      "severityScore": 6,
-      "summary": "The Change Log links \"X-Axis Cable Carrier\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still list it."
+      "severityScore": 8,
+      "summary": "The Change Log links \"X-Axis Cable Carrier\", but v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still list it."
     },
     {
       "id": "R7-10mm-nut-bar",
@@ -780,7 +836,7 @@
     },
     {
       "id": "R6",
-      "title": "A name changed or removed in the Change Log still appears in packing or service pages"
+      "title": "A name changed or removed in the Change Log still appears in an assembly chapter, packing list or service page"
     },
     {
       "id": "R7",

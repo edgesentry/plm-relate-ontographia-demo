@@ -224,7 +224,11 @@ function summaryValues(finding) {
     const files = [
       ...new Set(
         rows
-          .filter((row) => row && (row.role === 'packing-structure' || row.role === 'service'))
+          .filter(
+            (row) =>
+              row &&
+              (row.role === 'packing-structure' || row.role === 'service' || row.role === 'structure'),
+          )
           .map((row) => text(row.sourceFile))
           .filter((file) => file !== ''),
       ),
@@ -653,13 +657,18 @@ function assertLanguage(lang, caller) {
 }
 
 /**
+ * The downstream source files of an R6 finding: the assembly chapters, packing
+ * structures and service pages its evidence cites.
+ *
  * @param {Record<string, any>} finding
  * @returns {string[]}
  */
 function downstreamFiles(finding) {
   return sourceFiles(
     (Array.isArray(finding.evidence) ? finding.evidence : []).filter(
-      (row) => row && (row.role === 'packing-structure' || row.role === 'service'),
+      (row) =>
+        row &&
+        (row.role === 'packing-structure' || row.role === 'service' || row.role === 'structure'),
     ),
   );
 }

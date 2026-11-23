@@ -70,7 +70,9 @@ const SEVERITY_LEVELS = Object.freeze(['action', 'info', 'review']);
 /**
  * A bag reference is an Accessory bag BOM row, not a packing item. Bags named
  * `bag:accessory:` own the pre-assembly section the extract records as
- * `Accessory bag BOM`; R6 reads the `packing_item` rows only.
+ * `Accessory bag BOM`; R6 reads the assembly-chapter usage lines, the
+ * `packing_item` rows and the service references, so an Accessory bag row
+ * never reaches it.
  *
  * @param {{ kind: string, structure: Record<string, unknown>, usage: Record<string, unknown> }} reference
  * @returns {boolean}
@@ -829,11 +831,28 @@ export function collectFindings(options) {
     .map((row) => ({ change: nodeProperties(row.change), part: nodeProperties(row.part) }))
     .sort((left, right) => compareText(String(left.part.id), String(right.part.id)));
 
-  // Every display name a packing or service page writes, resolved or not. The
-  // role is the page kind; the structure and usage nodes carry the citation.
-  /** @type {Array<{ displayName: string, resolvedPart: string | null, channel: 'packing' | 'service', structure: Record<string, unknown>, usage: Record<string, unknown> }>} */
+  // Every display name an assembly chapter, packing or service page writes,
+  // resolved or not. The role is the page kind; the structure and usage nodes
+  // carry the citation.
+  /** @type {Array<{ displayName: string, resolvedPart: string | null, channel: 'assembly' | 'packing' | 'service', structure: Record<string, unknown>, usage: Record<string, unknown> }>} */
   const downstreamRecords = [];
+  // Assembly chapters are documented instruction structure: their usage lines
+  // sit on the BOP lane, so a changed part that an assembly chapter still
+  // names is cited on the same path as packing and service. Pre-assembly pages
+  // and the Accessory bag BOM stay out; no pre-assembly node is invented.
   for (const reference of references) {
+    if (reference.kind === 'assembly') {
+      if (typeof reference.usage.display_name !== 'string') continue;
+      downstreamRecords.push({
+        displayName: reference.usage.display_name,
+        resolvedPart:
+          typeof reference.part.name === 'string' ? reference.part.name : null,
+        channel: 'assembly',
+        structure: reference.structure,
+        usage: reference.usage,
+      });
+      continue;
+    }
     if (!['bag', 'kit', 'carton'].includes(reference.kind)) continue;
     if (isAccessoryBagReference(reference)) continue;
     if (typeof reference.usage.display_name !== 'string') continue;
@@ -844,6 +863,18 @@ export function collectFindings(options) {
       channel: 'packing',
       structure: reference.structure,
       usage: reference.usage,
+    });
+  }
+  for (const row of rows.get('r2-assembly-unmatched.json')) {
+    const structure = nodeProperties(row.structure);
+    const usage = nodeProperties(row.usage);
+    if (typeof usage.display_name !== 'string') continue;
+    downstreamRecords.push({
+      displayName: usage.display_name,
+      resolvedPart: null,
+      channel: 'assembly',
+      structure,
+      usage,
     });
   }
   for (const row of rows.get('r2-manufacturing-unmatched.json')) {
@@ -883,10 +914,42 @@ export function collectFindings(options) {
   }
 
   /**
+   * The evidence rows of one downstream record. A packing record cites the
+   * container and its usage line, a service record the page and its
+   * reference, and an assembly record the chapter and its usage line, so the
+   * chapter and usage rows land on the BOP lane.
+   *
    * @param {typeof downstreamRecords[number]} record
    * @returns {Array<Record<string, unknown>>}
    */
-  const downstreamEvidence = (record) => {    if (record.channel === 'packing') {
+  const downstreamEvidence = (record) => {
+    if (record.channel === 'assembly') {
+      return [
+        {
+          nodeId: record.structure.id,
+          role: 'structure',
+          sourceFile: record.structure.path ?? null,
+          line: null,
+          facts: {
+            structureKind: 'assembly',
+            title: valueOrNull(record.structure.title),
+          },
+        },
+        {
+          nodeId: record.usage.id,
+          role: 'reference',
+          sourceFile: record.structure.path ?? null,
+          line: valueOrNull(record.usage.line_number),
+          facts: {
+            displayName: valueOrNull(record.usage.display_name),
+            matchMethod: valueOrNull(record.usage.match_method),
+            resolvedPart: valueOrNull(record.resolvedPart),
+            sourceKind: 'assembly',
+          },
+        },
+      ];
+    }
+    if (record.channel === 'packing') {
       return [
         {
           nodeId: record.structure.id,
@@ -971,8 +1034,9 @@ export function collectFindings(options) {
     },
   });
 
-  // R6: a Change Log name still appears on a packing or service page. A linked
-  // name is a fact; a removal statement matched by normalized name is inferred.
+  // R6: a Change Log name still appears on an assembly chapter, packing or
+  // service page. A linked name is a fact; a removal statement matched by
+  // normalized name is inferred.
   const changeMatches = matchChangeNames({
     changes: changes.map((change) => ({
       id: /** @type {string} */ (change.id),

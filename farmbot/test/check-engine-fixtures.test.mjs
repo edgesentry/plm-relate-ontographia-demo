@@ -66,7 +66,7 @@ function runChecks(rows) {
 }
 
 /** Run the committed R6 oracle against a fresh in-memory database. */
-async function oracleRows(packingItems, changeNotes, changeLinks, serviceReferences = []) {
+async function oracleRows(packingItems, changeNotes, changeLinks, serviceReferences = [], assemblyReferences = []) {
   const instance = await DuckDBInstance.create(':memory:');
   const connection = await instance.connect();
   try {
@@ -75,6 +75,9 @@ async function oracleRows(packingItems, changeNotes, changeLinks, serviceReferen
     );
     await connection.run(
       'CREATE TABLE service_reference (page_path VARCHAR, display_name VARCHAR, resolved_part VARCHAR)',
+    );
+    await connection.run(
+      'CREATE TABLE assembly_reference (page_path VARCHAR, display_name VARCHAR, resolved_part VARCHAR)',
     );
     await connection.run(
       'CREATE TABLE change_note (section VARCHAR, bullet INTEGER, text VARCHAR)',
@@ -91,6 +94,12 @@ async function oracleRows(packingItems, changeNotes, changeLinks, serviceReferen
     for (const row of serviceReferences) {
       await connection.run(
         'INSERT INTO service_reference (page_path, display_name, resolved_part) VALUES (?, ?, ?)',
+        row,
+      );
+    }
+    for (const row of assemblyReferences) {
+      await connection.run(
+        'INSERT INTO assembly_reference (page_path, display_name, resolved_part) VALUES (?, ?, ?)',
         row,
       );
     }
@@ -353,6 +362,18 @@ test('collectFindings and the oracle agree on the collision and channel scope', 
         }),
       },
     ],
+    'refs-assembly.json': [
+      {
+        structure: node({ id: 'chapter:tracks.md', path: 'tracks.md', title: 'Tracks' }),
+        usage: node({
+          id: 'usage:assembly:tracks.md@1',
+          display_name: 'Tee Nuts',
+          match_method: 'exact',
+          line_number: 7,
+        }),
+        part: node(teePart),
+      },
+    ],
     'refs-kit.json': [
       {
         structure: node({ id: 'container:fileA.md', path: 'fileA.md', title: 'Kit A' }),
@@ -417,11 +438,32 @@ test('collectFindings and the oracle agree on the collision and channel scope', 
   const files = [
     ...new Set(
       finding.evidence
-        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .filter(
+          (row) =>
+            row.role === 'packing-structure' ||
+            row.role === 'service' ||
+            row.role === 'structure',
+        )
         .map((row) => row.sourceFile),
     ),
   ].sort();
-  assert.deepEqual(files, ['fileA.md', 'fileB.md']);
+  assert.deepEqual(files, ['fileA.md', 'fileB.md', 'tracks.md']);
+  // The assembly-chapter channel cites the chapter as a structure row and its
+  // usage line as a reference row, so both land on the BOP lane.
+  const chapterRows = finding.evidence.filter((row) => row.role === 'structure');
+  assert.equal(chapterRows.length, 1, 'the fixture must cite one assembly chapter');
+  assert.equal(
+    chapterRows[0].nodeId,
+    'chapter:tracks.md',
+    'the cited structure row is not the assembly chapter',
+  );
+  assert.ok(
+    finding.evidence.some(
+      (row) =>
+        row.role === 'reference' && row.nodeId === 'usage:assembly:tracks.md@1',
+    ),
+    'the fixture cites no assembly-chapter usage row',
+  );
   for (const row of finding.evidence) {
     const nodeId = String(row.nodeId);
     assert.equal(nodeId.startsWith('preassembly:'), false, `${nodeId} is a pre-assembly page`);
@@ -441,6 +483,8 @@ test('collectFindings and the oracle agree on the collision and channel scope', 
       ['Changed', 4, teeLinkNote.text],
     ],
     [['Changed', 4, 'Tee Nuts', 'Tee Nuts']],
+    [],
+    [['tracks.md', 'Tee Nuts', 'Tee Nuts']],
   );
   const actual = files.map((sourceFile) => ({
     inferred: finding.inferred,

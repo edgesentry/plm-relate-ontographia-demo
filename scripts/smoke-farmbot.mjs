@@ -2649,11 +2649,13 @@ async function main() {
     };
 
     // Lane liveness at the filming viewport: open the R6 deep link at
-    // 1280x800, select the packing evidence row with its Select node control,
-    // and expand that row's Intent, Cypher and parameters block. The lane pane
-    // and the selected node must stay inside the 0..800 viewport in the same
-    // frame as the row, the pane must be sticky beside the evidence column,
-    // and the reveal and the selection must show their in-place motion.
+    // 1280x800, check that the BOP (instructions) lane is drawn with the
+    // assembly-chapter evidence the finding now cites, select the packing
+    // evidence row with its Select node control, and expand that row's Intent,
+    // Cypher and parameters block. The lane pane and the selected node must
+    // stay inside the 0..800 viewport in the same frame as the row, the pane
+    // must be sticky beside the evidence column, and the reveal and the
+    // selection must show their in-place motion.
     const r6LiveFinding = findings.find((finding) => finding.id === 'R6-power-supply');
     assert(r6LiveFinding, 'the committed file has no R6-power-supply finding');
     const r6LiveRows = orderEvidenceRows(r6LiveFinding);
@@ -2664,6 +2666,43 @@ async function main() {
       r6LiveLayout.edges.some((edge) => edge.onPath),
       `${r6LiveFinding.id} has no on-path edge to animate`,
     );
+    // The hero finding cites the assembly chapter the committed seed links to
+    // its part, so the diagram must draw the BOP lane with that chapter and
+    // its usage rows, exactly as the layout computes them.
+    const r6ChapterRows = r6LiveFinding.evidence.filter(
+      (row) => row.role === 'structure' && String(row.nodeId).startsWith('chapter:'),
+    );
+    assert(
+      r6ChapterRows.length === 1,
+      `${r6LiveFinding.id} cites ${r6ChapterRows.length} assembly chapters, expected the one linked chapter`,
+    );
+    assert(
+      r6ChapterRows[0].sourceFile === 'v1.7/assembly/electronics.md',
+      `${r6LiveFinding.id} cites an unexpected assembly chapter: ` +
+        `${JSON.stringify(r6ChapterRows[0].sourceFile)}`,
+    );
+    const r6AssemblyReferences = r6LiveFinding.evidence.filter(
+      (row) => row.role === 'reference' && String(row.nodeId).startsWith('usage:assembly:'),
+    );
+    assert(
+      r6AssemblyReferences.length > 0,
+      `${r6LiveFinding.id} cites no assembly-chapter usage rows`,
+    );
+    const r6LiveBopNodes = r6LiveLayout.nodes
+      .filter((node) => node.lane === 'bop')
+      .map((node) => node.id)
+      .sort();
+    assert(
+      r6LiveBopNodes.length === r6ChapterRows.length + r6AssemblyReferences.length,
+      `${r6LiveFinding.id} draws ${r6LiveBopNodes.length} BOP nodes for ` +
+        `${r6ChapterRows.length + r6AssemblyReferences.length} cited assembly rows`,
+    );
+    for (const row of [...r6ChapterRows, ...r6AssemblyReferences]) {
+      assert(
+        r6LiveBopNodes.includes(row.nodeId),
+        `${r6LiveFinding.id} draws no BOP node for ${row.nodeId}`,
+      );
+    }
     const r6Live = await prepareContext(browser, 'process-lanes-r6-live', {
       width: 1280,
       height: 800,
@@ -2678,6 +2717,32 @@ async function main() {
     await r6Live.page.waitForSelector(`[data-testid="finding-row-${r6LiveFinding.id}"]`, {
       timeout: 30000,
     });
+    // The BOP (instructions) lane is visible with the assembly-chapter
+    // evidence: the lane element exists, its label is the committed English
+    // one, and its drawn nodes are exactly the layout's BOP nodes.
+    assert(
+      (await r6Live.page.locator('[data-testid="process-lane-bop"]').count()) === 1,
+      'the R6 hero shot draws no BOP (instructions) lane for its assembly-chapter evidence',
+    );
+    const r6LiveBopState = await r6Live.page.evaluate(() => ({
+      laneLabel:
+        document.querySelector('[data-testid="process-lane-bop"]')?.textContent?.trim() ?? '',
+      laneNodes: [
+        ...document.querySelectorAll('[data-testid="process-lanes"] [data-node-id]'),
+      ]
+        .map((element) => element.getAttribute('data-node-id') ?? '')
+        .filter((id) => id.startsWith('chapter:') || id.startsWith('usage:assembly:'))
+        .sort(),
+    }));
+    assert(
+      r6LiveBopState.laneLabel === 'BOP (instructions)',
+      `the R6 hero shot shows the BOP lane label ${JSON.stringify(r6LiveBopState.laneLabel)}`,
+    );
+    assert(
+      JSON.stringify(r6LiveBopState.laneNodes) === JSON.stringify(r6LiveBopNodes),
+      `the R6 hero shot draws BOP nodes ${JSON.stringify(r6LiveBopState.laneNodes)}, ` +
+        `expected ${JSON.stringify(r6LiveBopNodes)}`,
+    );
     // The reveal scrolls the finding view smoothly, so wait for it to settle
     // at the top of the viewport before reading any bounding rect.
     await r6Live.page.waitForFunction(
@@ -2908,6 +2973,10 @@ async function main() {
       selectedNode: r6LiveState.node.id,
       primaryIntent: r6LiveState.primary?.intent ?? null,
       hiddenIntents: r6LiveState.rest?.queries ?? null,
+      bopLane: {
+        laneLabel: r6LiveBopState.laneLabel,
+        nodes: r6LiveBopState.laneNodes,
+      },
       paneBottom: Number(r6LiveState.pane.bottom.toFixed(2)),
       rowTop: Number(r6LiveState.row.top.toFixed(2)),
       scrolledPaneTop: Number(r6LiveScrolled.pane.top.toFixed(2)),

@@ -32,7 +32,8 @@ const en = {
     'The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for ' +
     '40mm Nut Bar disagree by 4 for standard.',
   sampleSummaryR6PowerSupply:
-    'The Change Log links "Power Supply", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, ' +
+    'The Change Log links "Power Supply", but v1.7/assembly/electronics.md, ' +
+    'v1.7/extras/maintenance/storing-farmbot-for-winter.md, ' +
     'v1.7/manufacturing/packing/power-supply.md still list it.',
   sampleSummaryR8ShaftCoupler:
     'Shaft Coupler is named on v1.7/extras/troubleshooting/z-axis-movements.md but no assembly ' +
@@ -179,7 +180,7 @@ const en = {
     'R4 · A part is packed but not referenced by an assembly chapter or pre-assembly',
   checkR5Label: 'R5 · A pre-assembly page has no machine-readable parts table',
   checkR6Label:
-    'R6 · A name changed or removed in the Change Log still appears in packing or service pages',
+    'R6 · A name changed or removed in the Change Log still appears in an assembly chapter, packing list or service page',
   checkR7Label:
     'R7 · A changed part reaches no assembly chapter, pre-assembly, packing list or service page',
   checkR8Label:
@@ -271,8 +272,9 @@ const ja: Record<keyof typeof en, string> = {
     'v1.7/manufacturing/packing/hardware-kit.md の梱包リストと 40mm Nut Bar の部品ページでは ' +
     'standard の数量が 4 だけ異なります。',
   sampleSummaryR6PowerSupply:
-    '"Power Supply" は変更ログで変更または削除されましたが、v1.7/extras/maintenance/storing-farmbot-for-winter.md、' +
-    'v1.7/manufacturing/packing/power-supply.md に依然として記載されています。',
+    '"Power Supply" は変更ログで変更または削除されましたが、v1.7/assembly/electronics.md、' +
+    'v1.7/extras/maintenance/storing-farmbot-for-winter.md、v1.7/manufacturing/packing/power-supply.md ' +
+    'に依然として記載されています。',
   sampleSummaryR8ShaftCoupler:
     'Shaft Coupler は v1.7/extras/troubleshooting/z-axis-movements.md で名前が挙がっていますが、' +
     '組立チャプタからもプリ組立からも参照されていません。',
@@ -421,7 +423,8 @@ const ja: Record<keyof typeof en, string> = {
   checkR3Label: 'R3 · どの工程からも参照されない部品',
   checkR4Label: 'R4 · 梱包されているが組立チャプタにもプリ組立にも参照されない部品',
   checkR5Label: 'R5 · 機械可読の部品表がないプリ組立ページ',
-  checkR6Label: 'R6 · 変更ログで変更・削除された名前が梱包やサービスページに残っている',
+  checkR6Label:
+    'R6 · 変更ログで変更・削除された名前が組立チャプタ・梱包リスト・サービスページに残っている',
   checkR7Label: 'R7 · 組立チャプタ・プリ組立・梱包リスト・サービスページのどれにも到達しない変更部品',
   checkR8Label: 'R8 · サービスページが挙げる部品が組立チャプタとプリ組立にない',
   checkR9Label: 'R9 · サービスページの参照が部品に解決できない',

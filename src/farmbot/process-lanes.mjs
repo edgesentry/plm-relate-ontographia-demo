@@ -214,10 +214,11 @@ export function orderEvidenceRows(finding) {
  *   edge from the part to the BOP lane.
  * - R5: no edges; the page node stands alone.
  * - R6: the design change → the part (fact) or → the matching downstream rows
- *   (inferred); the part → each packing line and service reference that
- *   resolves to it or, when the finding has one part, each unmatched row; a
- *   packing line → its packing structure, joined by the shared source file; a
- *   service reference → its service page, joined by the shared source file.
+ *   (inferred); the part → each packing line and service or assembly reference
+ *   that resolves to it or, when the finding has one part, each unmatched row;
+ *   a packing line → its packing structure, an assembly reference → its
+ *   assembly chapter and a service reference → its service page, each joined by
+ *   the shared source file.
  * - R7: the design change → the part, plus a missing edge from the part to the
  *   BOP, packing and service lanes.
  * - R8: the part → each service reference → its service page and → each
@@ -306,10 +307,12 @@ export function edgesForFinding(finding) {
     const structures = uniqueNodeIds(rows, 'packing-structure');
     const references = uniqueNodeIds(rows, 'reference');
     const services = uniqueNodeIds(rows, 'service');
+    const chapters = uniqueNodeIds(rows, 'structure');
     const lineFiles = sourceFilesByNodeId(rows, 'packing-line');
     const structureFiles = sourceFilesByNodeId(rows, 'packing-structure');
     const referenceFiles = sourceFilesByNodeId(rows, 'reference');
     const serviceFiles = sourceFilesByNodeId(rows, 'service');
+    const chapterFiles = sourceFilesByNodeId(rows, 'structure');
 
     // The usage row records which part it resolved to, so a part-to-usage link
     // is drawn only when that row names it.
@@ -357,6 +360,11 @@ export function edgesForFinding(finding) {
       }
     }
     for (const reference of references) {
+      for (const chapter of chapters) {
+        if (sharesSourceFile(chapterFiles.get(chapter), referenceFiles.get(reference))) {
+          add(reference, chapter);
+        }
+      }
       for (const service of services) {
         if (sharesSourceFile(serviceFiles.get(service), referenceFiles.get(reference))) {
           add(reference, service);

@@ -127,6 +127,7 @@ const en = {
   evidenceSourceLabel: 'Source file',
   evidenceLineLabel: 'Line',
   evidenceQueriesLabel: 'Intent, Cypher and parameters',
+  evidenceShowRestLabel: 'Show all check Intents',
   evidenceSelect: 'Select node',
   processLanesHeading: 'Process lanes',
   processLanesHelp:
@@ -370,6 +371,7 @@ const ja: Record<keyof typeof en, string> = {
   evidenceSourceLabel: 'ソースファイル',
   evidenceLineLabel: '行',
   evidenceQueriesLabel: 'Intent・Cypher・パラメータ',
+  evidenceShowRestLabel: 'すべてのチェック Intent を表示',
   evidenceSelect: 'ノードを選択',
   processLanesHeading: 'プロセスレーン',
   processLanesHelp:

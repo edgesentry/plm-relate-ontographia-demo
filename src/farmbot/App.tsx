@@ -26,6 +26,7 @@ import {
   findingCountermeasures,
   orderFindings,
   parseFindingHash,
+  splitEvidenceQueries,
   summaryLine,
   visibleFindings,
 } from './findings-view.mjs';
@@ -1091,6 +1092,7 @@ export function App() {
                     row.line,
                   ]);
                   const rowSelected = selectedEvidence.includes(index);
+                  const { primary, rest } = splitEvidenceQueries(row, row.queries);
                   return (
                     <li
                       key={identity}
@@ -1141,18 +1143,43 @@ export function App() {
                       </ul>
                       <details className="evidence-queries">
                         <summary>{t('evidenceQueriesLabel')}</summary>
-                        {row.queries.map((query: FindingQuery) => (
-                          <div key={query.intent} className="evidence-query">
+                        {primary !== null && (
+                          <div
+                            className="evidence-query evidence-query-primary"
+                            data-testid="evidence-query-primary"
+                          >
                             <p>
-                              <strong>{t('intentLabel')}</strong>: <code>{query.intent}</code>
+                              <strong>{t('intentLabel')}</strong>: <code>{primary.intent}</code>
                             </p>
-                            <pre>{query.cypher}</pre>
+                            <pre>{primary.cypher}</pre>
                             <p>
                               <strong>{t('paramsLabel')}</strong>
                             </p>
-                            <pre>{JSON.stringify(query.params, null, 2)}</pre>
+                            <pre>{JSON.stringify(primary.params, null, 2)}</pre>
                           </div>
-                        ))}
+                        )}
+                        {rest.length > 0 && (
+                          <details
+                            className="evidence-queries-rest"
+                            data-testid="evidence-queries-rest"
+                          >
+                            <summary>
+                              {t('evidenceShowRestLabel')} ({rest.length})
+                            </summary>
+                            {rest.map((query: FindingQuery) => (
+                              <div key={query.intent} className="evidence-query">
+                                <p>
+                                  <strong>{t('intentLabel')}</strong>: <code>{query.intent}</code>
+                                </p>
+                                <pre>{query.cypher}</pre>
+                                <p>
+                                  <strong>{t('paramsLabel')}</strong>
+                                </p>
+                                <pre>{JSON.stringify(query.params, null, 2)}</pre>
+                              </div>
+                            ))}
+                          </details>
+                        )}
                       </details>
                       <button
                         type="button"

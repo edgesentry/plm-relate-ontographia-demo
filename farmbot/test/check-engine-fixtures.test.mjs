@@ -374,6 +374,21 @@ test('collectFindings and the oracle agree on the collision and channel scope', 
         part: node(teePart),
       },
     ],
+    // A second assembly chapter whose usage line resolves to no part, so the
+    // unmatched assembly-chapter loop of `collectFindings` runs too: the
+    // display name still collides with the changed part, so the fact finding
+    // cites this chapter exactly as the oracle's promoted row does.
+    'r2-assembly-unmatched.json': [
+      {
+        structure: node({ id: 'chapter:electronics.md', path: 'electronics.md', title: 'Electronics' }),
+        usage: node({
+          id: 'usage:assembly:electronics.md@9',
+          display_name: 'tee nuts',
+          match_method: 'unmatched',
+          line_number: 21,
+        }),
+      },
+    ],
     'refs-kit.json': [
       {
         structure: node({ id: 'container:fileA.md', path: 'fileA.md', title: 'Kit A' }),
@@ -447,22 +462,41 @@ test('collectFindings and the oracle agree on the collision and channel scope', 
         .map((row) => row.sourceFile),
     ),
   ].sort();
-  assert.deepEqual(files, ['fileA.md', 'fileB.md', 'tracks.md']);
+  assert.deepEqual(files, ['electronics.md', 'fileA.md', 'fileB.md', 'tracks.md']);
   // The assembly-chapter channel cites the chapter as a structure row and its
-  // usage line as a reference row, so both land on the BOP lane.
+  // usage line as a reference row, so both land on the BOP lane: one linked
+  // chapter and one unmatched chapter that still collides with the part.
   const chapterRows = finding.evidence.filter((row) => row.role === 'structure');
-  assert.equal(chapterRows.length, 1, 'the fixture must cite one assembly chapter');
   assert.equal(
-    chapterRows[0].nodeId,
-    'chapter:tracks.md',
-    'the cited structure row is not the assembly chapter',
+    chapterRows.length,
+    2,
+    'the fixture must cite the linked and the unmatched assembly chapter',
+  );
+  assert.deepEqual(
+    chapterRows.map((row) => row.nodeId).sort(),
+    ['chapter:electronics.md', 'chapter:tracks.md'],
+    'the cited structure rows are not the two assembly chapters',
   );
   assert.ok(
     finding.evidence.some(
       (row) =>
         row.role === 'reference' && row.nodeId === 'usage:assembly:tracks.md@1',
     ),
-    'the fixture cites no assembly-chapter usage row',
+    'the fixture cites no linked assembly-chapter usage row',
+  );
+  const unmatchedAssemblyRow = finding.evidence.find(
+    (row) => row.role === 'reference' && row.nodeId === 'usage:assembly:electronics.md@9',
+  );
+  assert.ok(unmatchedAssemblyRow, 'the fixture cites no unmatched assembly-chapter usage row');
+  assert.equal(
+    unmatchedAssemblyRow.facts.matchMethod,
+    'unmatched',
+    'the unmatched assembly usage row is not recorded as unmatched',
+  );
+  assert.equal(
+    unmatchedAssemblyRow.facts.resolvedPart,
+    null,
+    'the unmatched assembly usage row resolved a part',
   );
   for (const row of finding.evidence) {
     const nodeId = String(row.nodeId);
@@ -484,7 +518,10 @@ test('collectFindings and the oracle agree on the collision and channel scope', 
     ],
     [['Changed', 4, 'Tee Nuts', 'Tee Nuts']],
     [],
-    [['tracks.md', 'Tee Nuts', 'Tee Nuts']],
+    [
+      ['tracks.md', 'Tee Nuts', 'Tee Nuts'],
+      ['electronics.md', 'tee nuts', null],
+    ],
   );
   const actual = files.map((sourceFile) => ({
     inferred: finding.inferred,

@@ -313,7 +313,14 @@
 /* Finding view at desktop widths: the lane pane and the evidence list share the
    viewport, so a row selection and its node highlight stay in one frame while
    the operator reads or films the evidence. Below that width the pane stacks
-   above the evidence list, as before. */
+   above the evidence list, as before.
+
+   The lane column honors the pane's own minimum (the natural diagram width the
+   component reports inline, capped at 60vw), so a five-lane hero renders at
+   its natural 148px lanes instead of being scaled into about half a column,
+   while a two- or three-lane finding keeps the compact 2fr column because its
+   natural width is below the fr share. The evidence column keeps `min-width: 0`
+   and absorbs what the wider diagram needs, never past the viewport. */
 
 .finding-live-evidence {
   min-width: 0;
@@ -322,7 +329,7 @@
 @media (min-width: 1024px) {
   .finding-live {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: minmax(min-content, 2fr) minmax(0, 3fr);
     column-gap: 1.5rem;
     align-items: start;
   }

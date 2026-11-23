@@ -152,6 +152,13 @@
 .sample-card-summary {
   margin: 0;
   font-size: 0.9rem;
+  /* Cap the summary so the 1280x800 landing fold still holds when CI
+     fonts wrap the longer R6 card (assembly, packing, and service paths).
+     The full text stays in the element; the finding view lists every file. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .sample-card-link-row {

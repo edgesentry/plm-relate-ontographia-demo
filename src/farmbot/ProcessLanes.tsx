@@ -1,12 +1,20 @@
 // Hand-built SVG process-lane diagram for one finding.
 //
-// The geometry comes from `layoutFinding` in `./process-lanes.mjs`; this
-// component only draws it. Styling is classes plus React attributes (no
-// `<style>` element, no HTML strings), so the page keeps `style-src 'self'`.
-// Every node carries `data-` attributes for the browser smoke.
+// The geometry and the fitted node text come from `layoutFinding` and its
+// text helpers in `./process-lanes.mjs`; this component only draws them.
+// Styling is classes plus React attributes (no `<style>` element, no HTML
+// strings), so the page keeps `style-src 'self'`. Every node carries `data-`
+// attributes for the browser smoke.
 
 import type { MessageKey } from './i18n';
-import { LANES, layoutFinding } from './process-lanes.mjs';
+import {
+  LABEL_SIZE,
+  LANES,
+  META_SIZE,
+  clip,
+  fitMeta,
+  layoutFinding,
+} from './process-lanes.mjs';
 import type { Finding } from './types';
 
 /** Every lane id maps to its label, drawn or not (a missing link points at a hidden lane). */
@@ -78,16 +86,6 @@ interface ProcessLanesProps {
   t: (key: MessageKey) => string;
 }
 
-const LABEL_SIZE = 5.9;
-const META_SIZE = 4.9;
-
-/** Cut text to the node width; the full value stays in the `<title>`. */
-function clip(value: string, nodeWidth: number, charWidth: number): string {
-  const max = Math.max(6, Math.floor((nodeWidth - 16) / charWidth));
-  if (value.length <= max) return value;
-  return `${value.slice(0, Math.max(1, max - 1))}…`;
-}
-
 export function ProcessLanes({
   finding,
   selectedEvidence,
@@ -132,7 +130,16 @@ export function ProcessLanes({
   );
 
   return (
-    <section className="process-lanes" data-testid="process-lanes">
+    // The pane asks the finding-live grid for the layout's natural width, so
+    // a five-lane hero renders one to one instead of being scaled into half a
+    // column. `min(..., 60vw)` caps the ask on narrower desktop screens so the
+    // evidence list keeps its share, and below the 1024px split the pane is
+    // already wider than 60vw, which leaves the stacked flow unchanged.
+    <section
+      className="process-lanes"
+      data-testid="process-lanes"
+      style={{ minWidth: `min(${layout.width}px, 60vw)` }}
+    >
       <h3>{t('processLanesHeading')}</h3>
       <p className="muted small">{t('processLanesHelp')}</p>
       <p className="muted small">{t('lanesSelectHint')}</p>
@@ -274,7 +281,7 @@ export function ProcessLanes({
                   {clip(node.label, node.width, LABEL_SIZE)}
                 </text>
                 <text className="process-node-meta" x={node.x + 8} y={node.y + 29}>
-                  {clip(node.meta, node.width, META_SIZE)}
+                  {fitMeta(node.meta, node.width, META_SIZE)}
                 </text>
                 {node.pdfOnly && node.quantities.length === 0 && (
                   <text

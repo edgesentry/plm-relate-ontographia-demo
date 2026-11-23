@@ -65,7 +65,7 @@ export const SCENARIO_DIRECTIONS = Object.freeze({
     'process-to-design',
     'packing-to-process',
   ]),
-  designChange: Object.freeze(['design-to-packing-service', 'design-to-downstream']),
+  designChange: Object.freeze(['design-to-downstream']),
   service: Object.freeze(['service-to-design']),
   coverage: Object.freeze(['design-to-process', 'all-to-document']),
 });

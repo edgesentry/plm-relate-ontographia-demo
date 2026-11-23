@@ -39,7 +39,7 @@ const FINDINGS_DIGEST_PATH = `${FINDINGS_PATH}.sha256`;
 // canonical findings bytes must fail this test even if the sidecar is rewritten
 // to match, so the expected digest is never recomputed from the current file.
 const PINNED_FINDINGS_DIGEST =
-  'farmbot-findings-v1 sha256:cd1496f3e3708e4139ce2737b22bec73d58bbab323573319caf2109ff2b61fe0';
+  'farmbot-findings-v1 sha256:7bb1a0fd6c1f2a3fc645ce833c94346c32fc53b3514aff53b41cb47690fcdb28';
 
 const findingsText = readFileSync(FINDINGS_PATH, 'utf8');
 const document = JSON.parse(findingsText);
@@ -95,7 +95,10 @@ function summaryInputs(finding) {
       return [page.sourceFile];
     case 'R6': {
       const files = finding.evidence
-        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .filter(
+          (row) =>
+            row.role === 'packing-structure' || row.role === 'service' || row.role === 'structure',
+        )
         .map((row) => row.sourceFile);
       return [finding.subject.label, ...new Set(files)];
     }
@@ -409,7 +412,10 @@ function bodyInputs(finding) {
         .filter((row) => row.role === 'design-change')
         .map((row) => row.facts.section);
       const files = finding.evidence
-        .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+        .filter(
+          (row) =>
+            row.role === 'packing-structure' || row.role === 'service' || row.role === 'structure',
+        )
         .map((row) => row.sourceFile);
       return [finding.subject.label, ...new Set(sections), ...new Set(files)];
     }

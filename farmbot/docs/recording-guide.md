@@ -79,7 +79,7 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   - Explanation: `sampleIntro` ("Each card is a sample of a notification email, not a sent one...").
   - Four visible sample notification cards (`R1-40mm-nut-bar-standard`, `R6-power-supply`, `R8-shaft-coupler`, `R3-fuse`).
   - Each card displays badge `sampleCardLabel` ("Sample"), scenario label `sampleScenarioLabel`, and open link `sampleOpenFinding` ("Open the finding").
-  - Card 2 displays `sampleSummaryR6PowerSupply` ("The Change Log links 'Power Supply', but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it.").
+  - Card 2 displays `sampleSummaryR6PowerSupply` ("The Change Log links 'Power Supply', but v1.7/assembly/electronics.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it.").
 - **English Voiceover Line:**
   > "A reviewer can start from a notification and go straight to the evidence, without leaving the tab."
 - **Target Timing:** 12 seconds
@@ -95,13 +95,13 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   3. Cursor points to the finding header, rule description, and the downstream evidence table.
 - **On-Screen Requirements:**
   - Finding heading: `findingHeading` ("Finding"), `findingIdLabel` ("Finding ID: R6-power-supply").
-  - Rule details: `ruleLabel` ("Rule"), severity badge `severityReview` ("Check"), and rule title `checkR6Label` ("R6 · A name changed or removed in the Change Log still appears in packing or service pages").
+  - Rule details: `ruleLabel` ("Rule"), severity badge `severityReview` ("Check"), and rule title `checkR6Label` ("R6 · A name changed or removed in the Change Log still appears in an assembly chapter, packing list or service page").
   - Findings verification notice: `findingsMatch` ("The browser result matches the committed findings").
-  - Evidence table (`evidenceHeading`: "Evidence") displaying rows with roles: `design-change`, `part`, `packing-line`, `packing-structure`, and `service`.
+  - Evidence table (`evidenceHeading`: "Evidence") displaying rows with roles: `design-change`, `part`, `structure`, `reference`, `packing-line`, `packing-structure`, and `service`.
   - Column headers: `evidenceRoleLabel` ("Role"), `evidenceNodeLabel` ("Seed node"), `evidenceSourceLabel` ("Source file"), `evidenceLineLabel` ("Line").
-  - Exact source files visible: `v1.7/extras/maintenance/storing-farmbot-for-winter.md` and `v1.7/manufacturing/packing/power-supply.md`.
+  - Exact source files visible: `v1.7/assembly/electronics.md`, `v1.7/extras/maintenance/storing-farmbot-for-winter.md`, and `v1.7/manufacturing/packing/power-supply.md`.
 - **English Voiceover Line:**
-  > "The Change Log changed this part. The checks do not take the Change Log's word for it: the finding starts in the design-change lane and asks where the changed part still appears. The changed part still appears in a packing list and on a service page. Each evidence row names the source file and, where the source has one, the line."
+  > "The Change Log changed this part. The checks do not take the Change Log's word for it: the finding starts in the design-change lane and asks where the changed part still appears. The changed part still appears in an assembly chapter, in a packing list and on a service page. Each evidence row names the source file and, where the source has one, the line."
 - **Target Timing:** 18 seconds
 - **Cut Point:** Right after the camera showcases the source file path and line numbers in the evidence table.
 
@@ -116,7 +116,8 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   4. Click to expand "Intent, Cypher and parameters" (`evidenceQueriesLabel`) on that evidence row.
 - **On-Screen Requirements:**
   - Diagram title: `processLanesHeading` ("Process lanes").
-  - Four active swimlanes visible: `laneDesignChange` ("Design change"), `laneEbomPart` ("EBOM part"), `lanePacking` ("Packing"), and `laneService` ("Service").
+  - Five active swimlanes visible: `laneDesignChange` ("Design change"), `laneEbomPart` ("EBOM part"), `laneBop` ("BOP (instructions)"), `lanePacking` ("Packing"), and `laneService` ("Service").
+  - In `laneBop`, the assembly chapter `chapter:v1.7/assembly/electronics.md` is rendered with display text `Electronics`, next to its `usage:assembly:` reference nodes for `power supply`. The lane is the documented instruction structure the evidence cites, not a factory routing.
   - Legend items: `lanesLegendProblem` ("Problem"), `lanesLegendPath` ("Impacted path"), and `lanesLegendMissing` ("Missing link").
   - Reciprocal highlight active between SVG nodes and table rows (`aria-pressed="true"`).
   - Expanded query block showing:
@@ -124,7 +125,7 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
     - Executed Cypher query text block (`executedCypherLabel`: "Executed Cypher", showing `CYPHER 25 ...`).
     - Bound parameters block (`paramsLabel`: "Bound parameters", showing JSON parameter map).
 - **English Voiceover Line:**
-  > "The diagram is built only from this finding's evidence rows. The highlighted nodes are the problem nodes, and the highlighted links between them are the impacted path. The path runs from the design-change lane through the EBOM part lane to packing and service. Every evidence row carries the Intent, the executed Cypher, and the bound parameters that produced it."
+  > "The diagram is built only from this finding's evidence rows. The highlighted nodes are the problem nodes, and the highlighted links between them are the impacted path. The path runs from the design-change lane through the EBOM part lane to the BOP (instructions) lane, packing and service. Every evidence row carries the Intent, the executed Cypher, and the bound parameters that produced it."
 - **Target Timing:** 18 seconds
 - **Cut Point:** As the executed Cypher block and bound parameters are clearly displayed on screen.
 

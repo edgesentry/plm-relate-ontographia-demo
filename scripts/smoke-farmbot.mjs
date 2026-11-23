@@ -2649,11 +2649,17 @@ async function main() {
     };
 
     // Lane liveness at the filming viewport: open the R6 deep link at
-    // 1280x800, select the packing evidence row with its Select node control,
-    // and expand that row's Intent, Cypher and parameters block. The lane pane
-    // and the selected node must stay inside the 0..800 viewport in the same
-    // frame as the row, the pane must be sticky beside the evidence column,
-    // and the reveal and the selection must show their in-place motion.
+    // 1280x800, check that the BOP (instructions) lane is drawn with the
+    // assembly-chapter evidence the finding now cites, select the packing
+    // evidence row with its Select node control, and expand that row's Intent,
+    // Cypher and parameters block. The lane pane and the selected node must
+    // stay inside the 0..800 viewport in the same frame as the row, the pane
+    // must be sticky beside the evidence column, and the reveal and the
+    // selection must show their in-place motion. The shot must also read as a
+    // recording frame: the diagram renders at its natural width, every lane
+    // box and lane title stays whole inside the viewport, no BOP card text is
+    // truncated, and the three assembly usage cards are told apart by their
+    // line numbers.
     const r6LiveFinding = findings.find((finding) => finding.id === 'R6-power-supply');
     assert(r6LiveFinding, 'the committed file has no R6-power-supply finding');
     const r6LiveRows = orderEvidenceRows(r6LiveFinding);
@@ -2664,6 +2670,43 @@ async function main() {
       r6LiveLayout.edges.some((edge) => edge.onPath),
       `${r6LiveFinding.id} has no on-path edge to animate`,
     );
+    // The hero finding cites the assembly chapter the committed seed links to
+    // its part, so the diagram must draw the BOP lane with that chapter and
+    // its usage rows, exactly as the layout computes them.
+    const r6ChapterRows = r6LiveFinding.evidence.filter(
+      (row) => row.role === 'structure' && String(row.nodeId).startsWith('chapter:'),
+    );
+    assert(
+      r6ChapterRows.length === 1,
+      `${r6LiveFinding.id} cites ${r6ChapterRows.length} assembly chapters, expected the one linked chapter`,
+    );
+    assert(
+      r6ChapterRows[0].sourceFile === 'v1.7/assembly/electronics.md',
+      `${r6LiveFinding.id} cites an unexpected assembly chapter: ` +
+        `${JSON.stringify(r6ChapterRows[0].sourceFile)}`,
+    );
+    const r6AssemblyReferences = r6LiveFinding.evidence.filter(
+      (row) => row.role === 'reference' && String(row.nodeId).startsWith('usage:assembly:'),
+    );
+    assert(
+      r6AssemblyReferences.length > 0,
+      `${r6LiveFinding.id} cites no assembly-chapter usage rows`,
+    );
+    const r6LiveBopNodes = r6LiveLayout.nodes
+      .filter((node) => node.lane === 'bop')
+      .map((node) => node.id)
+      .sort();
+    assert(
+      r6LiveBopNodes.length === r6ChapterRows.length + r6AssemblyReferences.length,
+      `${r6LiveFinding.id} draws ${r6LiveBopNodes.length} BOP nodes for ` +
+        `${r6ChapterRows.length + r6AssemblyReferences.length} cited assembly rows`,
+    );
+    for (const row of [...r6ChapterRows, ...r6AssemblyReferences]) {
+      assert(
+        r6LiveBopNodes.includes(row.nodeId),
+        `${r6LiveFinding.id} draws no BOP node for ${row.nodeId}`,
+      );
+    }
     const r6Live = await prepareContext(browser, 'process-lanes-r6-live', {
       width: 1280,
       height: 800,
@@ -2678,6 +2721,35 @@ async function main() {
     await r6Live.page.waitForSelector(`[data-testid="finding-row-${r6LiveFinding.id}"]`, {
       timeout: 30000,
     });
+    // The BOP (instructions) lane is visible with the assembly-chapter
+    // evidence: the lane element exists, its label is the committed English
+    // one, and its drawn nodes are exactly the layout's BOP nodes.
+    assert(
+      (await r6Live.page.locator('[data-testid="process-lane-bop"]').count()) === 1,
+      'the R6 hero shot draws no BOP (instructions) lane for its assembly-chapter evidence',
+    );
+    const r6LiveBopState = await r6Live.page.evaluate(() => ({
+      laneLabel:
+        document.querySelector('[data-testid="process-lane-bop"]')?.textContent?.trim() ?? '',
+      // `ProcessLanes` stamps every node group with its lane, so the BOP
+      // nodes are collected by `data-lane`, not by id prefixes: a BOP lane
+      // can also hold `preassembly:` rows, and no other lane's node may leak
+      // into the comparison with the layout's BOP nodes.
+      laneNodes: [
+        ...document.querySelectorAll('[data-testid="process-lanes"] [data-node-id][data-lane="bop"]'),
+      ]
+        .map((element) => element.getAttribute('data-node-id') ?? '')
+        .sort(),
+    }));
+    assert(
+      r6LiveBopState.laneLabel === 'BOP (instructions)',
+      `the R6 hero shot shows the BOP lane label ${JSON.stringify(r6LiveBopState.laneLabel)}`,
+    );
+    assert(
+      JSON.stringify(r6LiveBopState.laneNodes) === JSON.stringify(r6LiveBopNodes),
+      `the R6 hero shot draws BOP nodes ${JSON.stringify(r6LiveBopState.laneNodes)}, ` +
+        `expected ${JSON.stringify(r6LiveBopNodes)}`,
+    );
     // The reveal scrolls the finding view smoothly, so wait for it to settle
     // at the top of the viewport before reading any bounding rect.
     await r6Live.page.waitForFunction(
@@ -2725,6 +2797,149 @@ async function main() {
         r6Reveal.paneRect.bottom <= 800,
       `the lane pane is outside 0..800 on reveal: ${JSON.stringify(r6Reveal.paneRect)}`,
     );
+
+    // Recording-frame readability of the 1280x800 hero shot (#123 Visual QA):
+    // the diagram renders at its natural width, every lane box stays inside
+    // the viewport, no lane title or BOP card text is truncated, and the three
+    // assembly usage cards are told apart by their line numbers. SVG `<text>`
+    // has no scrollWidth/clientWidth, so the fit is measured with
+    // `getComputedTextLength()` in SVG user units against the box `width`
+    // attributes, which the rendered scale never changes.
+    const r6HeroFrame = await r6Live.page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="process-lanes"]');
+      const svg = pane?.querySelector('svg') ?? null;
+      const svgRect = svg?.getBoundingClientRect() ?? null;
+      const lanes = [...(pane?.querySelectorAll('[data-testid^="process-lane-"]') ?? [])].map(
+        (lane) => {
+          const bg = lane.querySelector('.process-lane-bg');
+          const title = lane.querySelector('.process-lane-title');
+          const rect = lane.getBoundingClientRect();
+          return {
+            id: lane.getAttribute('data-testid') ?? '',
+            title: title?.textContent ?? '',
+            titleLength: title ? title.getComputedTextLength() : null,
+            laneWidth: bg ? Number(bg.getAttribute('width')) : null,
+            rect: {
+              left: rect.left,
+              right: rect.right,
+              top: rect.top,
+              bottom: rect.bottom,
+            },
+          };
+        },
+      );
+      const bopNodes = [
+        ...(pane?.querySelectorAll('[data-node-id][data-lane="bop"]') ?? []),
+      ].map((group) => {
+        const box = group.querySelector('.process-node-box');
+        const label = group.querySelector('.process-node-label');
+        const meta = group.querySelector('.process-node-meta');
+        return {
+          id: group.getAttribute('data-node-id') ?? '',
+          visible: [...group.querySelectorAll('text')]
+            .map((text) => text.textContent ?? '')
+            .join(' ')
+            .trim(),
+          label: label?.textContent ?? '',
+          meta: meta?.textContent ?? '',
+          labelLength: label ? label.getComputedTextLength() : null,
+          metaLength: meta ? meta.getComputedTextLength() : null,
+          boxWidth: box ? Number(box.getAttribute('width')) : null,
+        };
+      });
+      return {
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        svgWidth: svgRect ? svgRect.width : null,
+        viewBoxWidth: svg ? Number((svg.getAttribute('viewBox') ?? '').split(/\s+/)[2]) : null,
+        lanes,
+        bopNodes,
+      };
+    });
+    assert(
+      r6HeroFrame.viewport.width === 1280 && r6HeroFrame.viewport.height === 800,
+      `the hero frame viewport is ${JSON.stringify(r6HeroFrame.viewport)}`,
+    );
+    // The natural width the pane asks the grid for: rendered one to one, each
+    // of the five hero lanes is the natural 148px wide instead of about 88px.
+    assert(
+      typeof r6HeroFrame.svgWidth === 'number' &&
+        Math.abs(r6HeroFrame.svgWidth - r6LiveLayout.width) <= 1,
+      `the hero diagram renders ${r6HeroFrame.svgWidth}px wide, expected the natural ` +
+        `${r6LiveLayout.width}px at 1280x800`,
+    );
+    assert(
+      r6HeroFrame.lanes.length === r6LiveLayout.lanes.length,
+      `the hero shot draws ${r6HeroFrame.lanes.length} lane boxes, expected ` +
+        `${r6LiveLayout.lanes.length}`,
+    );
+    for (const lane of r6HeroFrame.lanes) {
+      assert(
+        lane.rect.left >= -1 &&
+          lane.rect.right <= 1281 &&
+          lane.rect.top >= -1 &&
+          lane.rect.bottom <= 801,
+        `the lane box ${lane.id} leaves the 1280x800 viewport: ${JSON.stringify(lane.rect)}`,
+      );
+      assert(
+        !lane.title.endsWith('…') && !lane.title.endsWith('...'),
+        `the lane title ${JSON.stringify(lane.title)} is truncated`,
+      );
+      assert(
+        lane.titleLength !== null &&
+          lane.laneWidth !== null &&
+          lane.titleLength <= lane.laneWidth + 1,
+        `the lane title ${JSON.stringify(lane.title)} needs ${lane.titleLength} of ` +
+          `${lane.laneWidth} SVG units`,
+      );
+    }
+    for (const node of r6HeroFrame.bopNodes) {
+      assert(
+        !node.label.endsWith('…') &&
+          !node.label.endsWith('...') &&
+          !node.meta.endsWith('…') &&
+          !node.meta.endsWith('...'),
+        `the BOP node ${node.id} shows truncated text: ${JSON.stringify(node)}`,
+      );
+      assert(
+        node.labelLength !== null &&
+          node.boxWidth !== null &&
+          8 + node.labelLength <= node.boxWidth + 1,
+        `the BOP node ${node.id} label needs ${8 + Number(node.labelLength)} of ` +
+          `${node.boxWidth} SVG units`,
+      );
+      assert(
+        node.metaLength !== null &&
+          node.boxWidth !== null &&
+          8 + node.metaLength <= node.boxWidth + 1,
+        `the BOP node ${node.id} meta needs ${8 + Number(node.metaLength)} of ` +
+          `${node.boxWidth} SVG units`,
+      );
+    }
+    const r6HeroUsageCards = r6HeroFrame.bopNodes.filter((node) =>
+      node.id.startsWith('usage:assembly:'),
+    );
+    assert(
+      r6HeroUsageCards.length === r6AssemblyReferences.length,
+      `the hero shot draws ${r6HeroUsageCards.length} assembly usage cards, expected ` +
+        `${r6AssemblyReferences.length}`,
+    );
+    const r6HeroUsageTexts = r6HeroUsageCards.map((node) => node.visible);
+    assert(
+      new Set(r6HeroUsageTexts).size === r6HeroUsageTexts.length,
+      `the assembly usage cards show identical text: ${JSON.stringify(r6HeroUsageTexts)}`,
+    );
+    for (const node of r6HeroUsageCards) {
+      const row = r6AssemblyReferences.find((candidate) => candidate.nodeId === node.id);
+      assert(row, `the committed evidence cites no row for the usage card ${node.id}`);
+      assert(
+        typeof row.line === 'number',
+        `the usage row of ${node.id} records no line number`,
+      );
+      assert(
+        node.meta.endsWith(`:${row.line}`),
+        `the usage card ${node.id} shows no line number: ${JSON.stringify(node.visible)}`,
+      );
+    }
 
     await r6Live.page
       .locator(
@@ -2908,6 +3123,22 @@ async function main() {
       selectedNode: r6LiveState.node.id,
       primaryIntent: r6LiveState.primary?.intent ?? null,
       hiddenIntents: r6LiveState.rest?.queries ?? null,
+      bopLane: {
+        laneLabel: r6LiveBopState.laneLabel,
+        nodes: r6LiveBopState.laneNodes,
+      },
+      heroFrame: {
+        svgWidth: typeof r6HeroFrame.svgWidth === 'number'
+          ? Number(r6HeroFrame.svgWidth.toFixed(2))
+          : null,
+        naturalWidth: r6LiveLayout.width,
+        lanes: r6HeroFrame.lanes.map((lane) => ({
+          id: lane.id,
+          title: lane.title,
+          right: Number(lane.rect.right.toFixed(2)),
+        })),
+        usageCards: r6HeroUsageTexts,
+      },
       paneBottom: Number(r6LiveState.pane.bottom.toFixed(2)),
       rowTop: Number(r6LiveState.row.top.toFixed(2)),
       scrolledPaneTop: Number(r6LiveScrolled.pane.top.toFixed(2)),

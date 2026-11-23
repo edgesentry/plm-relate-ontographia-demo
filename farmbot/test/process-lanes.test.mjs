@@ -14,9 +14,16 @@ import { test } from 'node:test';
 import { evidenceRows } from '../../src/farmbot/findings-view.mjs';
 import {
   DEFAULT_NODE_CAP,
+  LABEL_SIZE,
   LANES,
+  META_SIZE,
+  MIN_NATURAL_LANES,
+  NATURAL_LANE_WIDTH,
+  PAD,
   PLACEHOLDER_PREFIX,
+  clip,
   edgesForFinding,
+  fitMeta,
   laneForEvidence,
   layoutFinding,
   orderEvidenceRows,
@@ -259,7 +266,7 @@ test('the edge pattern of each rule comes from its evidence roles', () => {
     if (finding.rule === 'R6') {
       assert.ok(roles.has('design-change'), `${finding.id}: R6 has no design-change row`);
       assert.ok(
-        roles.has('packing-structure') || roles.has('service'),
+        roles.has('packing-structure') || roles.has('service') || roles.has('structure'),
         `${finding.id}: R6 has no downstream row`,
       );
     }
@@ -327,7 +334,7 @@ test('R2 links join a structure and a reference from the same source file', () =
   );
 });
 
-test('R6 diagrams put the design change upstream of packing and service', () => {
+test('R6 diagrams put the design change upstream of assembly, packing and service', () => {
   const r6 = findings.filter((finding) => finding.rule === 'R6');
   assert.ok(r6.length > 0, 'the committed file has no R6 finding');
 
@@ -347,7 +354,7 @@ test('R6 diagrams put the design change upstream of packing and service', () => 
       }
     }
     for (const node of layout.nodes) {
-      if (node.lane !== 'packing' && node.lane !== 'service') continue;
+      if (node.lane !== 'bop' && node.lane !== 'packing' && node.lane !== 'service') continue;
       assert.ok(
         reached.has(node.id),
         `${finding.id}: ${node.id} is not downstream of the design change`,
@@ -369,6 +376,198 @@ test('R6 diagrams put the design change upstream of packing and service', () => 
   assert.ok(
     inferred.evidence.some((row) => row.role === 'service'),
     `${inferred.id}: inferred finding has no service path`,
+  );
+});
+
+test('the R6 hero finding carries assembly-chapter evidence on the BOP lane', () => {
+  const hero = findings.find((finding) => finding.id === 'R6-power-supply');
+  assert.ok(hero, 'the committed file has no R6-power-supply finding');
+
+  // The committed seed links the hero part to usage lines on one assembly
+  // chapter, so the finding must cite that chapter and those usage rows.
+  const heroChapterRows = hero.evidence.filter(
+    (row) => row.role === 'structure' && row.nodeId.startsWith('chapter:'),
+  );
+  assert.ok(
+    heroChapterRows.length > 0,
+    `${hero.id} cites no assembly-chapter structure row`,
+  );
+  const heroChapterFile = heroChapterRows[0].sourceFile;
+  assert.equal(
+    heroChapterFile,
+    'v1.7/assembly/electronics.md',
+    `${hero.id} cites an unexpected assembly chapter`,
+  );
+  const heroAssemblyReferences = hero.evidence.filter(
+    (row) =>
+      row.role === 'reference' && String(row.nodeId).startsWith('usage:assembly:'),
+  );
+  assert.ok(
+    heroAssemblyReferences.length > 0,
+    `${hero.id} cites no assembly-chapter usage row`,
+  );
+  for (const row of heroAssemblyReferences) {
+    assert.equal(
+      row.sourceFile,
+      heroChapterFile,
+      `${hero.id}: usage ${row.nodeId} is cited from ${row.sourceFile}`,
+    );
+  }
+
+  // The laid-out diagram shows the BOP lane with that chapter node, and the
+  // chapter and its usage rows join by the shared source file.
+  const layout = layoutFinding(hero);
+  const bopLane = layout.lanes.find((lane) => lane.id === 'bop');
+  assert.ok(bopLane, `${hero.id} hides the BOP lane although its evidence cites a chapter`);
+  const bopNodeIds = layout.nodes
+    .filter((node) => node.lane === 'bop')
+    .map((node) => node.id)
+    .sort();
+  const citedBopIds = [
+    ...new Set([...heroChapterRows, ...heroAssemblyReferences].map((row) => row.nodeId)),
+  ].sort();
+  assert.deepEqual(
+    bopNodeIds,
+    citedBopIds,
+    `${hero.id} draws BOP nodes its evidence does not cite`,
+  );
+  for (const row of heroAssemblyReferences) {
+    assert.ok(
+      edgesForFinding(hero).some(
+        (edge) =>
+          edge.kind === 'link' &&
+          edge.from === row.nodeId &&
+          edge.to === heroChapterRows[0].nodeId,
+      ),
+      `${hero.id}: usage ${row.nodeId} does not join its chapter on the diagram`,
+    );
+  }
+
+  // The widened rule keeps the packing and service rows on the same finding.
+  for (const role of ['packing-structure', 'packing-line', 'service']) {
+    assert.ok(
+      hero.evidence.some((row) => row.role === role),
+      `${hero.id} lost its ${role} evidence`,
+    );
+  }
+});
+
+test('the R6 hero cards read apart at the natural lane width', () => {
+  const hero = findings.find((finding) => finding.id === 'R6-power-supply');
+  assert.ok(hero, 'the committed file has no R6-power-supply finding');
+  const layout = layoutFinding(hero);
+
+  // The width the finding view asks the desktop grid for: padding plus one
+  // natural lane width per visible lane. Rendered one to one at 1280x800 each
+  // hero lane is the natural width, not a half-column squeeze.
+  assert.equal(
+    layout.width,
+    PAD * 2 + Math.max(layout.lanes.length, MIN_NATURAL_LANES) * NATURAL_LANE_WIDTH,
+    `${hero.id} left the natural width formula`,
+  );
+  assert.ok(layout.lanes.length >= 4, `${hero.id} draws fewer than four lanes`);
+  for (const lane of layout.lanes) {
+    assert.equal(lane.width, NATURAL_LANE_WIDTH, `${lane.id} left the natural lane width`);
+  }
+
+  // A one-lane finding keeps the compact minimum, not the hero column.
+  const compact = layoutFinding({
+    id: 'R3-one-part',
+    rule: 'R3',
+    subject: { key: 'Tee Nuts', kind: 'part', label: 'Tee Nuts', nodeId: 'part:Tee Nuts' },
+    evidence: [
+      {
+        role: 'part',
+        nodeId: 'part:Tee Nuts',
+        sourceFile: 'parts/tee-nuts.md',
+        line: null,
+        facts: { name: 'Tee Nuts' },
+      },
+    ],
+    queries: [],
+  });
+  assert.equal(
+    compact.width,
+    PAD * 2 + MIN_NATURAL_LANES * NATURAL_LANE_WIDTH,
+    'a one-lane finding inherited the hero column width',
+  );
+
+  // The visible text of every card is what the screen draws. A meta that no
+  // longer fits degrades to its file name, never to a left-truncated
+  // directory chain such as `v1.7/assembly/elect...`, and the BOP cards (the
+  // chapter and its usage lines) keep their labels whole at the natural width.
+  const rows = orderEvidenceRows(hero);
+  const visibleMetaById = new Map();
+  for (const node of layout.nodes) {
+    const visible = fitMeta(node.meta, node.width, META_SIZE);
+    visibleMetaById.set(node.id, visible);
+    if (visible !== node.meta) {
+      assert.ok(
+        !visible.includes('/'),
+        `${node.id} meta is a left-truncated directory chain: ${JSON.stringify(visible)}`,
+      );
+    }
+  }
+  for (const node of layout.nodes.filter((entry) => entry.lane === 'bop')) {
+    assert.equal(
+      clip(node.label, node.width, LABEL_SIZE),
+      node.label,
+      `${node.id} label is cut at the natural lane width`,
+    );
+  }
+
+  // The three power-supply cards of the assembly chapter share one label, so
+  // the citation's line number is what tells them apart without hover.
+  const assemblyUsage = layout.nodes.filter((node) => node.id.startsWith('usage:assembly:'));
+  assert.ok(
+    assemblyUsage.length >= 2,
+    `${hero.id} draws fewer than two assembly usage cards`,
+  );
+  const usageRows = assemblyUsage.map((node) => rows[node.evidenceIndexes[0]]);
+  for (const node of assemblyUsage) {
+    const row = rows[node.evidenceIndexes[0]];
+    assert.equal(
+      visibleMetaById.get(node.id),
+      `${row.sourceFile.split('/').pop()}:${row.line}`,
+      `${node.id} does not show its chapter file and line`,
+    );
+  }
+  assert.equal(
+    new Set(assemblyUsage.map((node) => node.label)).size,
+    1,
+    `${hero.id} assembly usage cards unexpectedly differ in label`,
+  );
+  assert.equal(
+    new Set(assemblyUsage.map((node) => visibleMetaById.get(node.id))).size,
+    assemblyUsage.length,
+    `${hero.id} assembly usage cards are indistinguishable on the recording frame`,
+  );
+  assert.deepEqual(
+    usageRows.map((row) => row.line),
+    [...new Set(usageRows.map((row) => row.line))],
+    `${hero.id} assembly usage rows repeat a line number`,
+  );
+
+  // Usage cards elsewhere stay distinguishable too: a card with a recorded
+  // line keeps that line in its visible meta.
+  for (const node of layout.nodes.filter((entry) => entry.id.startsWith('usage:'))) {
+    const row = rows[node.evidenceIndexes[0]];
+    if (row.line === null || row.line === undefined) continue;
+    assert.ok(
+      String(visibleMetaById.get(node.id)).endsWith(String(row.line)),
+      `${node.id} meta ${JSON.stringify(visibleMetaById.get(node.id))} drops its line number`,
+    );
+  }
+
+  // The chapter card names its file, never a left-truncated chain such as
+  // `v1.7/assembly/elect...`.
+  const chapter = layout.nodes.find((node) => node.id.startsWith('chapter:'));
+  assert.ok(chapter, `${hero.id} draws no assembly chapter node`);
+  const chapterRow = rows[chapter.evidenceIndexes[0]];
+  assert.equal(
+    visibleMetaById.get(chapter.id),
+    chapterRow.sourceFile.split('/').pop(),
+    `${chapter.id} truncates its file name`,
   );
 });
 

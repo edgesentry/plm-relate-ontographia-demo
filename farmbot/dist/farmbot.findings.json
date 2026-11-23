@@ -7208,7 +7208,7 @@
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log links 90-Degree Barb to its part page in Miscellaneous, and v1.7/manufacturing/packing/hardware-kit.md still reference that part."
+          "text": "The Change Log links 3-Slot Toolbay to its part page in Toolbays, and v1.7/assembly/toolbays.md still reference that part."
         },
         {
           "kind": "inference",
@@ -7217,7 +7217,377 @@
         }
       ],
       "countermeasures": [
-        "Confirm whether 90-Degree Barb should still appear on v1.7/manufacturing/packing/hardware-kit.md.",
+        "Confirm whether 3-Slot Toolbay should still appear on v1.7/assembly/toolbays.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Toolbays",
+            "text": "The [[3-slot toolbays]] have been redesigned to save weight while providing slightly improved geometry for UTM access. Both kits now include just two 3-slot toolbays."
+          },
+          "line": 31,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Toolbays@0",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "5052 Aluminum",
+            "material": "5052 Aluminum",
+            "partNodeId": "part:3-Slot Toolbay"
+          },
+          "line": null,
+          "nodeId": "material:5052 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/toolbay-3-slot.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "plates-and-brackets",
+            "name": "3-Slot Toolbay",
+            "slug": "toolbay-3-slot"
+          },
+          "line": null,
+          "nodeId": "part:3-Slot Toolbay",
+          "role": "part",
+          "sourceFile": "v1.7/bom/plates-and-brackets/toolbay-3-slot.md"
+        },
+        {
+          "facts": {
+            "displayName": "3-slot toolbay",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "3-Slot Toolbay",
+            "sourceKind": "assembly"
+          },
+          "line": 18,
+          "nodeId": "usage:assembly:v1.7/assembly/toolbays.md@1",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/toolbays.md"
+        },
+        {
+          "facts": {
+            "displayName": "3-slot toolbays",
+            "matchMethod": "singular",
+            "resolvedPart": "3-Slot Toolbay",
+            "sourceKind": "assembly"
+          },
+          "line": 2,
+          "nodeId": "usage:assembly:v1.7/assembly/toolbays.md@2",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/toolbays.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Toolbays"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/toolbays.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/toolbays.md"
+        }
+      ],
+      "id": "R6-3-slot-toolbay",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "info",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 1,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 4,
+      "subject": {
+        "key": "3-Slot Toolbay",
+        "kind": "part",
+        "label": "3-Slot Toolbay",
+        "nodeId": "part:3-Slot Toolbay"
+      },
+      "summary": "The Change Log links \"3-Slot Toolbay\", but v1.7/assembly/toolbays.md still lists it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links 60mm Horizontal Cable Carrier Support to its part page in Miscellaneous, and v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether 60mm Horizontal Cable Carrier Support should still appear on v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Miscellaneous",
+            "text": "* Reduced the number of [[60mm horizontal cable carrier supports]] on the gantry main beam to 5 per extrusion."
+          },
+          "line": 65,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@10",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "Gray UV stabilized ABS",
+            "material": "Gray UV stabilized ABS",
+            "partNodeId": "part:60mm Horizontal Cable Carrier Support"
+          },
+          "line": null,
+          "nodeId": "material:gray uv stabilized abs",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plastic-parts/cable-carrier-support-horizontal-60mm.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "plastic-parts",
+            "name": "60mm Horizontal Cable Carrier Support",
+            "slug": "cable-carrier-support-horizontal-60mm"
+          },
+          "line": null,
+          "nodeId": "part:60mm Horizontal Cable Carrier Support",
+          "role": "part",
+          "sourceFile": "v1.7/bom/plastic-parts/cable-carrier-support-horizontal-60mm.md"
+        },
+        {
+          "facts": {
+            "displayName": "60mm horizontal cable carrier support",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "60mm Horizontal Cable Carrier Support",
+            "sourceKind": "assembly"
+          },
+          "line": 67,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@2",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "displayName": "60mm horizontal cable carrier supports",
+            "matchMethod": "singular",
+            "resolvedPart": "60mm Horizontal Cable Carrier Support",
+            "sourceKind": "assembly"
+          },
+          "line": 63,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@3",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "displayName": "60mm horizontal cable carrier supports",
+            "matchMethod": "singular",
+            "resolvedPart": "60mm Horizontal Cable Carrier Support",
+            "sourceKind": "assembly"
+          },
+          "line": 100,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@4",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "60mm horizontal cable carrier supports",
+            "matchMethod": "singular",
+            "resolvedPart": "60mm Horizontal Cable Carrier Support",
+            "sourceKind": "assembly"
+          },
+          "line": 44,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@5",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "60mm horizontal cable carrier supports",
+            "matchMethod": "singular",
+            "resolvedPart": "60mm Horizontal Cable Carrier Support",
+            "sourceKind": "assembly"
+          },
+          "line": 88,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@6",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Cross-Slide and Z-Axis"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/cross-slide-and-z-axis.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        }
+      ],
+      "id": "R6-60mm-horizontal-cable-carrier-support",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "review",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 2,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 6,
+      "subject": {
+        "key": "60mm Horizontal Cable Carrier Support",
+        "kind": "part",
+        "label": "60mm Horizontal Cable Carrier Support",
+        "nodeId": "part:60mm Horizontal Cable Carrier Support"
+      },
+      "summary": "The Change Log links \"60mm Horizontal Cable Carrier Support\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md still list it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links 90-Degree Barb to its part page in Miscellaneous, and v1.7/assembly/cross-slide-and-z-axis.md, v1.7/manufacturing/packing/hardware-kit.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether 90-Degree Barb should still appear on v1.7/assembly/cross-slide-and-z-axis.md, v1.7/manufacturing/packing/hardware-kit.md.",
         "Correct the Change Log or the downstream page, then rebuild the extract."
       ],
       "evidence": [
@@ -7273,6 +7643,28 @@
           "nodeId": "part:90-Degree Barb",
           "role": "part",
           "sourceFile": "v1.7/bom/tubing/90-degree-barb.md"
+        },
+        {
+          "facts": {
+            "displayName": "90-degree barb",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "90-Degree Barb",
+            "sourceKind": "assembly"
+          },
+          "line": 73,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@6",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Cross-Slide and Z-Axis"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/cross-slide-and-z-axis.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
         }
       ],
       "id": "R6-90-degree-barb",
@@ -7282,6 +7674,13 @@
           "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
           "intent": "farmbot/checks/changed-parts.json",
           "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
@@ -7301,6 +7700,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -7324,28 +7728,28 @@
         }
       ],
       "rule": "R6",
-      "severity": "info",
+      "severity": "review",
       "severityFactors": {
         "overlap": 0,
-        "processesReached": 1,
+        "processesReached": 2,
         "productVariantsReached": 2,
         "quantityDifference": 0
       },
-      "severityScore": 4,
+      "severityScore": 6,
       "subject": {
         "key": "90-Degree Barb",
         "kind": "part",
         "label": "90-Degree Barb",
         "nodeId": "part:90-Degree Barb"
       },
-      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
+      "summary": "The Change Log links \"90-Degree Barb\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/manufacturing/packing/hardware-kit.md still list it."
     },
     {
       "causes": [
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log links Belt Clip to its part page in Miscellaneous, and v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still reference that part."
+          "text": "The Change Log links Belt Clip to its part page in Miscellaneous, and v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md, v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still reference that part."
         },
         {
           "kind": "inference",
@@ -7354,7 +7758,7 @@
         }
       ],
       "countermeasures": [
-        "Confirm whether Belt Clip should still appear on v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md.",
+        "Confirm whether Belt Clip should still appear on v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md, v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md.",
         "Correct the Change Log or the downstream page, then rebuild the extract."
       ],
       "evidence": [
@@ -7389,6 +7793,42 @@
           "nodeId": "part:Belt Clip",
           "role": "part",
           "sourceFile": "v1.7/bom/plates-and-brackets/belt-clip.md"
+        },
+        {
+          "facts": {
+            "displayName": "belt clip",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Belt Clip",
+            "sourceKind": "assembly"
+          },
+          "line": 43,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@23",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "displayName": "belt clip",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Belt Clip",
+            "sourceKind": "assembly"
+          },
+          "line": 57,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@24",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "displayName": "belt clip",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Belt Clip",
+            "sourceKind": "assembly"
+          },
+          "line": 129,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@20",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
         },
         {
           "facts": {
@@ -7433,6 +7873,26 @@
           "nodeId": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
           "role": "service",
           "sourceFile": "v1.7/extras/maintenance/storing-farmbot-for-winter.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Cross-Slide and Z-Axis"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/cross-slide-and-z-axis.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
         }
       ],
       "id": "R6-belt-clip",
@@ -7442,6 +7902,13 @@
           "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
           "intent": "farmbot/checks/changed-parts.json",
           "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
@@ -7461,6 +7928,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -7484,21 +7956,21 @@
         }
       ],
       "rule": "R6",
-      "severity": "review",
+      "severity": "action",
       "severityFactors": {
         "overlap": 0,
-        "processesReached": 2,
+        "processesReached": 4,
         "productVariantsReached": 2,
         "quantityDifference": 0
       },
-      "severityScore": 6,
+      "severityScore": 10,
       "subject": {
         "key": "Belt Clip",
         "kind": "part",
         "label": "Belt Clip",
         "nodeId": "part:Belt Clip"
       },
-      "summary": "The Change Log links \"Belt Clip\", but v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+      "summary": "The Change Log links \"Belt Clip\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md, v1.7/extras/maintenance/general-maintenance.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
     },
     {
       "causes": [
@@ -7559,6 +8031,13 @@
           "params": {}
         },
         {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
           "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
           "params": {
@@ -7576,6 +8055,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -7620,7 +8104,7 @@
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log links Gantry Column to its part page in Gantry columns, and v1.7/extras/maintenance/storing-farmbot-for-winter.md still reference that part."
+          "text": "The Change Log links Cross-Slide Plate to its part page in Cross-slide plate, and v1.7/assembly/cross-slide-and-z-axis.md still reference that part."
         },
         {
           "kind": "inference",
@@ -7629,7 +8113,157 @@
         }
       ],
       "countermeasures": [
-        "Confirm whether Gantry Column should still appear on v1.7/extras/maintenance/storing-farmbot-for-winter.md.",
+        "Confirm whether Cross-Slide Plate should still appear on v1.7/assembly/cross-slide-and-z-axis.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Cross-slide plate",
+            "text": "Reduced the number of wheels mounted to the [[cross-slide plate]] and added weight-saving cutouts."
+          },
+          "line": 37,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Cross-slide plate@0",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "6061 Aluminum",
+            "material": "6061 Aluminum",
+            "partNodeId": "part:Cross-Slide Plate"
+          },
+          "line": null,
+          "nodeId": "material:6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/cross-slide-plate.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "plates-and-brackets",
+            "name": "Cross-Slide Plate",
+            "slug": "cross-slide-plate"
+          },
+          "line": null,
+          "nodeId": "part:Cross-Slide Plate",
+          "role": "part",
+          "sourceFile": "v1.7/bom/plates-and-brackets/cross-slide-plate.md"
+        },
+        {
+          "facts": {
+            "displayName": "cross-slide plate",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Cross-Slide Plate",
+            "sourceKind": "assembly"
+          },
+          "line": 13,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@28",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Cross-Slide and Z-Axis"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/cross-slide-and-z-axis.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        }
+      ],
+      "id": "R6-cross-slide-plate",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "info",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 1,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 4,
+      "subject": {
+        "key": "Cross-Slide Plate",
+        "kind": "part",
+        "label": "Cross-Slide Plate",
+        "nodeId": "part:Cross-Slide Plate"
+      },
+      "summary": "The Change Log links \"Cross-Slide Plate\", but v1.7/assembly/cross-slide-and-z-axis.md still lists it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links Gantry Column to its part page in Gantry columns, and v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether Gantry Column should still appear on v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md.",
         "Correct the Change Log or the downstream page, then rebuild the extract."
       ],
       "evidence": [
@@ -7670,6 +8304,30 @@
             "displayName": "gantry column",
             "matchMethod": "case-insensitive",
             "resolvedPart": "Gantry Column",
+            "sourceKind": "assembly"
+          },
+          "line": 112,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@27",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "gantry columns",
+            "matchMethod": "singular",
+            "resolvedPart": "Gantry Column",
+            "sourceKind": "assembly"
+          },
+          "line": 25,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@28",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "gantry column",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Gantry Column",
             "sourceKind": "service"
           },
           "line": 28,
@@ -7686,6 +8344,16 @@
           "nodeId": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
           "role": "service",
           "sourceFile": "v1.7/extras/maintenance/storing-farmbot-for-winter.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
         }
       ],
       "id": "R6-gantry-column",
@@ -7695,6 +8363,13 @@
           "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
           "intent": "farmbot/checks/changed-parts.json",
           "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
@@ -7714,6 +8389,357 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "review",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 2,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 6,
+      "subject": {
+        "key": "Gantry Column",
+        "kind": "part",
+        "label": "Gantry Column",
+        "nodeId": "part:Gantry Column"
+      },
+      "summary": "The Change Log links \"Gantry Column\", but v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md still list it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links Gantry Wheel Plate to its part page in Gantry wheel plates, and v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether Gantry Wheel Plate should still appear on v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Gantry wheel plates",
+            "text": "Accompanying the new track extrusions are a new version of the [[gantry wheel plates]]. These new plates are significantly lighter than previous versions thanks to a more compact shape and the addition of two large cutouts. The new wheel plates now include holes for only 3 wheels on the top and two wheels on the bottom, allowing FarmBot to more easily move over track joints and debris, while also reducing part count, manufacturing cost, and overall weight."
+          },
+          "line": 19,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Gantry wheel plates@0",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "6061 Aluminum",
+            "material": "6061 Aluminum",
+            "partNodeId": "part:Gantry Wheel Plate"
+          },
+          "line": null,
+          "nodeId": "material:6061 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/gantry-wheel-plate.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "plates-and-brackets",
+            "name": "Gantry Wheel Plate",
+            "slug": "gantry-wheel-plate"
+          },
+          "line": null,
+          "nodeId": "part:Gantry Wheel Plate",
+          "role": "part",
+          "sourceFile": "v1.7/bom/plates-and-brackets/gantry-wheel-plate.md"
+        },
+        {
+          "facts": {
+            "displayName": "gantry wheel plate",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Gantry Wheel Plate",
+            "sourceKind": "assembly"
+          },
+          "line": 28,
+          "nodeId": "usage:assembly:v1.7/assembly/cross-slide-and-z-axis.md@36",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "displayName": "gantry wheel plate",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Gantry Wheel Plate",
+            "sourceKind": "assembly"
+          },
+          "line": 116,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@36",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "gantry wheel plate",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Gantry Wheel Plate",
+            "sourceKind": "assembly"
+          },
+          "line": 14,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@37",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Cross-Slide and Z-Axis"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/cross-slide-and-z-axis.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/cross-slide-and-z-axis.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        }
+      ],
+      "id": "R6-gantry-wheel-plate",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "review",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 2,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 6,
+      "subject": {
+        "key": "Gantry Wheel Plate",
+        "kind": "part",
+        "label": "Gantry Wheel Plate",
+        "nodeId": "part:Gantry Wheel Plate"
+      },
+      "summary": "The Change Log links \"Gantry Wheel Plate\", but v1.7/assembly/cross-slide-and-z-axis.md, v1.7/assembly/gantry.md still list it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links M5 x 4mm Setscrew to its part page in Miscellaneous, and v1.7/assembly/tracks.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether M5 x 4mm Setscrew should still appear on v1.7/assembly/tracks.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Miscellaneous",
+            "text": "* Added [[M5 x 4mm setscrews]] for use with nut bars to align track extrusions end-to-end."
+          },
+          "line": 60,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@5",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "Stainless Steel",
+            "material": "Stainless Steel",
+            "partNodeId": "part:M5 x 4mm Setscrew"
+          },
+          "line": null,
+          "nodeId": "material:stainless steel",
+          "role": "material",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-setscrew-4mm.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "fasteners-and-hardware",
+            "name": "M5 x 4mm Setscrew",
+            "slug": "m5-setscrew-4mm"
+          },
+          "line": null,
+          "nodeId": "part:M5 x 4mm Setscrew",
+          "role": "part",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/m5-setscrew-4mm.md"
+        },
+        {
+          "facts": {
+            "displayName": "M5 x 4mm setscrew",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "M5 x 4mm Setscrew",
+            "sourceKind": "assembly"
+          },
+          "line": 41,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@3",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "displayName": "M5 x 4mm setscrew",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "M5 x 4mm Setscrew",
+            "sourceKind": "assembly"
+          },
+          "line": 51,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@4",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Tracks"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/tracks.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        }
+      ],
+      "id": "R6-m5-x-4mm-setscrew",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -7746,19 +8772,19 @@
       },
       "severityScore": 4,
       "subject": {
-        "key": "Gantry Column",
+        "key": "M5 x 4mm Setscrew",
         "kind": "part",
-        "label": "Gantry Column",
-        "nodeId": "part:Gantry Column"
+        "label": "M5 x 4mm Setscrew",
+        "nodeId": "part:M5 x 4mm Setscrew"
       },
-      "summary": "The Change Log links \"Gantry Column\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md still lists it."
+      "summary": "The Change Log links \"M5 x 4mm Setscrew\", but v1.7/assembly/tracks.md still lists it."
     },
     {
       "causes": [
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log links Power Supply to its part page in 100 watt power supply, and v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still reference that part."
+          "text": "The Change Log links Power Supply to its part page in 100 watt power supply, and v1.7/assembly/electronics.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still reference that part."
         },
         {
           "kind": "inference",
@@ -7767,7 +8793,7 @@
         }
       ],
       "countermeasures": [
-        "Confirm whether Power Supply should still appear on v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md.",
+        "Confirm whether Power Supply should still appear on v1.7/assembly/electronics.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md.",
         "Correct the Change Log or the downstream page, then rebuild the extract."
       ],
       "evidence": [
@@ -7818,6 +8844,42 @@
             "displayName": "power supply",
             "matchMethod": "case-insensitive",
             "resolvedPart": "Power Supply",
+            "sourceKind": "assembly"
+          },
+          "line": 146,
+          "nodeId": "usage:assembly:v1.7/assembly/electronics.md@23",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/electronics.md"
+        },
+        {
+          "facts": {
+            "displayName": "power supply",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Power Supply",
+            "sourceKind": "assembly"
+          },
+          "line": 158,
+          "nodeId": "usage:assembly:v1.7/assembly/electronics.md@24",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/electronics.md"
+        },
+        {
+          "facts": {
+            "displayName": "power supply",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Power Supply",
+            "sourceKind": "assembly"
+          },
+          "line": 171,
+          "nodeId": "usage:assembly:v1.7/assembly/electronics.md@25",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/electronics.md"
+        },
+        {
+          "facts": {
+            "displayName": "power supply",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Power Supply",
             "sourceKind": "service"
           },
           "line": 15,
@@ -7846,6 +8908,16 @@
           "nodeId": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
           "role": "service",
           "sourceFile": "v1.7/extras/maintenance/storing-farmbot-for-winter.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Electronics"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/electronics.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/electronics.md"
         }
       ],
       "id": "R6-power-supply",
@@ -7855,6 +8927,13 @@
           "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
           "intent": "farmbot/checks/changed-parts.json",
           "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
@@ -7874,6 +8953,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -7900,18 +8984,18 @@
       "severity": "review",
       "severityFactors": {
         "overlap": 0,
-        "processesReached": 2,
+        "processesReached": 3,
         "productVariantsReached": 2,
         "quantityDifference": 0
       },
-      "severityScore": 6,
+      "severityScore": 8,
       "subject": {
         "key": "Power Supply",
         "kind": "part",
         "label": "Power Supply",
         "nodeId": "part:Power Supply"
       },
-      "summary": "The Change Log links \"Power Supply\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it."
+      "summary": "The Change Log links \"Power Supply\", but v1.7/assembly/electronics.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/power-supply.md still list it."
     },
     {
       "causes": [
@@ -7972,6 +9056,13 @@
           "params": {}
         },
         {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
           "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
           "params": {
@@ -7989,6 +9080,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -8027,6 +9123,423 @@
         "nodeId": null
       },
       "summary": "The Change Log removal statement names \"PTFE Tape\", but v1.7/manufacturing/packing/hardware-kit.md still lists it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links Right Gantry Corner Bracket to its part page in Miscellaneous, and v1.7/assembly/gantry.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether Right Gantry Corner Bracket should still appear on v1.7/assembly/gantry.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Miscellaneous",
+            "text": "* Added weight-saving cutouts to the [[left gantry corner bracket]] and [[right gantry corner bracket]]."
+          },
+          "line": 55,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@0",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "5052 Aluminum",
+            "material": "5052 Aluminum",
+            "partNodeId": "part:Right Gantry Corner Bracket"
+          },
+          "line": null,
+          "nodeId": "material:5052 aluminum",
+          "role": "material",
+          "sourceFile": "v1.7/bom/plates-and-brackets/gantry-corner-bracket-right.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "plates-and-brackets",
+            "name": "Right Gantry Corner Bracket",
+            "slug": "gantry-corner-bracket-right"
+          },
+          "line": null,
+          "nodeId": "part:Right Gantry Corner Bracket",
+          "role": "part",
+          "sourceFile": "v1.7/bom/plates-and-brackets/gantry-corner-bracket-right.md"
+        },
+        {
+          "facts": {
+            "displayName": "right gantry corner bracket",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Right Gantry Corner Bracket",
+            "sourceKind": "assembly"
+          },
+          "line": 67,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@43",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        }
+      ],
+      "id": "R6-right-gantry-corner-bracket",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "info",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 1,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 4,
+      "subject": {
+        "key": "Right Gantry Corner Bracket",
+        "kind": "part",
+        "label": "Right Gantry Corner Bracket",
+        "nodeId": "part:Right Gantry Corner Bracket"
+      },
+      "summary": "The Change Log links \"Right Gantry Corner Bracket\", but v1.7/assembly/gantry.md still lists it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log removal statement in Miscellaneous names \"seed tray\", and v1.7/assembly/tools.md still lists it."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether seed tray should still appear on v1.7/assembly/tools.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Miscellaneous",
+            "text": "* Removed the jumper wires, peripheral leads, PTFE tape, 2mm hex driver, 2.5mm hex key, 5.5mm nut driver, 8mm nut driver, second seed tray and bin, and crop stickers from the kit."
+          },
+          "line": 67,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@12",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "displayName": "seed tray",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Seed Tray",
+            "sourceKind": "assembly"
+          },
+          "line": 59,
+          "nodeId": "usage:assembly:v1.7/assembly/tools.md@9",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tools.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Tools"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/tools.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/tools.md"
+        }
+      ],
+      "id": "R6-seed-tray",
+      "inferred": true,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "info",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 1,
+        "productVariantsReached": 0,
+        "quantityDifference": 0
+      },
+      "severityScore": 2,
+      "subject": {
+        "key": "seed tray",
+        "kind": "name",
+        "label": "seed tray",
+        "nodeId": null
+      },
+      "summary": "The Change Log removal statement names \"seed tray\", but v1.7/assembly/tools.md still lists it."
+    },
+    {
+      "causes": [
+        {
+          "kind": "fact",
+          "rule": null,
+          "text": "The Change Log links T25 Bit to its part page in Miscellaneous, and v1.7/assembly/tracks.md still reference that part."
+        },
+        {
+          "kind": "inference",
+          "rule": null,
+          "text": "The downstream page may be stale, or the Change Log may describe an earlier revision; this tool does not decide which document is current."
+        }
+      ],
+      "countermeasures": [
+        "Confirm whether T25 Bit should still appear on v1.7/assembly/tracks.md.",
+        "Correct the Change Log or the downstream page, then rebuild the extract."
+      ],
+      "evidence": [
+        {
+          "facts": {
+            "section": "Miscellaneous",
+            "text": "* Included a [[T25 bit]] and [[T10 bit]] as assembly tools."
+          },
+          "line": 59,
+          "nodeId": "designchange:v1.7/assembly/intro/change-log.md#Miscellaneous@4",
+          "role": "design-change",
+          "sourceFile": "v1.7/assembly/intro/change-log.md"
+        },
+        {
+          "facts": {
+            "categorySlug": "fasteners-and-hardware",
+            "name": "T25 Bit",
+            "slug": "bit-t25"
+          },
+          "line": null,
+          "nodeId": "part:T25 Bit",
+          "role": "part",
+          "sourceFile": "v1.7/bom/fasteners-and-hardware/bit-t25.md"
+        },
+        {
+          "facts": {
+            "displayName": "T25 bit",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "T25 Bit",
+            "sourceKind": "assembly"
+          },
+          "line": 35,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@5",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Tracks"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/tracks.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        }
+      ],
+      "id": "R6-t25-bit",
+      "inferred": false,
+      "queries": [
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
+          "intent": "farmbot/checks/changed-parts.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (change:DesignChange)\nRETURN change AS change\nLIMIT 100",
+          "intent": "farmbot/checks/r6-changes.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r9-service-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-bag.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Carton)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-carton.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:Kit)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-kit.json",
+          "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:ServiceProcedure)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-service.json",
+          "params": {}
+        }
+      ],
+      "rule": "R6",
+      "severity": "info",
+      "severityFactors": {
+        "overlap": 0,
+        "processesReached": 1,
+        "productVariantsReached": 2,
+        "quantityDifference": 0
+      },
+      "severityScore": 4,
+      "subject": {
+        "key": "T25 Bit",
+        "kind": "part",
+        "label": "T25 Bit",
+        "nodeId": "part:T25 Bit"
+      },
+      "summary": "The Change Log links \"T25 Bit\", but v1.7/assembly/tracks.md still lists it."
     },
     {
       "causes": [
@@ -8109,6 +9622,13 @@
           "params": {}
         },
         {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
+        },
+        {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
           "intent": "farmbot/checks/r2-manufacturing-unmatched.json",
           "params": {
@@ -8126,6 +9646,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -8170,7 +9695,7 @@
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log links Track Extrusion to its part page in Track extrusions, and v1.7/manufacturing/packing/extrusion-kit.md still reference that part."
+          "text": "The Change Log links Track Extrusion to its part page in Track extrusions, and v1.7/assembly/gantry.md, v1.7/assembly/tracks.md, v1.7/manufacturing/packing/extrusion-kit.md still reference that part."
         },
         {
           "kind": "inference",
@@ -8179,7 +9704,7 @@
         }
       ],
       "countermeasures": [
-        "Confirm whether Track Extrusion should still appear on v1.7/manufacturing/packing/extrusion-kit.md.",
+        "Confirm whether Track Extrusion should still appear on v1.7/assembly/gantry.md, v1.7/assembly/tracks.md, v1.7/manufacturing/packing/extrusion-kit.md.",
         "Correct the Change Log or the downstream page, then rebuild the extract."
       ],
       "evidence": [
@@ -8247,6 +9772,98 @@
           "nodeId": "part:Track Extrusion",
           "role": "part",
           "sourceFile": "v1.7/bom/extrusions/track-extrusion.md"
+        },
+        {
+          "facts": {
+            "displayName": "track extrusions",
+            "matchMethod": "singular",
+            "resolvedPart": "Track Extrusion",
+            "sourceKind": "assembly"
+          },
+          "line": 116,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@48",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "track extrusions",
+            "matchMethod": "singular",
+            "resolvedPart": "Track Extrusion",
+            "sourceKind": "assembly"
+          },
+          "line": 59,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@10",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "displayName": "track extrusion",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Track Extrusion",
+            "sourceKind": "assembly"
+          },
+          "line": 35,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@6",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "displayName": "track extrusion",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Track Extrusion",
+            "sourceKind": "assembly"
+          },
+          "line": 41,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@7",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "displayName": "track extrusion",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "Track Extrusion",
+            "sourceKind": "assembly"
+          },
+          "line": 47,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@8",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "displayName": "track extrusions",
+            "matchMethod": "singular",
+            "resolvedPart": "Track Extrusion",
+            "sourceKind": "assembly"
+          },
+          "line": 24,
+          "nodeId": "usage:assembly:v1.7/assembly/tracks.md@9",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/tracks.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Tracks"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/tracks.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/tracks.md"
         }
       ],
       "id": "R6-track-extrusion",
@@ -8256,6 +9873,13 @@
           "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
           "intent": "farmbot/checks/changed-parts.json",
           "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
@@ -8275,6 +9899,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -8298,28 +9927,28 @@
         }
       ],
       "rule": "R6",
-      "severity": "info",
+      "severity": "review",
       "severityFactors": {
         "overlap": 0,
-        "processesReached": 1,
+        "processesReached": 3,
         "productVariantsReached": 2,
         "quantityDifference": 0
       },
-      "severityScore": 4,
+      "severityScore": 8,
       "subject": {
         "key": "Track Extrusion",
         "kind": "part",
         "label": "Track Extrusion",
         "nodeId": "part:Track Extrusion"
       },
-      "summary": "The Change Log links \"Track Extrusion\", but v1.7/manufacturing/packing/extrusion-kit.md still lists it."
+      "summary": "The Change Log links \"Track Extrusion\", but v1.7/assembly/gantry.md, v1.7/assembly/tracks.md, v1.7/manufacturing/packing/extrusion-kit.md still list it."
     },
     {
       "causes": [
         {
           "kind": "fact",
           "rule": null,
-          "text": "The Change Log links X-Axis Cable Carrier to its part page in X-axis cable carrier, and v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still reference that part."
+          "text": "The Change Log links X-Axis Cable Carrier to its part page in X-axis cable carrier, and v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still reference that part."
         },
         {
           "kind": "inference",
@@ -8328,7 +9957,7 @@
         }
       ],
       "countermeasures": [
-        "Confirm whether X-Axis Cable Carrier should still appear on v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md.",
+        "Confirm whether X-Axis Cable Carrier should still appear on v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md.",
         "Correct the Change Log or the downstream page, then rebuild the extract."
       ],
       "evidence": [
@@ -8402,6 +10031,42 @@
             "displayName": "x-axis cable carrier",
             "matchMethod": "case-insensitive",
             "resolvedPart": "X-Axis Cable Carrier",
+            "sourceKind": "assembly"
+          },
+          "line": 146,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@51",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "x-axis cable carrier",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "X-Axis Cable Carrier",
+            "sourceKind": "assembly"
+          },
+          "line": 162,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@52",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "x-axis cable carrier",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "X-Axis Cable Carrier",
+            "sourceKind": "assembly"
+          },
+          "line": 166,
+          "nodeId": "usage:assembly:v1.7/assembly/gantry.md@53",
+          "role": "reference",
+          "sourceFile": "v1.7/assembly/gantry.md"
+        },
+        {
+          "facts": {
+            "displayName": "x-axis cable carrier",
+            "matchMethod": "case-insensitive",
+            "resolvedPart": "X-Axis Cable Carrier",
             "sourceKind": "service"
           },
           "line": 20,
@@ -8418,6 +10083,16 @@
           "nodeId": "service:v1.7/extras/maintenance/storing-farmbot-for-winter.md",
           "role": "service",
           "sourceFile": "v1.7/extras/maintenance/storing-farmbot-for-winter.md"
+        },
+        {
+          "facts": {
+            "structureKind": "assembly",
+            "title": "Gantry"
+          },
+          "line": null,
+          "nodeId": "chapter:v1.7/assembly/gantry.md",
+          "role": "structure",
+          "sourceFile": "v1.7/assembly/gantry.md"
         }
       ],
       "id": "R6-x-axis-cable-carrier",
@@ -8427,6 +10102,13 @@
           "cypher": "CYPHER 25\nMATCH (change:DesignChange)-[:AFFECTS_PART]->(part:Part)\nRETURN change AS change, part AS part\nLIMIT 100",
           "intent": "farmbot/checks/changed-parts.json",
           "params": {}
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
+          "intent": "farmbot/checks/r2-assembly-unmatched.json",
+          "params": {
+            "param_0": "unmatched"
+          }
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:ManufacturingContainer)-[:HAS_USAGE]->(usage:Usage)\nFILTER usage.match_method = $param_0\nRETURN structure AS structure, usage AS usage\nLIMIT 100",
@@ -8446,6 +10128,11 @@
           "params": {
             "param_0": "unmatched"
           }
+        },
+        {
+          "cypher": "CYPHER 25\nMATCH (structure:AssemblyChapter)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
+          "intent": "farmbot/checks/refs-assembly.json",
+          "params": {}
         },
         {
           "cypher": "CYPHER 25\nMATCH (structure:Bag)-[:HAS_USAGE]->(usage:Usage)-[:USES_ITEM]->(part:Part)\nRETURN structure AS structure, usage AS usage, part AS part\nLIMIT 1000",
@@ -8472,18 +10159,18 @@
       "severity": "review",
       "severityFactors": {
         "overlap": 0,
-        "processesReached": 2,
+        "processesReached": 3,
         "productVariantsReached": 2,
         "quantityDifference": 0
       },
-      "severityScore": 6,
+      "severityScore": 8,
       "subject": {
         "key": "X-Axis Cable Carrier",
         "kind": "part",
         "label": "X-Axis Cable Carrier",
         "nodeId": "part:X-Axis Cable Carrier"
       },
-      "summary": "The Change Log links \"X-Axis Cable Carrier\", but v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still list it."
+      "summary": "The Change Log links \"X-Axis Cable Carrier\", but v1.7/assembly/gantry.md, v1.7/extras/maintenance/storing-farmbot-for-winter.md, v1.7/manufacturing/packing/main-carton.md still list it."
     },
     {
       "causes": [
@@ -9897,12 +11584,14 @@
       "title": "A pre-assembly page has no machine-readable parts table"
     },
     {
-      "direction": "design-to-packing-service",
-      "findingCount": 9,
+      "direction": "design-to-downstream",
+      "findingCount": 17,
       "id": "R6",
       "intents": [
         "r6-changes.json",
         "changed-parts.json",
+        "refs-assembly.json",
+        "r2-assembly-unmatched.json",
         "refs-kit.json",
         "refs-carton.json",
         "refs-bag.json",
@@ -9911,11 +11600,11 @@
         "r9-service-unmatched.json"
       ],
       "severityCounts": {
-        "action": 0,
-        "info": 6,
-        "review": 3
+        "action": 1,
+        "info": 9,
+        "review": 7
       },
-      "title": "A name changed or removed in the Change Log still appears in packing or service pages"
+      "title": "A name changed or removed in the Change Log still appears in an assembly chapter, packing list or service page"
     },
     {
       "direction": "design-to-downstream",

@@ -3,9 +3,9 @@
 // The extract resolves a `[[part name]]` link to a part, so a linked name is a
 // fact. A removal statement in the Change Log is prose: it names items without
 // a link, and the rule can only compare the words with the display names on
-// packing and service pages. That comparison is an inference. This module keeps
-// both cases deterministic and free of Node-only imports so the Node entry and
-// the browser screen share one implementation.
+// assembly-chapter, packing and service pages. That comparison is an inference.
+// This module keeps both cases deterministic and free of Node-only imports so
+// the Node entry and the browser screen share one implementation.
 //
 // A removal statement is a Change Log list item whose first word is one of the
 // removal verbs below. The note text keeps its Markdown bullet, so anchoring on
@@ -89,11 +89,13 @@ export function phraseContains(haystack, name) {
  */
 
 /**
- * Match Change Log names against packing and service display names.
+ * Match Change Log names against assembly-chapter, packing and service display
+ * names.
  *
  * Fact: a name linked to a part (`AFFECTS_PART`) is still named downstream when
- * a usage line on a packing or service page resolves to that part. The subject
- * is the part, so the result does not depend on the link's wording.
+ * a usage line on an assembly chapter, packing or service page resolves to
+ * that part. The subject is the part, so the result does not depend on the
+ * link's wording.
  *
  * Inference: a removal statement names an item in prose. Each downstream
  * display name whose normalized words appear in the statement is a candidate,

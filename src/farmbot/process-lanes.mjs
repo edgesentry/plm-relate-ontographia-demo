@@ -1,9 +1,11 @@
 // Pure layout helpers for the process-lane diagram in the finding view.
 //
 // No DOM and no imports beyond the shared view helpers: `node --test` and the
-// React screen use the same functions. Nodes and edges come only from a
-// finding's evidence rows, so the diagram never adds a node that the table does
-// not cite. Everything here is text or numbers; nothing produces HTML.
+// React screen use the same functions. The visible node text is fitted here
+// too (`clip`, `fitMeta`), so the strings the screen draws are the strings a
+// test can pin. Nodes and edges come only from a finding's evidence rows, so
+// the diagram never adds a node that the table does not cite. Everything here
+// is text or numbers; nothing produces HTML.
 //
 // Lane model, edge patterns, the highlight rules and the node cap are
 // documented in `farmbot/docs/checks.md` (section "Process lanes").
@@ -40,14 +42,25 @@ export const PLACEHOLDER_PREFIX = 'lane:';
 
 const LANE_INDEX = new Map(LANES.map((lane, index) => [lane.id, index]));
 
-const PAD = 12;
+/** ViewBox padding around the whole diagram. */
+export const PAD = 12;
 const HEADER_HEIGHT = 24;
 const ROW_PITCH = 58;
 const NODE_HEIGHT = 48;
 const LANE_INSET_LEFT = 14;
 const LANE_INSET_RIGHT = 16;
-const NATURAL_LANE_WIDTH = 148;
-const MIN_NATURAL_LANES = 2;
+
+/**
+ * The lane width the diagram is drawn for and the finding view asks the CSS
+ * grid for: `layoutFinding` reports `PAD * 2 + lanes * NATURAL_LANE_WIDTH` as
+ * the natural width, and the view renders it one to one when the viewport
+ * gives the pane that much room, instead of scaling five hero lanes down to
+ * half a column.
+ */
+export const NATURAL_LANE_WIDTH = 148;
+
+/** The smallest lane count the natural width is computed for. */
+export const MIN_NATURAL_LANES = 2;
 const MISSING_LENGTH = 14;
 const MISSING_SPREAD = 16;
 
@@ -214,10 +227,11 @@ export function orderEvidenceRows(finding) {
  *   edge from the part to the BOP lane.
  * - R5: no edges; the page node stands alone.
  * - R6: the design change → the part (fact) or → the matching downstream rows
- *   (inferred); the part → each packing line and service reference that
- *   resolves to it or, when the finding has one part, each unmatched row; a
- *   packing line → its packing structure, joined by the shared source file; a
- *   service reference → its service page, joined by the shared source file.
+ *   (inferred); the part → each packing line and service or assembly reference
+ *   that resolves to it or, when the finding has one part, each unmatched row;
+ *   a packing line → its packing structure, an assembly reference → its
+ *   assembly chapter and a service reference → its service page, each joined by
+ *   the shared source file.
  * - R7: the design change → the part, plus a missing edge from the part to the
  *   BOP, packing and service lanes.
  * - R8: the part → each service reference → its service page and → each
@@ -306,10 +320,12 @@ export function edgesForFinding(finding) {
     const structures = uniqueNodeIds(rows, 'packing-structure');
     const references = uniqueNodeIds(rows, 'reference');
     const services = uniqueNodeIds(rows, 'service');
+    const chapters = uniqueNodeIds(rows, 'structure');
     const lineFiles = sourceFilesByNodeId(rows, 'packing-line');
     const structureFiles = sourceFilesByNodeId(rows, 'packing-structure');
     const referenceFiles = sourceFilesByNodeId(rows, 'reference');
     const serviceFiles = sourceFilesByNodeId(rows, 'service');
+    const chapterFiles = sourceFilesByNodeId(rows, 'structure');
 
     // The usage row records which part it resolved to, so a part-to-usage link
     // is drawn only when that row names it.
@@ -357,6 +373,11 @@ export function edgesForFinding(finding) {
       }
     }
     for (const reference of references) {
+      for (const chapter of chapters) {
+        if (sharesSourceFile(chapterFiles.get(chapter), referenceFiles.get(reference))) {
+          add(reference, chapter);
+        }
+      }
       for (const service of services) {
         if (sharesSourceFile(serviceFiles.get(service), referenceFiles.get(reference))) {
           add(reference, service);
@@ -459,12 +480,69 @@ function labelOf(row) {
   return row.nodeId;
 }
 
+/** Character widths the node label and meta lines are budgeted for. */
+export const LABEL_SIZE = 5.9;
+export const META_SIZE = 4.9;
+
+/** Characters that fit on one node line at `charWidth` per character. */
+function clipMax(nodeWidth, charWidth) {
+  return Math.max(6, Math.floor((nodeWidth - 16) / charWidth));
+}
+
+/** Cut text to the node width; the full value stays in the `<title>`. */
+export function clip(value, nodeWidth, charWidth) {
+  const max = clipMax(nodeWidth, charWidth);
+  if (value.length <= max) return value;
+  return `${value.slice(0, Math.max(1, max - 1))}…`;
+}
+
+/**
+ * The meta line drawn on a node.
+ *
+ * The full citation is kept when it fits. When it does not, whole directory
+ * segments are dropped from the left until what is left fits, so a long path
+ * degrades to its readable file name (`electronics.md:146`) instead of a
+ * left-truncated chain (`v1.7/assembly/elect...`) that identifies nothing. A
+ * value that is still too long is cut by `clip`, keeping its `:line` suffix,
+ * so usage cards of one long-named page stay distinguishable by line.
+ *
+ * @param {string} value
+ * @param {number} nodeWidth
+ * @param {number} [charWidth]
+ * @returns {string}
+ */
+export function fitMeta(value, nodeWidth, charWidth = META_SIZE) {
+  const max = clipMax(nodeWidth, charWidth);
+  if (value.length <= max) return value;
+  let candidate = value;
+  while (candidate.includes('/')) {
+    candidate = candidate.slice(candidate.indexOf('/') + 1);
+    if (candidate.length <= max) return candidate;
+  }
+  const lineAt = candidate.lastIndexOf(':');
+  if (lineAt !== -1) {
+    const line = candidate.slice(lineAt);
+    if (line.length + 2 <= max) {
+      return `${candidate.slice(0, Math.max(1, max - line.length - 1))}…${line}`;
+    }
+  }
+  return clip(candidate, nodeWidth, charWidth);
+}
+
 function metaOf(row) {
   const facts = row.facts && typeof row.facts === 'object' ? row.facts : {};
   if (row.role === 'quantity-difference') {
     if (typeof facts.version === 'string' && facts.version !== '') return facts.version;
   }
-  if (typeof row.sourceFile === 'string' && row.sourceFile !== '') return row.sourceFile;
+  if (typeof row.sourceFile === 'string' && row.sourceFile !== '') {
+    // The row's line joins the citation, so usage cards of one chapter (the
+    // three power-supply lines of the R6 hero) are readable apart without
+    // hover; the file name alone is the same on all of them.
+    if (typeof row.line === 'number' && Number.isFinite(row.line)) {
+      return `${row.sourceFile}:${row.line}`;
+    }
+    return row.sourceFile;
+  }
   return row.nodeId;
 }
 

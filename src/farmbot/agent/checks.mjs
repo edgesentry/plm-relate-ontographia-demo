@@ -64,11 +64,14 @@ export const CHECKS = Object.freeze([
   }),
   Object.freeze({
     id: 'R6',
-    direction: 'design-to-packing-service',
-    title: 'A name changed or removed in the Change Log still appears in packing or service pages',
+    direction: 'design-to-downstream',
+    title:
+      'A name changed or removed in the Change Log still appears in an assembly chapter, packing list or service page',
     intents: Object.freeze([
       'r6-changes.json',
       'changed-parts.json',
+      'refs-assembly.json',
+      'r2-assembly-unmatched.json',
       'refs-kit.json',
       'refs-carton.json',
       'refs-bag.json',

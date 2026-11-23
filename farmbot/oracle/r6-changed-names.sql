@@ -1,8 +1,9 @@
--- R6: a name changed or removed in the Change Log still appears on a packing
--- or service page.
+-- R6: a name changed or removed in the Change Log still appears on an assembly
+-- chapter, packing or service page.
 --
--- Fact: a `change_note_link` that resolved to a part is still named by a
--- packing or service usage line, matched on the resolved part.
+-- Fact: a `change_note_link` that resolved to a part is still named by an
+-- assembly-chapter, packing or service usage line, matched on the resolved
+-- part.
 -- Inferred: a Change Log list item that removes or replaces an item
 -- (`removed`, `replaced`, `switched`, `dropped`) names an item in prose. A
 -- downstream display name whose normalized words occur in that item is a
@@ -23,8 +24,9 @@
 -- seed and the fixtures contain no compatibility characters the two forms
 -- differ on.
 --
--- `downstream` is `packing_item` plus `service_reference` only. Pre-assembly
--- pages and the Accessory bag BOM are not packing items, so they never reach
+-- `downstream` is `assembly_reference` plus `packing_item` plus
+-- `service_reference`. Pre-assembly pages and the Accessory bag BOM are not
+-- packing items and not assembly-chapter usage lines, so they never reach
 -- this rule.
 --
 -- The returned `name` is the finding subject: the part name for a fact, the
@@ -40,6 +42,17 @@ WITH RECURSIVE
       NULL::VARCHAR AS section,
       NULL::INTEGER AS bullet
     FROM packing_item
+    WHERE display_name IS NOT NULL
+    UNION ALL
+    SELECT
+      'downstream',
+      page_path,
+      display_name,
+      display_name,
+      resolved_part,
+      NULL::VARCHAR,
+      NULL::INTEGER
+    FROM assembly_reference
     WHERE display_name IS NOT NULL
     UNION ALL
     SELECT

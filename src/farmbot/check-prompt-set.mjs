@@ -52,8 +52,18 @@ export function farmbotCheckPromptSet(allowedValues) {
     },
     { id: 'r5-en', lang: 'en', check: 'R5', text: 'Find pre-assembly pages without a machine-readable parts table.' },
     { id: 'r5-ja', lang: 'ja', check: 'R5', text: '機械可読の部品表がないプリ組立ページを探してください。' },
-    { id: 'r6-en', lang: 'en', check: 'R6', text: 'Which removed Change Log names still appear in packing or service pages?' },
-    { id: 'r6-ja', lang: 'ja', check: 'R6', text: '変更ログで削除された名前のうち、梱包やサービスページに残っているものはどれですか？' },
+    {
+      id: 'r6-en',
+      lang: 'en',
+      check: 'R6',
+      text: 'Which removed Change Log names still appear in assembly chapters, packing or service pages?',
+    },
+    {
+      id: 'r6-ja',
+      lang: 'ja',
+      check: 'R6',
+      text: '変更ログで削除された名前のうち、組立チャプタ・梱包・サービスページに残っているものはどれですか？',
+    },
     { id: 'r7-en', lang: 'en', check: 'R7', text: 'Show changed parts that reach no assembly, packing, or service page.' },
     { id: 'r7-ja', lang: 'ja', check: 'R7', text: '組立・梱包・サービスのどのページにも到達しない変更部品を表示してください。' },
     {

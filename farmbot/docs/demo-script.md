@@ -89,13 +89,14 @@ evidence, without leaving the tab."
 
 Follow a card's `#finding=` link to `/farmbot/#finding=R6-power-supply`. The id
 is taken from `farmbot/dist/farmbot.findings.json`. This finding carries design
-change, packing and service evidence.
+change, assembly-chapter, packing and service evidence.
 
 Narration: "The Change Log changed this part. The checks do not take the Change
 Log's word for it: the finding starts in the design-change lane
 (`laneDesignChange`) and asks where the changed part still appears. The changed
-part still appears in a packing list and on a service page. Each evidence row
-names the source file and, where the source has one, the line."
+part still appears in an assembly chapter, in a packing list and on a service
+page. Each evidence row names the source file and, where the source has one,
+the line."
 
 ### 3. Process-lane diagram and query provenance (about 18 seconds)
 
@@ -107,8 +108,9 @@ Narration: "The diagram is built only from this finding's evidence rows. The
 highlighted nodes are the problem nodes (`lanesLegendProblem`), and the
 highlighted links between them are the impacted path (`lanesLegendPath`). The
 path runs from the design-change lane (`laneDesignChange`) through the EBOM
-part lane (`laneEbomPart`) to packing (`lanePacking`) and service
-(`laneService`)."
+part lane (`laneEbomPart`) to the BOP (instructions) lane (`laneBop`), packing
+(`lanePacking`) and service (`laneService`); the BOP lane holds the
+assembly-chapter evidence, not a factory routing."
 
 Click a diagram node: its evidence row is selected. Then click that row's
 select-node control (`evidenceSelect`): the node is selected from the table.

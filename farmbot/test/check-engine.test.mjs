@@ -318,7 +318,12 @@ test('R6 findings equal the SQL oracle, fact and inferred rows apart', async () 
     const files = [
       ...new Set(
         finding.evidence
-          .filter((row) => row.role === 'packing-structure' || row.role === 'service')
+          .filter(
+            (row) =>
+              row.role === 'packing-structure' ||
+              row.role === 'service' ||
+              row.role === 'structure',
+          )
           .map((row) => row.sourceFile),
       ),
     ];
@@ -345,7 +350,7 @@ test('R6 findings equal the SQL oracle, fact and inferred rows apart', async () 
   );
 });
 
-test('R6 evidence comes only from the packing and service channels', () => {
+test('R6 evidence comes only from the assembly, packing and service channels', () => {
   const r6 = findingsByRule('R6');
   assert.ok(r6.length > 0, 'the committed file has no R6 finding');
   for (const finding of r6) {
@@ -354,7 +359,7 @@ test('R6 evidence comes only from the packing and service channels', () => {
       assert.equal(
         nodeId.startsWith('preassembly:'),
         false,
-        `${finding.id}: ${nodeId} is a pre-assembly page, not a packing item`,
+        `${finding.id}: ${nodeId} is a pre-assembly page, not a downstream usage the rule reads`,
       );
       assert.equal(
         nodeId.startsWith('bag:accessory:'),
@@ -366,6 +371,12 @@ test('R6 evidence comes only from the packing and service channels', () => {
         false,
         `${finding.id}: ${nodeId} is a pre-assembly usage line`,
       );
+      if (row.role === 'structure') {
+        assert.ok(
+          nodeId.startsWith('chapter:'),
+          `${finding.id}: ${nodeId} is not an assembly chapter`,
+        );
+      }
       if (row.role === 'packing-structure') {
         assert.ok(
           nodeId.startsWith('container:') || nodeId.startsWith('bag:pack:'),
@@ -386,8 +397,8 @@ test('R6 evidence comes only from the packing and service channels', () => {
       }
       if (row.role === 'reference') {
         assert.ok(
-          nodeId.startsWith('usage:service:'),
-          `${finding.id}: ${nodeId} is not a service usage`,
+          nodeId.startsWith('usage:assembly:') || nodeId.startsWith('usage:service:'),
+          `${finding.id}: ${nodeId} is not an assembly or service usage`,
         );
       }
     }

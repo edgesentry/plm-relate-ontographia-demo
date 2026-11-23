@@ -38,7 +38,7 @@ const ROUTING_HINTS = Object.freeze({
   R3: 'part with no process reference, unreferenced part, 工程から参照されない部品',
   R4: 'packed part absent from assembly or pre-assembly, 梱包にあるが工程にない部品',
   R5: 'pre-assembly without a machine-readable parts table, 機械可読でないプリ組立',
-  R6: 'Change Log name still in packing or service, 変更ログの名前が梱包・サービスに残る',
+  R6: 'Change Log name still in assembly, packing or service, 変更ログの名前が組立・梱包・サービスに残る',
   R7: 'changed part reaches no downstream page, 下流に到達しない変更部品',
   R8: 'service-only part, service part absent from process, サービスのみの部品',
   R9: 'unresolved service-page reference, サービスページの未解決参照',

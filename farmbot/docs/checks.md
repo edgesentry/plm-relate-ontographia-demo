@@ -55,15 +55,21 @@ candidate there.
 ### R6: a Change Log name still appears downstream
 
 One finding per name, reached either way. A **fact** is a `change_note_link` that
-resolves to the part still named by a packing or service usage line. An
-**inferred** candidate is a downstream display name whose normalized words occur
-in a removal or replacement item, unless that item also links a name containing
-those words: the link is the replacement and covers it, so "Replaced the black
-oxide wood screws with stainless steel [[T25 wood screws]]" does not report "wood
-screws".
+resolves to the part still named by an assembly-chapter, packing or service
+usage line. An **inferred** candidate is a downstream display name whose
+normalized words occur in a removal or replacement item, unless that item also
+links a name containing those words: the link is the replacement and covers it,
+so "Replaced the black oxide wood screws with stainless steel [[T25 wood
+screws]]" does not report "wood screws".
 
-R6 reads packing items and service references only; pre-assembly pages and the
-Accessory bag BOM are manufacturing containers, not packing items. The inference
+R6 reads assembly-chapter usage lines, packing items and service references.
+The assembly rows are the documented instruction structure the BOP lane draws,
+so a changed part that an assembly chapter still names is cited on the same
+path as packing and service, and a removal statement can name an unmatched
+assembly-chapter usage line. Pre-assembly pages and the Accessory bag BOM stay
+out: they are manufacturing containers, not packing items and not
+assembly-chapter usage lines, and no pre-assembly node is invented for the
+lane. The inference
 shares the extract's normalization (`farmbot/docs/name-normalization.md`): names
 that normalize to one key merge into one finding, and a linked-and-inferred name
 stays one finding with the fact winning. The finding carries the boolean
@@ -277,9 +283,11 @@ countermeasures ask the reader to confirm the value or add the missing reference
 Each rule has an independent DuckDB query under `farmbot/oracle/`, and
 `npm run test:farmbot` compares each with the engine on the committed seed. R2 and
 R9 keep one row per reference line, so they compare as multisets. The R6 oracle
-shares the rule's name normalization (parentheticals, `&`, `w/`, `×`, singular
-fallback) and promotes an inferred match equal to a changed part to a fact row,
-including an unmatched row other rules would not treat as a packing item.
+reads the same assembly-chapter, packing and service downstream rows as the rule
+module, shares the rule's name normalization (parentheticals, `&`, `w/`, `×`,
+singular fallback) and promotes an inferred match equal to a changed part to a
+fact row, including an unmatched row other rules would not treat as a packing
+item.
 
 ## Verification
 

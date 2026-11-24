@@ -1,9 +1,9 @@
 # FarmBot Genesis B1 Demo Video Recording Guide
 
-A timed, shootable recording guide for filming the live `/farmbot/` screen in one pass against the accepted 8-beat spine (a Beat 0 opening plus the seven beats). This guide translates the draft narration from `farmbot/docs/demo-script.md` into an operational shot list with exact live URLs, click sequences, on-screen UI requirements (keyed to `src/farmbot/i18n.ts`), English voiceover lines, target durations, and cut points.
+A timed, shootable recording guide for filming the live `/farmbot/` screen in one pass against the accepted 9-beat spine (a Beat 0 opening plus eight beats). The take is a silent screen recording: no voiceover is recorded, and the English caption lines (the existing narration text from `farmbot/docs/demo-script.md`, unchanged) are burned in after the take. This guide turns that draft into an operational shot list with exact live URLs, click sequences, on-screen UI requirements (keyed to `src/farmbot/i18n.ts`), target durations, and cut points.
 
 Live URL: `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`  
-Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; the eight named beats sum to 103 seconds).
+Target Screen Length: 129 seconds, ending at 2:09 (the nine named beats sum to the documented screen-and-caption total; captions and music are added after the take).
 
 ---
 
@@ -15,7 +15,7 @@ Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; the eight name
 - **Operating System Notifications:** Set "Do Not Disturb" / "Focus" mode to ON on the recording workstation to suppress desktop banners, dock badges, and audio chimes.
 
 ### Language Setting
-- **On-Screen Language:** The voiceover is recorded in English. Ensure the on-screen language toggle (`data-testid="lang-toggle"`, `language`) is set to English (`en`). All headings, labels, and descriptions must display English UI strings.
+- **On-Screen Language:** The take is silent and the captions are English. Ensure the on-screen language toggle (`data-testid="lang-toggle"`, `language`) is set to English (`en`). All headings, labels, and descriptions must display English UI strings.
 
 ### Local Model and WebGPU Configuration
 - **No Live Model Roll:** The recording uses the deterministic rejection demo control (`checkRejectionDemoButton`) and does not invoke a live model roll or prompt typing.
@@ -23,13 +23,13 @@ Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; the eight name
   - If WebGPU is supported, the consent card (`checkConsentTitle`: "Allow a local model download?") may appear above the free-text section.
   - **Do NOT click "Allow and load model" (`checkConsentAllow`) during recording.** No WebLLM package (`@mlc-ai/web-llm`) or model weights (879 MB) should be downloaded on film.
   - To prevent layout shifts during the take, resolve the consent prompt off-camera prior to recording by clicking "Decline" (`checkConsentDecline`), which cleanly reveals `checkConsentDeclined` ("Model access was declined. Nothing was downloaded; the rule chips and the rest of this screen remain available.").
-  - If WebGPU is not supported on the host machine, the page displays `checkWebgpuNotice` ("WebGPU is not available..."). This fallback state is completely acceptable and does not interfere with beats 1 through 7.
+  - If WebGPU is not supported on the host machine, the page displays `checkWebgpuNotice` ("WebGPU is not available..."). This fallback state is completely acceptable and does not interfere with beats 1 through 8.
 - **No Model Warm-up:** Because the take relies exclusively on the deterministic button and fixed sample text, no WebLLM warm-up is required or permitted.
 
 ### Operational Guardrails (from Repo Docs)
 - **Committed Data Only:** Use only the committed seed graph, check rules, and findings (`farmbot/dist/farmbot.findings.json`). Do not modify them for the take.
-- **No Inventory Totals:** Do not state inventory totals (e.g., number of findings, rules, intents, or seeds) in the voiceover.
-- **In-Browser Execution Only:** Everything runs locally in the browser tab. The Cloudflare Worker email notification path is narrated as a concept, never triggered.
+- **No Inventory Totals:** Do not state inventory totals (e.g., number of findings, rules, intents, or seeds) in a caption line.
+- **In-Browser Execution Only:** Everything runs locally in the browser tab. The Cloudflare Worker email notification path is described as a concept, never triggered.
 - **No Secrets or Endpoints:** Do not call `/api/notify/test`, configure secrets, or display destination email addresses or API tokens.
 - **Public Deployed Build:** Do not claim that the deployment serves an unconfirmed build.
 - **Scope Restriction:** The desk-fan screen at `/` represents a different graph; do not film or describe its fixtures as `/farmbot/` behaviour.
@@ -40,30 +40,30 @@ Target Spoken Length: 90 to 110 seconds (1 to 2 minutes envelope; the eight name
 
 ```
 Spine Overview:
-Beat 0 (12s) ──> Beat 1 (12s) ──> Beat 2 (18s) ──> Beat 3 (18s) ──> Beat 4 (12s) ──> Beat 5 (15s) ──> Beat 6 (9s) ──> Beat 7 (7s)
-Opening        Sample Cards     Deep Link R6     Lanes & Cypher   SBOM Lane R1     BOP & PDF R2/R5   Rejection Button Closing Bound
-                                                                                      (103s Total)
+Beat 0 (12s) ──> Beat 1 (12s) ──> Beat 2 (22s) ──> Beat 3 (23s) ──> Beat 4 (17s) ──> Beat 5 (17s) ──> Beat 6 (9s) ──> Beat 7 (10s) ──> Beat 8 (7s)
+Opening        Sample Cards     Deep Link R6     Lanes & Cypher   SBOM Lane R1     BOP & PDF R2/R5   Rejection Button Claim Verification Closing Bound
+                                                                                      (129s Total)
 ```
 
-Named trim, so the opening plus the seven beats stays inside the spoken envelope:
+Pacing notes, so the silent take lands on the documented screen-and-caption total:
 
 - The 12-second Beat 0 opening is added.
-- Beat 6 is trimmed by 3 seconds (12 to 9 seconds).
-- Beat 7 is trimmed by 5 seconds (12 to 7 seconds), by dropping its first sentence; the closing line stays verbatim.
-- The eight named beats sum to 103 seconds, inside the 90 to 110 second spoken envelope and under 2 minutes.
+- Beats 2 through 5 are stretched to the caption reading pace (18, 18, 12, and 15 seconds become 22, 23, 17, and 17 seconds), and the new Beat 7 claim verification is added at 10 seconds.
+- Beat 6 is trimmed by 3 seconds (12 to 9 seconds); Beat 8 is trimmed by 5 seconds (12 to 7 seconds), by dropping its first sentence; the closing line stays verbatim.
+- The nine named beats sum to 129 seconds (2:09), the documented screen-and-caption total.
 
 ### Beat 0: Opening (Background, Purpose, and Flow Overview)
 - **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
 - **Click Sequence:**
   1. Open the URL in a fresh browser tab and let the first frame settle.
-  2. Do not click, do not scroll, and do not type: this beat is spoken over the landing before any Beat 1 screen operation.
+  2. Do not click, do not scroll, and do not type: this beat is a silent hold on the landing before any Beat 1 screen operation.
 - **On-Screen Requirements:**
   - The compact 3-step flow strip above the sample notification cards (`data-testid="flow-strip"`), showing one short line: `flowStepAgent` ("Agent finds the drift"), then `flowStepEmail` ("Email link"), then `flowStepAnalysis` ("Graph analysis in the browser").
   - The "How it works" disclosure (`data-testid="how-it-works"`, `howItWorksLabel`) stays closed, so the EBOM/MBOM and engine definitions stay off the fold during the take.
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "Hardware docs drift across BOMs, packing lists, and service pages. An agent spots the broken subgraph, emails a link, and clicking it runs live graph verification right in your browser."
-- **Target Timing:** 12 seconds
-- **Cut Point:** Right after the narrator finishes the spoken line, as the camera settles on the sample notification cards for Beat 1.
+- **Target Timing:** 12 seconds (0:00 to 0:12)
+- **Cut Point:** Right after the 12-second hold ends, as the camera settles on the sample notification cards for Beat 1.
 
 ---
 
@@ -80,10 +80,10 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   - Four visible sample notification cards (`R1-40mm-nut-bar-standard`, `R6-power-supply`, `R8-shaft-coupler`, `R3-fuse`).
   - Each card displays badge `sampleCardLabel` ("Sample"), its scenario line (for example `sampleScenarioDesignChange`, "Design change downstream"), and open link `sampleOpenFinding` ("Open" plus the finding id).
   - Card 2 displays `sampleSummaryR6PowerSupply` ("The Change Log links 'Power Supply', but assembly, packing, and service pages still list it.").
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "A reviewer can start from a notification and go straight to the evidence, without leaving the tab."
-- **Target Timing:** 12 seconds
-- **Cut Point:** Immediately after the narrator finishes speaking, right as the cursor moves to click the "Open R6-power-supply" link on the `R6-power-supply` card.
+- **Target Timing:** 12 seconds (0:12 to 0:24)
+- **Cut Point:** Immediately after the 12-second hold ends, right as the cursor moves to click the "Open R6-power-supply" link on the `R6-power-supply` card.
 
 ---
 
@@ -100,9 +100,9 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   - Evidence table (`evidenceHeading`: "Evidence") displaying rows with roles: `design-change`, `part`, `structure`, `reference`, `packing-line`, `packing-structure`, and `service`.
   - Each evidence row shows its role plus the source file and line on one line (for example `electronics.md:146`); the exact path, the seed node and the facts sit behind the row's `evidenceFactsLabel` ("Facts") disclosure.
   - Exact source files cited by the rows: `electronics.md`, `storing-farmbot-for-winter.md`, and `power-supply.md`, with each row's Facts disclosure carrying the exact path.
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "The Change Log changed this part. The checks do not take the Change Log's word for it: the finding starts in the design-change lane and asks where the changed part still appears. The changed part still appears in the BOP (instructions) lane, in a packing list and on a service page. Each evidence row names the source file and, where the source has one, the line."
-- **Target Timing:** 18 seconds
+- **Target Timing:** 22 seconds (0:24 to 0:46)
 - **Cut Point:** Right after the camera showcases the source file path and line numbers in the evidence table.
 
 ---
@@ -124,9 +124,9 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
     - Intent identifier (e.g., `farmbot/checks/changed-parts.json`).
     - Executed Cypher query text block (`executedCypherLabel`: "Executed Cypher", showing `CYPHER 25 ...`).
     - Bound parameters block (`paramsLabel`: "Bound parameters", showing JSON parameter map).
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "The diagram is built only from this finding's evidence rows. The highlighted nodes are the problem nodes, and the highlighted links between them are the impacted path. The path runs from the design-change lane through the EBOM part lane to the BOP (instructions) lane, packing and service. Every evidence row carries the Intent, the executed Cypher, and the bound parameters that produced it."
-- **Target Timing:** 18 seconds
+- **Target Timing:** 23 seconds (0:46 to 1:09)
 - **Cut Point:** As the executed Cypher block and bound parameters are clearly displayed on screen.
 
 ---
@@ -140,13 +140,13 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   4. Cursor indicates the newly visible `SBOM (materials)` lane and hovers over the `Stainless Steel` node.
 - **On-Screen Requirements:**
   - Finding header indicates `R1-40mm-nut-bar-standard` (`checkR1Label`: "R1 · Packing quantity differs from the part page quantity").
-  - Reconciliation category on screen: the finding view shows the category label `reconciliationCategoryR1` ("Quantity difference") with the comparison note `reconciliationR1Note` ("Part page versus packing list"). On-screen only: no extra narration, and the beat keeps its 12-second target timing.
+  - Reconciliation category on screen: the finding view shows the category label `reconciliationCategoryR1` ("Quantity difference") with the comparison note `reconciliationR1Note` ("Part page versus packing list"). On-screen only: no extra caption, and the beat keeps its 17-second target timing.
   - Process lanes rendered: `laneEbomPart` ("EBOM part"), `laneSbom` ("SBOM (materials)"), and `lanePacking` ("Packing").
   - In `laneSbom`, the material node `material:stainless steel` is rendered with display text `Stainless Steel`.
   - Contrast note visible or demonstrable: `laneSbom` is present here because the part page documents `specs.material`, but was absent on `R6-power-supply`.
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "When a cited part page records a material, the SBOM (materials) lane shows that documented material next to the part. It is a view of the recorded values, not a software bill of materials and not a substance list. The lane stays hidden on a finding that cites no such material."
-- **Target Timing:** 12 seconds
+- **Target Timing:** 17 seconds (1:09 to 1:26)
 - **Cut Point:** Immediately following the explanation that the lane stays hidden when no material is documented.
 
 ---
@@ -169,12 +169,12 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
     - Finding `R5-v1-7-manufacturing-pre-assembly-cable-carrier-md` (`checkR5Label`: "R5 · A pre-assembly page has no machine-readable parts table").
     - Visible lane: `laneBop` ("BOP (instructions)").
     - PDF-only marker visible on the node (drawn label "PDF only", `lanesNodePdfOnlyShort`; the long explanation stays on the SVG title, element `[data-testid="process-node-pdf-only"]`).
-- **English Voiceover Lines:**
-  - *On R2-barb (approx. 5 to 6 seconds):*
+- **English Caption Lines:**
+  - *On R2-barb (approx. 6 seconds):*
     > "The BOP (instructions) lane shows the documented instruction structure the evidence cites, not a factory routing."
-  - *On R5-cable-carrier (approx. 9 to 10 seconds):*
+  - *On R5-cable-carrier (approx. 11 seconds):*
     > "A pre-assembly page whose steps are only in a PDF gets this marker. It records that the page has no machine-readable component list; it is not a claim that the PDF was parsed."
-- **Target Timing:** 15 seconds total across both findings
+- **Target Timing:** 17 seconds total across both findings (1:26 to 1:43; R5 at about 1:32)
 - **Cut Point:** Right after the camera highlights the "PDF only" badge.
 
 ---
@@ -194,27 +194,47 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
   - Rejection body: `checkRoutingRejectedBody` ("Nothing new was compiled or executed.").
   - Validator rejection reason string displayed: `routing output contains Cypher or a markdown fence`.
   - Zero compilation or execution attempts triggered.
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "If the routing output contains Cypher or a markdown fence, the screen rejects it. Nothing new is compiled or executed."
-- **Target Timing:** 9 seconds
+- **Target Timing:** 9 seconds (1:43 to 1:52)
 - **Cut Point:** As the rejection alert banner and validator error string are clearly readable.
 
 ---
 
-### Beat 7: Closed Routing Bound and Closing
+### Beat 7: Deterministic Claim Verification Panel
 - **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
 - **Click Sequence:**
-  1. Stay within the "Free-text check routing" section.
+  1. Scroll down from the free-text section, past the findings panel, to the claim verification panel below it (`data-testid="claim-verifier-panel"`, a collapsed `<details>` disclosure) and open it; the summary heading is "Deterministic claim verification" (element id `claim-verifier-heading`).
+  2. Keep the default fixture selected: `uc1-hallucinated-part-fail` (chip title "UC1 Fail: Invented part in gantry assembly", use-case label "Use case 1: Hallucinated part"). The fixed agent claim reads "Titanium Servo Coupling is used in the gantry assembly chapter (v1.7/assembly/gantry.md)." Click `Verify claim` (`data-testid="verify-claim-run"`); the badge is `REJECTED` and the evidence includes the missing node or claimed-versus-actual block (`data-testid="claim-missing-evidence"` / `claim-actual-evidence`).
+  3. Click the `uc1-hallucinated-part-pass` chip (chip title "UC1 Pass: Valid part in gantry assembly"); the fixed agent claim reads "M5 x 10mm Screw is used in the gantry assembly chapter (v1.7/assembly/gantry.md)." Click `Verify claim` again; the badge is `CONFIRMED`.
+- **On-Screen Requirements:**
+  - Panel summary heading: "Deterministic claim verification".
+  - REJECTED run on `uc1-hallucinated-part-fail`: badge `REJECTED`, with the missing node or claimed-versus-actual evidence visible.
+  - CONFIRMED run on `uc1-hallucinated-part-pass`: badge `CONFIRMED`.
+- **English Caption Lines:**
+  - *On the REJECTED run (approx. 5 seconds):*
+    > "A fixed agent claim is replayed as Intent queries and rejected."
+  - *On the CONFIRMED run (approx. 5 seconds):*
+    > "A claim that matches the graph is confirmed."
+- **Target Timing:** 10 seconds (1:52 to 2:02)
+- **Cut Point:** As the `CONFIRMED` badge settles, before the camera returns to the free-text section for Beat 8.
+
+---
+
+### Beat 8: Closed Routing Bound and Closing
+- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Click Sequence:**
+  1. Scroll back up to the "Free-text check routing" section and stay within it.
   2. Direct the cursor / zoom toward the permanently visible notice at the bottom of the section (`checkModelNoCypher`).
 - **On-Screen Requirements:**
   - The static boundary notice text (`checkModelNoCypher`):
     `"The model only routes; it never writes Cypher."`
   - Rule chips (`checkChipListLabel`) and committed artifact digests visible in the background, reinforcing deterministic execution.
-- **English Voiceover Line:**
+- **English Caption Line:**
   > "In short, the model only routes; it never writes Cypher."
-- **Target Timing:** 7 seconds
-- **Cut Point:** Hold for 1 second of clean pause immediately following the final spoken phrase `"it never writes Cypher."`
-- **Pacing & Trimming Directive:** The named trim already applies: Beat 7 speaks only its closing line, and Beat 6 is 9 seconds. If a retake still runs long, tighten the pause before the Beat 6 button press first. The concluding sentence `"In short, the model only routes; it never writes Cypher."` must remain intact as the final spoken statement of the video.
+- **Target Timing:** 7 seconds (2:02 to 2:09)
+- **Cut Point:** Hold for 1 second of clean pause immediately following the final caption phrase `"it never writes Cypher."`
+- **Pacing & Trimming Directive:** The named trim already applies: Beat 8 carries only its closing line, and Beat 6 is 9 seconds. If a retake still runs long, tighten the pause before the Beat 6 button press first. The concluding sentence `"In short, the model only routes; it never writes Cypher."` must remain intact as the final caption statement of the video.
 
 ---
 
@@ -235,8 +255,8 @@ Use this checklist between recording takes to reset the environment cleanly:
    - Check that no browser console, dev inspector, bookmarks, or system notifications overlap the viewport.
 5. **Rejection Button Reset:**
    - Verify the rejection demo area is clean. Ensure it is triggered only via `checkRejectionDemoButton` feeding `MATCH (part:Part) RETURN part` (no free-text typing).
-6. **Final Voiceover Check:**
-   - Confirm the final voiceover phrase remains verbatim: `"the model only routes; it never writes Cypher."`
+6. **Final Caption Check:**
+   - Confirm the final caption phrase remains verbatim: `"the model only routes; it never writes Cypher."`
 
 ---
 
@@ -246,9 +266,9 @@ The following constraints are quoted verbatim from the repository documentation.
 
 ### From `farmbot/docs/demo-script.md`:
 
-> "Target spoken length: 1 to 2 minutes."
+> "Target screen length: 129 seconds (2:09)."
 
-> "Keep the narration within 1 to 2 minutes, about 90 to 110 seconds. If it runs long, shorten step 6 first, then step 0; the closing words must stay the final statement."
+> "Keep the silent take within the documented 129 seconds. If it runs long, shorten step 6 first, then step 0; the closing caption must stay the final statement."
 
 > "Do not claim that the live deployment already serves a build you have not confirmed."
 

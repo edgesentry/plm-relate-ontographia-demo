@@ -1713,6 +1713,31 @@ async function main() {
       tamperChecksState.questionErrorText === questionErrorBeforeChecks,
       'Run checks cleared or changed the question error banner',
     );
+    // A deep-link auto-run that fails must open the findings disclosure so
+    // the checks error is visible without a manual toggle.
+    await tamper.page.goto(`${entryUrl}#finding=R6-power-supply`, {
+      waitUntil: 'load',
+      timeout: 60000,
+    });
+    await tamper.page.waitForSelector('[data-testid="checks-error"]', { timeout: 30000 });
+    const checksErrorAutoOpen = await tamper.page.evaluate(() => {
+      const panel = document.querySelector('[data-testid="findings-panel"]');
+      const checksError = document.querySelector('[data-testid="checks-error"]');
+      return {
+        open: panel instanceof HTMLDetailsElement ? panel.open : false,
+        errorVisible: Boolean(
+          checksError && checksError.getBoundingClientRect().height > 0,
+        ),
+      };
+    });
+    assert(
+      checksErrorAutoOpen.open,
+      'the findings panel stayed closed after a checks error',
+    );
+    assert(
+      checksErrorAutoOpen.errorVisible,
+      'the checks error box is not visible after the panel auto-opened',
+    );
     const tamperCsp = await readCspViolations(tamper.page);
     assert(tamperCsp.length === 0, `tampered-seed CSP violation(s): ${JSON.stringify(tamperCsp)}`);
     const tamperExternal = externalRequests(tamper.requests);

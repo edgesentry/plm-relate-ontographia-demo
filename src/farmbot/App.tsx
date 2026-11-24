@@ -292,10 +292,16 @@ export function App() {
     document.title = messages[lang].title;
   }, [lang]);
 
-  // A finished checks run opens the findings panel once; a manual toggle of
-  // the summary afterwards is the user's own and is never overridden.
+  // A finished or failed checks run opens the findings panel once so the
+  // result or the error is visible. A manual toggle of the summary afterwards
+  // is the user's own and is never overridden.
   useEffect(() => {
-    if (checks.status === 'ready' && findingsRef.current) findingsRef.current.open = true;
+    if (
+      (checks.status === 'ready' || checks.status === 'error') &&
+      findingsRef.current
+    ) {
+      findingsRef.current.open = true;
+    }
   }, [checks.status]);
 
   useEffect(

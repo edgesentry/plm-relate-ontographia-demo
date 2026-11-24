@@ -209,7 +209,7 @@ Named trim, so the opening plus the seven beats stays inside the spoken envelope
 - **On-Screen Requirements:**
   - The static boundary notice text (`checkModelNoCypher`):
     `"The model only routes; it never writes Cypher."`
-  - Rule chips (`checkChipListLabel`) and committed artifact digests visible in the background, reinforcing deterministic execution.
+  - The fixed sample `MATCH (part:Part) RETURN part` and the validator reason `routing output contains Cypher or a markdown fence` stay in frame with the bound.
 - **English Voiceover Line:**
   > "In short, the model only routes; it never writes Cypher."
 - **Target Timing:** 7 seconds

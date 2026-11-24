@@ -37,6 +37,7 @@ import r9ServiceUnmatchedJson from '../../farmbot/checks/r9-service-unmatched.js
 import refsServiceJson from '../../farmbot/checks/refs-service.json';
 import unmatchedCandidatesJson from '../../farmbot/checks/unmatched-candidates.json';
 import allowedValuesJson from '../../farmbot/dist/farmbot.allowed-values.json';
+import agentClaimsJson from '../../farmbot/claims/agent-claims.json';
 import partSourcesJson from '../../farmbot/dist/farmbot.part-sources.json';
 import findingsSidecar from '../../farmbot/dist/farmbot.findings.json.sha256?raw';
 import ontologyYaml from '../../farmbot/ontology/farmbot.native.yaml?raw';
@@ -103,6 +104,9 @@ if (Object.keys(checkIntents).length !== INTENT_FILES.length) {
 
 /** Part page paths written by the agent from the extract, for evidence rows. */
 export const partSources = partSourcesJson as PartSourcesFile;
+
+/** Fixed agent-claim fixtures verified deterministically against the Relate graph. */
+export const agentClaims = agentClaimsJson;
 
 /** SHA-256 hex of the committed findings document, from its sidecar. */
 export const COMMITTED_FINDINGS_DIGEST = (() => {

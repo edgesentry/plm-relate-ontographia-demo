@@ -1210,6 +1210,30 @@ async function main() {
       );
     }
 
+    // Deterministic claim verifier panel: verify reject and confirm verdicts
+    // using the same in-browser Relate session with 0 external requests.
+    await page.locator('[data-testid="claim-verifier-panel"] > summary').click();
+    const claimChecks = [];
+    for (const [id, expectedBadge] of [
+      ['uc1-hallucinated-part-fail', 'REJECTED'],
+      ['uc2-wrong-conclusion-fail', 'REJECTED'],
+      ['uc3-missed-change-impact-pass', 'CONFIRMED'],
+    ]) {
+      await page.click(`[data-testid="claim-fixture-${id}"]`);
+      await page.click('[data-testid="verify-claim-run"]');
+      await page.waitForSelector('[data-testid="claim-verdict-badge"]', { timeout: 30000 });
+      const badge = (
+        await page.locator('[data-testid="claim-verdict-badge"]').textContent()
+      )?.trim();
+      assert(
+        badge === expectedBadge,
+        `claim verifier ${id}: expected ${expectedBadge}, got ${JSON.stringify(badge)}`,
+      );
+      claimChecks.push({ id, badge });
+    }
+    await page.locator('[data-testid="claim-verifier-panel"] > summary').click();
+    summary.claimVerifier = claimChecks;
+
     const happyCsp = await readCspViolations(page);
     assert(happyCsp.length === 0, `CSP violation(s): ${JSON.stringify(happyCsp)}`);
     assert(

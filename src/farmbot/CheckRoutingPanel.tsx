@@ -335,8 +335,10 @@ export function CheckRoutingPanel({ engine, disabled, onRun, t }: CheckRoutingPa
     !modelRef.current || phase !== 'ready' || !engine || disabled || text.trim().length === 0;
 
   return (
-    <section className="panel farmbot-check-routing" aria-labelledby="check-routing-heading">
-      <h2 id="check-routing-heading">{t('checkRoutingHeading')}</h2>
+    <details className="panel farmbot-check-routing" data-testid="check-routing">
+      <summary>
+        <h2 id="check-routing-heading">{t('checkRoutingHeading')}</h2>
+      </summary>
       <p className="muted small">{t('checkRoutingIntro')}</p>
       <div hidden data-testid="farmbot-check-routing-debug">
         {JSON.stringify(debug)}
@@ -515,6 +517,6 @@ export function CheckRoutingPanel({ engine, disabled, onRun, t }: CheckRoutingPa
           ))}
         </div>
       )}
-    </section>
+    </details>
   );
 }

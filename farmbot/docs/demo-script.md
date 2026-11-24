@@ -80,7 +80,7 @@ runs live graph verification right in your browser."
 
 Open `/farmbot/` and point at the sample notification-email cards
 (`sampleHeading`). Each card is a sample of notification email, not sent mail
-(`sampleOpenFinding`). Nothing is sent from this screen.
+(`sampleIntro`). Nothing is sent from this screen.
 
 Narration: "A reviewer can start from a notification and go straight to the
 evidence, without leaving the tab."
@@ -94,9 +94,9 @@ change, assembly-chapter, packing and service evidence.
 Narration: "The Change Log changed this part. The checks do not take the Change
 Log's word for it: the finding starts in the design-change lane
 (`laneDesignChange`) and asks where the changed part still appears. The changed
-part still appears in an assembly chapter, in a packing list and on a service
-page. Each evidence row names the source file and, where the source has one,
-the line."
+part still appears in the BOP (instructions) lane (`laneBop`), in a packing
+list and on a service page. Each evidence row names the source file and, where
+the source has one, the line."
 
 ### 3. Process-lane diagram and query provenance (about 18 seconds)
 
@@ -162,15 +162,15 @@ that the PDF was parsed."
 
 ### 6. Cypher-output rejection (about 9 seconds)
 
-Scroll to the free-text heading (`checkFreeTextHeading`). The consent card
-(`checkConsentTitle`) may be visible; declining leaves the rule chips
-available. Use the labelled control (`checkRejectionDemoButton`), not a live
-prompt hoping the model emits Cypher. The button feeds a fixed sample, not a
-live model result (`checkRejectionDemoSampleLabel`, `checkRejectionDemoHint`).
-The fixed sample text is `MATCH (part:Part) RETURN part`. The validator reason
-is `routing output contains Cypher or a markdown fence`. The on-screen
-rejection copy is `checkRoutingRejected` / `checkRoutingRejectedBody`. Nothing
-new is compiled or executed. Do not film a live model roll.
+Open `checkRoutingHeading`, then scroll to the free-text heading
+(`checkFreeTextHeading`). The consent card (`checkConsentTitle`) may be
+visible; declining keeps the chips. Use the labelled control
+(`checkRejectionDemoButton`), never a live prompt. The button feeds the
+fixed sample (`checkRejectionDemoSampleLabel`, `checkRejectionDemoHint`).
+The fixed sample text is `MATCH (part:Part) RETURN part`. The validator
+reason is `routing output contains Cypher or a markdown fence`. The
+on-screen rejection copy is `checkRoutingRejected` / `checkRoutingRejectedBody`.
+Nothing new is compiled or executed. Do not film a live model roll.
 
 Narration: "If the routing output contains Cypher or a markdown fence, the
 screen rejects it. Nothing new is compiled or executed."

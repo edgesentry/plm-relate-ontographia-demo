@@ -1,9 +1,8 @@
 export type Lang = 'ja' | 'en';
 
 const en = {
-  title: 'Cross-document inconsistencies in FarmBot Genesis documentation, traced to evidence',
-  subtitle:
-    'Committed seed, Intents compiled by Ontographia, Cypher executed by Relate — all in this tab',
+  title: 'FarmBot doc inconsistencies, traced to evidence',
+  subtitle: 'Seed, compiled Intents, and Cypher - all in this tab',
   explainSources:
     'EBOM here means the engineering part pages taken from the pinned FarmBot Genesis source. ' +
     'MBOM is a view constructed by this repository — assembly chapters, pre-assemblies, kits, ' +
@@ -18,29 +17,23 @@ const en = {
   flowStepAgent: 'Agent finds the drift',
   flowStepEmail: 'Email link',
   flowStepAnalysis: 'Graph analysis in the browser',
-  sampleHeading: 'Sample notification emails',
+  sampleHeading: 'Sample emails',
   sampleIntro:
-    'Each card is a sample of a notification email, not a sent one. Nothing is sent from this ' +
-    'page: opening a link runs the checks in this tab and highlights that finding.',
+    'Sample emails, not sent. Opening a link runs the checks in this tab.',
   sampleCardLabel: 'Sample',
-  sampleScenarioLabel: 'Scenario checked',
-  sampleScenarioPacking: 'Reconciliation: part page versus packing list',
-  sampleScenarioDesignChange: 'Design-change reach into downstream documents',
-  sampleScenarioService: 'Service documents feeding back to design',
-  sampleScenarioCoverage: 'Reconciliation: process coverage gaps',
+  sampleScenarioPacking: 'Part page vs packing list',
+  sampleScenarioDesignChange: 'Design change downstream',
+  sampleScenarioService: 'Service back to design',
+  sampleScenarioCoverage: 'Process coverage gaps',
   sampleSummaryR1NutBar:
-    'The packing list on v1.7/manufacturing/packing/hardware-kit.md and the part page for ' +
-    '40mm Nut Bar disagree by 4 for standard.',
+    'The hardware-kit packing list and the 40mm Nut Bar part page disagree by 4 for standard.',
   sampleSummaryR6PowerSupply:
-    'The Change Log links "Power Supply", but v1.7/assembly/electronics.md, ' +
-    'v1.7/extras/maintenance/storing-farmbot-for-winter.md, ' +
-    'v1.7/manufacturing/packing/power-supply.md still list it.',
+    'The Change Log links "Power Supply", but assembly, packing, and service pages still list it.',
   sampleSummaryR8ShaftCoupler:
-    'Shaft Coupler is named on v1.7/extras/troubleshooting/z-axis-movements.md but no assembly ' +
-    'chapter or pre-assembly references it.',
+    'Shaft Coupler is named on a service page, but no assembly chapter or pre-assembly references it.',
   sampleSummaryR3Fuse:
     'Fuse is referenced by no assembly chapter, pre-assembly, bag or packing list.',
-  sampleOpenFinding: 'Open the finding',
+  sampleOpenFinding: 'Open',
   language: 'Language',
   loadingEngine: 'Loading Ontographia (WASM)…',
   engineFailed: 'Ontographia (WASM) failed to load',
@@ -102,8 +95,7 @@ const en = {
   limitNote: 'limit',
   rowsFoundNote: 'rows returned',
   findingsHeading: 'Check findings',
-  findingsHint:
-    'The check Intents run in this tab against the seed whose digest was verified. Nothing is sent anywhere.',
+  findingsHint: 'Checks run in this tab. Nothing is sent anywhere.',
   runChecks: 'Run checks',
   runningChecks: 'Running checks…',
   checksIdle: 'Checks have not run. Relate loads only when they run.',
@@ -139,12 +131,12 @@ const en = {
   evidenceNodeLabel: 'Seed node',
   evidenceSourceLabel: 'Source file',
   evidenceLineLabel: 'Line',
+  evidenceFactsLabel: 'Facts',
   evidenceQueriesLabel: 'Intent, Cypher and parameters',
   evidenceShowRestLabel: 'Show all check Intents',
   evidenceSelect: 'Select node',
   processLanesHeading: 'Process lanes',
-  processLanesHelp:
-    'Lanes, nodes and links come only from the evidence rows of this finding. Rows are ordered by lane, then role, then seed node id.',
+  processLanesHelp: "Built only from this finding's evidence.",
   lanesSelectHint:
     'Select a node to highlight its evidence rows; select an evidence row to highlight its node.',
   laneDesignChange: 'Design change',
@@ -156,7 +148,7 @@ const en = {
   lanesLegendProblem: 'Problem',
   lanesLegendPath: 'Impacted path',
   lanesLegendMissing: 'Missing link',
-  lanesLegendQuantity: 'Quantity difference (+ packing higher, − lower)',
+  lanesLegendQuantity: 'Qty difference',
   lanesMissingTitle: 'Missing link to lane',
   lanesMissingList: 'Missing link toward:',
   lanesOverflowNote: 'more evidence node(s) are not drawn; see the evidence table below.',
@@ -166,6 +158,7 @@ const en = {
   lanesNodeQuantity: 'Quantity difference',
   lanesNodeVariant: 'variant',
   lanesNodePdfOnly: 'PDF only (no machine-readable steps)',
+  lanesNodePdfOnlyShort: 'PDF only',
   causesHeading: 'Cause candidates',
   countermeasuresHeading: 'Countermeasures',
   factLabel: 'fact',
@@ -181,7 +174,7 @@ const en = {
     'The seed, the five Intents, the ontology, the allowed-values file and their digests are committed files. The page fetches the seed bytes, checks the digest with Web Crypto, then loads them into an in-memory Relate database.',
   limitLabel: 'Intent limit',
   parentEntry: 'Desk-fan demo',
-  checkRoutingHeading: 'Check by rule or free text',
+  checkRoutingHeading: 'Check routing',
   checkRoutingIntro:
     'Choose a rule chip, or convert one sentence after local model consent. Review the expanded Intents, then confirm before anything runs.',
   checkChipListLabel: 'Checks R1–R9',
@@ -201,11 +194,12 @@ const en = {
   checkParameterLabel: 'Part filter',
   checkFreeTextHeading: 'Free-text check routing',
   checkFreeTextIntro:
-    'The local model selects only one routing object. The check engine, not the model, remains responsible for findings.',
+    'The model only selects a route. The check engine still produces findings.',
   checkWebgpuChecking: 'Checking local WebGPU support…',
   checkWebgpuNotice:
-    'WebGPU is not available. The rule chips and parameter selectors still provide the same Intents; no model card or download is offered.',
+    'WebGPU is not available. Rule chips still work; no model is offered.',
   checkConsentTitle: 'Allow a local model download?',
+  checkModelAboutLabel: 'About this model',
   checkModelLabel: 'Model',
   checkVramLabel: 'Documented WebGPU memory',
   checkDownloadLabel: 'Documented download size',
@@ -224,11 +218,10 @@ const en = {
   checkModelLoadFailed: 'The local model could not be loaded.',
   checkModelGenerateFailed: 'The local model could not route this text.',
   checkRoutingRejected: 'The routing output was rejected.',
-  checkRoutingRejectedBody:
-    'Nothing new was compiled or executed. Use plain text or choose a rule chip instead.',
+  checkRoutingRejectedBody: 'Nothing new was compiled or executed.',
   checkRejectionDemoButton: 'Show a rejected routing output',
   checkRejectionDemoHint:
-    'Fixed sample, not a model result: this feeds a Cypher-like text through the same validator that checks model output. Nothing is compiled or executed.',
+    'Fixed sample, not a model result. Nothing is compiled or executed.',
   checkRejectionDemoSampleLabel: 'Fixed sample input (not a model result)',
   checkRoutingCompileFailed: 'Ontographia could not compile the expanded Intents.',
   checkRoutingExecuteFailed: 'Relate could not execute the confirmed Intents.',
@@ -238,8 +231,7 @@ const en = {
   checkGenerating: 'Selecting a routing object locally…',
   checkFreeTextPrivacy:
     'Consent is required before the lazy WebLLM package or model files are requested. Declining never disables the rule chips.',
-  checkModelNoCypher:
-    'The model never writes Cypher and never detects, explains, or scores a finding. Strict validation precedes Ontographia compilation.',
+  checkModelNoCypher: 'The model only routes; it never writes Cypher.',
   checkProposalHeading: 'Confirm the proposed Intents',
   checkProposalCheck: 'Selected check',
   checkProposalParameter: 'Parameter',
@@ -254,9 +246,8 @@ const en = {
 } as const;
 
 const ja: Record<keyof typeof en, string> = {
-  title: 'FarmBot Genesis ドキュメントの文書間不一致とその根拠',
-  subtitle:
-    'コミット済みシード、Ontographia がコンパイルした Intent、Relate が実行する Cypher — すべてこのタブ内で完結します',
+  title: 'FarmBot ドキュメントの不一致とその根拠',
+  subtitle: 'シード、コンパイル済み Intent、Cypher - すべてこのタブ内',
   explainSources:
     'この画面での EBOM は、ピン留めした FarmBot Genesis ソースから取り出したエンジニアリング用の部品ページを指します。' +
     'MBOM は、組立チャプタ・プリ組立・キット・バッグ・カートンをまとめた、このリポジトリが構成した見方であり、' +
@@ -270,29 +261,23 @@ const ja: Record<keyof typeof en, string> = {
   flowStepAgent: 'エージェントが不一致を発見',
   flowStepEmail: 'メールのリンク',
   flowStepAnalysis: 'ブラウザでグラフを分析',
-  sampleHeading: '通知メールのサンプル',
+  sampleHeading: 'サンプルメール',
   sampleIntro:
-    '各カードは通知メールのサンプルであり、実際に送信したものではありません。このページからは何も送信しません。' +
-    'リンクを開くと、このタブ内でチェックを実行して該当の検出を強調表示します。',
+    '送信済みメールではありません。リンクを開くと、このタブで検査が走ります。',
   sampleCardLabel: 'サンプル',
-  sampleScenarioLabel: '確認したシナリオ',
-  sampleScenarioPacking: '照合: 部品ページと梱包リストの比較',
-  sampleScenarioDesignChange: '設計変更の下流文書への到達',
-  sampleScenarioService: 'サービス文書から設計へのフィードバック',
-  sampleScenarioCoverage: '照合: 工程カバレッジの欠落',
+  sampleScenarioPacking: '部品ページと梱包リスト',
+  sampleScenarioDesignChange: '設計変更の下流到達',
+  sampleScenarioService: 'サービスから設計へ',
+  sampleScenarioCoverage: '工程カバレッジの欠落',
   sampleSummaryR1NutBar:
-    'v1.7/manufacturing/packing/hardware-kit.md の梱包リストと 40mm Nut Bar の部品ページでは ' +
-    'standard の数量が 4 だけ異なります。',
+    'hardware-kit の梱包リストと 40mm Nut Bar の部品ページでは、standard の数量が 4 だけ異なります。',
   sampleSummaryR6PowerSupply:
-    '"Power Supply" は変更ログで変更または削除されましたが、v1.7/assembly/electronics.md、' +
-    'v1.7/extras/maintenance/storing-farmbot-for-winter.md、v1.7/manufacturing/packing/power-supply.md ' +
-    'に依然として記載されています。',
+    '変更ログは "Power Supply" を挙げていますが、組立・梱包・サービスページにも残っています。',
   sampleSummaryR8ShaftCoupler:
-    'Shaft Coupler は v1.7/extras/troubleshooting/z-axis-movements.md で名前が挙がっていますが、' +
-    '組立チャプタからもプリ組立からも参照されていません。',
+    'Shaft Coupler はサービスページで名前が挙がっていますが、組立チャプタからもプリ組立からも参照されていません。',
   sampleSummaryR3Fuse:
     'Fuse は組立チャプタ、プリ組立、バッグ、梱包リストのいずれからも参照されていません。',
-  sampleOpenFinding: '検出を開く',
+  sampleOpenFinding: '開く',
   language: '言語',
   loadingEngine: 'Ontographia (WASM) を読み込み中…',
   engineFailed: 'Ontographia (WASM) の読み込みに失敗しました',
@@ -359,8 +344,7 @@ const ja: Record<keyof typeof en, string> = {
   limitNote: '上限',
   rowsFoundNote: '行が返されました',
   findingsHeading: 'チェック結果',
-  findingsHint:
-    'チェック Intent は、ダイジェストを検証したシードに対してこのタブ内で実行します。どこにも送信しません。',
+  findingsHint: 'チェックはこのタブ内で実行します。どこにも送信しません。',
   runChecks: 'チェックを実行',
   runningChecks: 'チェックを実行中…',
   checksIdle: 'チェックは未実行です。Relate は実行時にのみ読み込みます。',
@@ -395,12 +379,12 @@ const ja: Record<keyof typeof en, string> = {
   evidenceNodeLabel: 'シードノード',
   evidenceSourceLabel: 'ソースファイル',
   evidenceLineLabel: '行',
+  evidenceFactsLabel: 'ファクト',
   evidenceQueriesLabel: 'Intent・Cypher・パラメータ',
   evidenceShowRestLabel: 'すべてのチェック Intent を表示',
   evidenceSelect: 'ノードを選択',
   processLanesHeading: 'プロセスレーン',
-  processLanesHelp:
-    'レーン、ノード、リンクはこの検出の根拠行だけから構成します。行の順序はレーン、役割、シードノード ID の順で固定です。',
+  processLanesHelp: 'この検出の根拠行だけから構成します。',
   lanesSelectHint:
     'ノードを選ぶと対応する根拠行が強調され、根拠行を選ぶと対応するノードが強調されます。',
   laneDesignChange: '設計変更',
@@ -412,7 +396,7 @@ const ja: Record<keyof typeof en, string> = {
   lanesLegendProblem: '問題',
   lanesLegendPath: '影響経路',
   lanesLegendMissing: '欠落リンク',
-  lanesLegendQuantity: '数量差（+ は梱包が多い、− は少ない）',
+  lanesLegendQuantity: '数量差',
   lanesMissingTitle: 'レーンへの欠落リンク',
   lanesMissingList: '欠落リンクの向き先:',
   lanesOverflowNote: '件の根拠ノードは描画していません。下の根拠表を参照してください。',
@@ -422,6 +406,7 @@ const ja: Record<keyof typeof en, string> = {
   lanesNodeQuantity: '数量差',
   lanesNodeVariant: 'バリアント',
   lanesNodePdfOnly: 'PDFのみ（機械可読の手順なし）',
+  lanesNodePdfOnlyShort: 'PDFのみ',
   causesHeading: '原因候補',
   countermeasuresHeading: '対策',
   factLabel: '事実',
@@ -437,7 +422,7 @@ const ja: Record<keyof typeof en, string> = {
     'シード、5 つの Intent、オントロジー、許可値ファイルとそのダイジェストはコミット済みのファイルです。ページはシードのバイト列を取得し、Web Crypto でダイジェストを検証してから、メモリ上の Relate データベースに読み込みます。',
   limitLabel: 'Intent の上限',
   parentEntry: 'デスクファンのデモ',
-  checkRoutingHeading: 'ルールまたは自由な文章でチェック',
+  checkRoutingHeading: 'チェックルーティング',
   checkRoutingIntro:
     'ルールのチップを選ぶか、ローカルモデルの利用を許可して文章を変換してください。展開された Intent を確認してから実行します。',
   checkChipListLabel: 'チェック R1–R9',
@@ -454,11 +439,12 @@ const ja: Record<keyof typeof en, string> = {
   checkParameterLabel: '部品フィルタ',
   checkFreeTextHeading: '自由な文章からチェックを選択',
   checkFreeTextIntro:
-    'ローカルモデルはルーティングオブジェクトを一つ選ぶだけです。検出結果の生成はモデルではなく従来のチェックエンジンが担当します。',
+    'モデルは経路を選ぶだけです。検出はこれまでどおり検査エンジンが出します。',
   checkWebgpuChecking: 'ローカルの WebGPU 対応を確認中…',
   checkWebgpuNotice:
-    'WebGPU を利用できません。ルールのチップとパラメータセレクタで同じ Intent を使えます。モデルの許可カードとダウンロードは表示しません。',
+    'WebGPU を利用できません。ルールのチップは使えます。モデルは出しません。',
   checkConsentTitle: 'ローカルモデルのダウンロードを許可しますか？',
+  checkModelAboutLabel: 'このモデルについて',
   checkModelLabel: 'モデル',
   checkVramLabel: '記載されている WebGPU メモリ',
   checkDownloadLabel: '記載されているダウンロードサイズ',
@@ -477,11 +463,10 @@ const ja: Record<keyof typeof en, string> = {
   checkModelLoadFailed: 'ローカルモデルを読み込めませんでした。',
   checkModelGenerateFailed: 'ローカルモデルが文章をルーティングできませんでした。',
   checkRoutingRejected: 'ルーティング出力を拒否しました。',
-  checkRoutingRejectedBody:
-    '新たなコンパイルと実行は行われていません。文章を修正するか、ルールのチップを選んでください。',
+  checkRoutingRejectedBody: '新たなコンパイルと実行は行われていません。',
   checkRejectionDemoButton: '拒否されるルーティング出力を表示',
   checkRejectionDemoHint:
-    '固定のサンプルであり、モデルの出力ではありません。Cypher に見えるテキストを、モデル出力と同じ検証に通します。コンパイルも実行もしません。',
+    '固定サンプルであり、モデルの出力ではありません。コンパイルも実行もしません。',
   checkRejectionDemoSampleLabel: '固定のサンプル入力（モデルの出力ではありません）',
   checkRoutingCompileFailed: 'Ontographia が展開した Intent をコンパイルできませんでした。',
   checkRoutingExecuteFailed: 'Relate が確認済みの Intent を実行できませんでした。',
@@ -491,8 +476,7 @@ const ja: Record<keyof typeof en, string> = {
   checkGenerating: 'ローカルでルーティングオブジェクトを選択中…',
   checkFreeTextPrivacy:
     'WebLLM の遅延読み込みパッケージとモデルファイルの要求には同意が必要です。拒否してもルールのチップは使えます。',
-  checkModelNoCypher:
-    'モデルは Cypher を記述せず、検出・説明・スコア計算も行いません。Ontographia のコンパイル前に厳密に検証します。',
+  checkModelNoCypher: 'モデルは経路を選ぶだけで、Cypher は書きません。',
   checkProposalHeading: '提案された Intent を確認',
   checkProposalCheck: '選択されたチェック',
   checkProposalParameter: 'パラメータ',

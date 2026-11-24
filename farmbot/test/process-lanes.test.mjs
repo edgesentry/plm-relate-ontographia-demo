@@ -571,6 +571,96 @@ test('the R6 hero cards read apart at the natural lane width', () => {
   );
 });
 
+test('node labels cut at a word boundary, never mid-word', () => {
+  const hero = findings.find((finding) => finding.id === 'R6-power-supply');
+  assert.ok(hero, 'the committed file has no R6-power-supply finding');
+  const layout = layoutFinding(hero);
+  const nodeWidth = layout.nodes[0]?.width ?? 118;
+  const labelMax = Math.floor((nodeWidth - 16) / LABEL_SIZE);
+
+  // A title that fits stays whole.
+  assert.equal(clip('Power Supply', nodeWidth, LABEL_SIZE), 'Power Supply');
+
+  // A title that does not fit cuts after its last whole word.
+  const cut = clip('100 watt power supply', nodeWidth, LABEL_SIZE);
+  assert.equal(cut, '100 watt power…');
+  assert.ok(cut.length <= labelMax, `the cut label ${JSON.stringify(cut)} overflows its budget`);
+  const title = clip('Storing FarmBot for Winter', nodeWidth, LABEL_SIZE);
+  assert.equal(title, 'Storing FarmBot…');
+
+  // A single-word title still degrades to an ellipsis inside its budget.
+  const oneWord = clip('averylongwordwithoutspaces', nodeWidth, LABEL_SIZE);
+  assert.ok(oneWord.endsWith('…') && oneWord.length <= labelMax);
+
+  // Every drawn hero label keeps its prefix a word boundary of the full text.
+  for (const node of layout.nodes) {
+    const visible = clip(node.label, node.width, LABEL_SIZE);
+    if (visible === node.label) continue;
+    const prefix = visible.slice(0, -1);
+    assert.equal(
+      node.label.charAt(prefix.length),
+      ' ',
+      `${node.id} label ${JSON.stringify(visible)} cuts inside a word of ` +
+        `${JSON.stringify(node.label)}`,
+    );
+  }
+});
+
+test('a long citation keeps a readable .md:line suffix', () => {
+  const nodeWidth = 118;
+  const metaMax = Math.floor((nodeWidth - 16) / META_SIZE);
+
+  // A citation that fits after its directories are dropped stays whole.
+  assert.equal(
+    fitMeta('v1.7/assembly/electronics.md:146', nodeWidth, META_SIZE),
+    'electronics.md:146',
+  );
+  assert.equal(
+    fitMeta('v1.7/assembly/intro/change-log.md:43', nodeWidth, META_SIZE),
+    'change-log.md:43',
+  );
+
+  // A file name that still does not fit keeps its extension and line, cut
+  // after the name's last dash, instead of a mid-name cut.
+  const winter = fitMeta(
+    'v1.7/extras/maintenance/storing-farmbot-for-winter.md:15',
+    nodeWidth,
+    META_SIZE,
+  );
+  assert.equal(winter, '…winter.md:15');
+  assert.ok(winter.length <= metaMax, `the cut meta ${JSON.stringify(winter)} overflows`);
+  assert.equal(
+    fitMeta('v1.7/extras/maintenance/storing-farmbot-for-winter.md', nodeWidth, META_SIZE),
+    '…winter.md',
+  );
+
+  // A dashed name cuts at its own boundary even without a line number.
+  assert.equal(
+    fitMeta('v1.7/x/electronics-and-wiring-power-supply-cable.md:9', nodeWidth, META_SIZE),
+    '…cable.md:9',
+  );
+
+  // A value with no file extension falls back to the line-suffix cut.
+  assert.equal(
+    fitMeta('change:v1.7/a/verylongnodeidentifier:15', nodeWidth, META_SIZE),
+    'verylongnodeiden…:15',
+  );
+
+  // Every drawn hero meta either fits or ends in a readable .md(:line).
+  const hero = findings.find((finding) => finding.id === 'R6-power-supply');
+  assert.ok(hero, 'the committed file has no R6-power-supply finding');
+  const layout = layoutFinding(hero);
+  for (const node of layout.nodes) {
+    const visible = fitMeta(node.meta, node.width, META_SIZE);
+    if (!visible.includes('…')) continue;
+    assert.match(
+      visible,
+      /^…[\w.-]+\.md(?::\d+)?$/,
+      `${node.id} meta ${JSON.stringify(visible)} drops its readable file suffix`,
+    );
+  }
+});
+
 test('an unmatched downstream row stays downstream of the design change', () => {
   const finding = {
     id: 'R6-collision',

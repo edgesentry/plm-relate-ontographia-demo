@@ -87,24 +87,28 @@ export function CheckFreeTextPanel({
       {phase === 'consent' && (
         <div className="consent-box" data-testid="farmbot-free-text-consent">
           <h4>{t('checkConsentTitle')}</h4>
-          <dl className="farmbot-meta">
-            <div>
-              <dt>{t('checkModelLabel')}</dt>
-              <dd>
-                <code>{INTENT_MODEL_ID}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>{t('checkVramLabel')}</dt>
-              <dd>{INTENT_MODEL_VRAM_MB.toFixed(2)} MB</dd>
-            </div>
-            <div>
-              <dt>{t('checkDownloadLabel')}</dt>
-              <dd>{INTENT_MODEL_DOWNLOAD_BYTES.toLocaleString('en-US')} bytes</dd>
-            </div>
-          </dl>
-          <p>{t('checkConsentBody')}</p>
-          <p className="muted small">{t('checkDownloadSource')}</p>
+          <details className="consent-about">
+            <summary>{t('checkModelAboutLabel')}</summary>
+            <dl className="farmbot-meta">
+              <div>
+                <dt>{t('checkModelLabel')}</dt>
+                <dd>
+                  <code>{INTENT_MODEL_ID}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>{t('checkVramLabel')}</dt>
+                <dd>{INTENT_MODEL_VRAM_MB.toFixed(2)} MB</dd>
+              </div>
+              <div>
+                <dt>{t('checkDownloadLabel')}</dt>
+                <dd>{INTENT_MODEL_DOWNLOAD_BYTES.toLocaleString('en-US')} bytes</dd>
+              </div>
+            </dl>
+            <p>{t('checkConsentBody')}</p>
+            <p className="muted small">{t('checkDownloadSource')}</p>
+            <p className="muted small">{t('checkFreeTextPrivacy')}</p>
+          </details>
           <div className="farmbot-actions">
             <button
               type="button"
@@ -229,7 +233,6 @@ export function CheckFreeTextPanel({
           </button>
         </div>
       </div>
-      <p className="muted small">{t('checkFreeTextPrivacy')}</p>
       <p className="muted small">{t('checkModelNoCypher')}</p>
     </div>
   );

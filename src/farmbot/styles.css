@@ -106,7 +106,10 @@
   margin: 0.75rem 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  /* Two wide cards per row at the filming viewport: the summaries read on
+     one line and the landing fold ends after the second card row, so the
+     working sections below start beneath the frame. */
+  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
   gap: 0.75rem;
 }
 
@@ -170,6 +173,14 @@
 .farmbot-findings,
 .farmbot-finding {
   margin-top: 1rem;
+}
+
+/* The finding view holds one full viewport: a short finding cannot scroll its
+   own top out of the frame, and the section below starts on a fresh screen
+   instead of crowding the view's last rows. */
+
+.farmbot-finding {
+  min-height: 100vh;
 }
 
 .severity-counts {
@@ -304,8 +315,139 @@
   gap: 0.5rem;
 }
 
+/* The finding view's Close control is a compact button, not a `.chip`: the
+   chip flex basis makes it nearly full width, so at 1280x800 it reads as an
+   empty box instead of a control next to the heading. */
+
+.finding-close {
+  flex: 0 0 auto;
+}
+
+/* Compact finding header: one line for id, severity, score, badges and
+   subject instead of the six-cell meta grid. */
+
+.finding-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0.25rem 0 0.1rem;
+  font-weight: 700;
+}
+
+.finding-meta-line code {
+  overflow-wrap: anywhere;
+}
+
 .finding-summary {
   font-weight: 700;
+}
+
+/* Evidence rows: role plus file and line on one line; the seed node id and
+   the fact list wait behind the row's closed Facts disclosure. Each row is
+   a citation card with room to breathe, so the filming frame reads the
+   first rows instead of a wall of rows. */
+
+.evidence-row {
+  margin-bottom: 4rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 1.25rem 0.75rem;
+}
+
+.evidence-row:focus {
+  outline: none;
+}
+
+.evidence-citation {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.evidence-citation .evidence-role {
+  font-weight: 700;
+}
+
+.evidence-source-path {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+}
+
+.evidence-facts summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.evidence-facts[open] summary {
+  margin-bottom: 0.2rem;
+}
+
+.evidence-node-id {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+}
+
+/* Cause candidates and countermeasures stay reachable behind their own
+   summaries so they leave the first 1280x800 frame unless opened. */
+
+.finding-section-details summary {
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1.1rem 0 0.25rem;
+}
+
+.finding-section-details[open] summary {
+  margin-bottom: 0.4rem;
+}
+
+/* Landing: the preset questions, the check routing panel, the findings
+   panel and the committed-artifacts digest sit behind closed disclosures, so
+   the first filming frame keeps the sample cards readable and short findings
+   keep their last controls in frame. A finished checks run opens the
+   findings panel; every other one opens exactly as before with one click. */
+
+.farmbot-questions > summary,
+.farmbot-check-routing > summary,
+.farmbot-findings > summary,
+.farmbot-about > summary,
+.reconciliation-group > summary {
+  cursor: pointer;
+}
+
+.farmbot-questions > summary h2,
+.farmbot-check-routing > summary h2,
+.farmbot-findings > summary h2,
+.farmbot-about > summary h2,
+.reconciliation-group > summary h3 {
+  display: inline;
+  margin: 0;
+}
+
+.farmbot-questions[open] > summary,
+.farmbot-check-routing[open] > summary,
+.farmbot-findings[open] > summary,
+.farmbot-about[open] > summary {
+  margin-bottom: 0.5rem;
+}
+
+.reconciliation-group[open] > summary {
+  margin-bottom: 0.25rem;
+}
+
+/* Consent card: model metadata, body, download source and privacy note sit
+   behind one closed disclosure, so the card stays compact enough to keep the
+   rejection control and the model bound in a 1280x800 frame. */
+
+.consent-about summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.consent-about[open] summary {
+  margin-bottom: 0.3rem;
 }
 
 .evidence-list,
@@ -313,16 +455,6 @@
 .countermeasure-list {
   margin: 0.5rem 0 1rem;
   padding-left: 1.25rem;
-}
-
-.evidence-row {
-  margin-bottom: 0.75rem;
-  border-radius: 8px;
-  padding: 0.15rem 0.35rem;
-}
-
-.evidence-row:focus {
-  outline: none;
 }
 
 .evidence-row.is-selected {
@@ -634,6 +766,12 @@
 .evidence-query pre {
   max-height: 18rem;
   overflow: auto;
+  /* Wrap long MATCH lines instead of clipping them at the evidence column
+     edge, so the open block stays readable in the 1280x800 filming frame. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  padding: 1.35rem 0.75rem;
 }
 
 .fact-label {

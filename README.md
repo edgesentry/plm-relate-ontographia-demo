@@ -30,7 +30,7 @@ The project uses **Relate, Neo4j's lightweight graph database**, in two compleme
 
 ### Prerequisites
 
-- Node >=22 (use `npx -y node@22` if your default Node differs)
+- Node 22 (place Node 22 first on `PATH` and run `node` / `npm` directly without `npx`)
 - npm
 
 ### Run locally
@@ -46,7 +46,6 @@ Open <http://localhost:5173/farmbot/>.
 
 ```bash
 npm run verify
-npx -y node@22 scripts/verify.mjs
 npm run test:farmbot
 npm run smoke:farmbot
 ```
@@ -67,7 +66,7 @@ Live deployment smoke:
 
 ```bash
 npm run smoke:live
-SMOKE_BASE_URL=https://ontographia-plm-demo.egdesentry.workers.dev/ npx -y node@22 scripts/smoke-farmbot.mjs
+SMOKE_BASE_URL=https://ontographia-plm-demo.egdesentry.workers.dev/ node scripts/smoke-farmbot.mjs
 ```
 
 ## Data, digests, and reproducible builds

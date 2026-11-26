@@ -536,7 +536,7 @@ async function readDiagram(page) {
 
 // --- filming-viewport visible-character budget (#128) ------------------------
 //
-// The demo-script beats are filmed at 1280x800 English, and each beat's
+// The recording-guide beats are filmed at 1280x800 English, and each beat's
 // on-screen text stays under a committed cap. A character counts when its
 // glyph box intersects the viewport; hidden nodes, closed `<details>` bodies
 // and ancestor overflow clips keep their text out of the count, and
@@ -3998,7 +3998,7 @@ async function main() {
       ...pdfOnlyClean,
     };
 
-    // Filming-viewport text budget (#128): each demo-script beat at
+    // Filming-viewport text budget (#128): each recording-guide beat at
     // 1280x800 English stays inside its visible-character cap, and the
     // walkthrough layout contracts hold: the compact Close button, whole
     // lane titles, word-boundary label cuts with readable `.md:line`

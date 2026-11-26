@@ -43,9 +43,9 @@ Relate, Neo4j, Cypher, Ontographia, WebAssembly, React, TypeScript, Vite, WebLLM
 ## Video Demo Link
 
 > **Field limit:** Public YouTube or Vimeo URL, video of up to 2 minutes (verified). Sources: Devpost Help, "Know Your Submission Steps", article 126; Official Rules section 4 (https://relate.devpost.com/rules).  
-> **Placeholder status:** Explicit placeholder for #60. No URL is invented.
+> **Status:** Published for #60 (1:58 silent walkthrough with burned-in English captions).
 
-TBD: public YouTube or Vimeo URL after #60
+https://youtu.be/YbGLU2pqlC0
 
 ---
 
@@ -54,6 +54,13 @@ TBD: public YouTube or Vimeo URL after #60
 > Reference limits from Devpost Help for media and file attachments:
 > - **Thumbnail:** JPG, PNG, or GIF, 5 MB maximum, 3:2 recommended (verified, Devpost Help article 126).
 > - **File upload:** 35 MB maximum (verified, Devpost Help articles 126 and 145).
+> - **Image Gallery (`farmbot/docs/devpost-image-gallery/`):**
+>   - `01-landing-sample-cards.png`
+>   - `02-r6-process-lanes.png`
+>   - `03-r1-sbom-reconciliation.png`
+>   - `04-r5-bop-pdf-only.png`
+>   - `05-cypher-rejection-guard.png`
+>   - `06-claim-verifier-rejected.png`
 
 ---
 

@@ -185,7 +185,7 @@ Pacing notes, so the silent take lands on the documented screen-and-caption tota
   1. Open the `checkRoutingHeading` ("Check routing") disclosure, then scroll to the "Free-text check routing" section (`checkFreeTextHeading`).
   2. Confirm the consent card was declined off-camera or left unconsented (do not click Allow).
   3. Do not type in the input box (`checkInputLabel`).
-  4. Click the labelled button: `Show a rejected routing output` (`checkRejectionDemoButton`, `[data-testid="check-rejection-demo-button"]`).
+  4. Click the labelled button: `Show a rejected routing output` (`checkRejectionDemoButton`, `[data-testid="farmbot-rejection-demo-button"]`).
 - **On-Screen Requirements:**
   - Section heading: `checkFreeTextHeading` ("Free-text check routing").
   - Fixed sample input label: `checkRejectionDemoSampleLabel` ("Fixed sample input (not a model result)").
@@ -281,3 +281,25 @@ The following constraints are quoted verbatim from the repository documentation.
 ### From `farmbot/docs/devpost-submission.md` (Positioning Decision 4):
 
 > "The public demo video URL is filled in after recording (#70, #60) and is not known yet. Do not invent a video URL. Name Relate as 'Relate, Neo4j's lightweight graph database' if the narration names it. The official contest title is 'Relate by Neo4j Hackathon'."
+
+---
+
+## 5. Automated Recording & Post-Production Best Practices (Lessons from v1 Take)
+
+The following operational practices were established while producing the v1 submission video (`118s`, `1280x800` H.264 MP4 + `.srt`):
+
+### 1. Aligning Duration to the 2-Minute Devpost Limit
+- While the 9-beat baseline sums to `129s` (`2:09`), Devpost's submission rule specifies up to **2 minutes (`120s`)**.
+- All nine caption blocks fit comfortably inside **`118s` (`1:58`)** without dropping any caption text by trimming idle holds:
+  - Beat 0: `10s` | Beat 1: `10s` | Beat 2: `20s` | Beat 3: `21s` | Beat 4: `16s` | Beat 5: `16s` (`6s` R2 + `10s` R5) | Beat 6: `8s` | Beat 7: `10s` (`5s` FAIL + `5s` PASS) | Beat 8: `7s`.
+
+### 2. Automated Browser Capture & CSP-Safe Cursor Cues
+- **Pre-beat trimming:** Record from context creation and capture the timestamp immediately after `networkidle` and language verification (`en`), then trim the initial loading frames via `ffmpeg -ss <trimStartSec>` so Beat 0 starts cleanly at `0:00`.
+- **Reliable `<details>` expansion:** Scroll the `<summary>` element to viewport center before clicking, and verify the parent `<details>` has the `open` attribute before proceeding (especially on `details.evidence-queries` in Beat 3).
+- **Post-click scrolling on Beat 7:** After clicking `[data-testid="verify-claim-run"]` and waiting for `[data-testid="claim-verdict"]`, explicitly scroll `[data-testid="claim-verdict"]` into view; otherwise the `REJECTED` / `CONFIRMED` badge and evidence grid sit below the `800px` fold.
+- **Cursor overlay under strict CSP:** Headless Playwright recordings omit the OS cursor. Because `/farmbot/` enforces `style-src 'self'`, injecting inline `<style>` tags or `element.style` transforms is blocked by CSP. To render a subtle pointer and click-ripple overlay without altering app code or `connect-src`, intercept only the `/farmbot/*` HTML document response in Playwright (`page.route`) and append `'unsafe-inline'` to `style-src` for the recording session.
+- **Exact selector note:** The rejection demo button uses `data-testid="farmbot-rejection-demo-button"` in `src/farmbot/CheckFreeTextPanel.tsx`.
+
+### 3. Caption Burn-In & Subtitle Export
+- **Portable burn-in without `libass`/`drawtext`:** If the local `ffmpeg` build lacks `subtitles`/`drawtext` filters, render each beat's English caption as a transparent `1280x800` PNG using Python `Pillow` and composite them with `ffmpeg`'s `overlay=0:0:enable='between(t,start,end)'` filter chain.
+- **Audio & streaming compatibility:** Attach a silent stereo AAC track (`-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -c:a aac`) and `-movflags +faststart` (`yuv420p`, `30fps`) so YouTube/Vimeo ingest cleanly, and emit a matching `.srt` file from the measured beat timestamps for closed-caption (CC) upload.

@@ -306,6 +306,8 @@ npm run test:farmbot       # compile gold, oracle equality, two-run byte match
 npm run smoke:farmbot      # browser: panel counts, deep link, no external request
 ```
 
-`npm run test:farmbot` runs the committed suite, including the browser parity in
-`farmbot/test/findings-browser-parity.test.mjs` and the view rules in
-`farmbot/test/findings-view.test.mjs`.
+`npm run test:farmbot` runs the committed suite, including browser parity
+(`farmbot/test/findings-browser-parity.test.mjs`), view rules
+(`farmbot/test/findings-view.test.mjs`), and deterministic agent-claim
+verification (`src/farmbot/claim-verifier.mjs` over
+`farmbot/claims/agent-claims.json`).

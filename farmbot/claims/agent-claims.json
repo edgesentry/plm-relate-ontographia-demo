@@ -1,0 +1,93 @@
+{
+  "format": "farmbot-agent-claims-v1",
+  "claims": [
+    {
+      "id": "uc1-hallucinated-part-fail",
+      "useCase": "hallucinated-part",
+      "expectedVerdict": "rejected",
+      "title": "UC1 Fail: Invented part in gantry assembly",
+      "agentAnswer": "Titanium Servo Coupling is used in the gantry assembly chapter (v1.7/assembly/gantry.md).",
+      "claim": {
+        "kind": "part-in-assembly",
+        "partName": "Titanium Servo Coupling",
+        "chapterPath": "v1.7/assembly/gantry.md"
+      }
+    },
+    {
+      "id": "uc1-hallucinated-part-pass",
+      "useCase": "hallucinated-part",
+      "expectedVerdict": "confirmed",
+      "title": "UC1 Pass: Valid part in gantry assembly",
+      "agentAnswer": "M5 x 10mm Screw is used in the gantry assembly chapter (v1.7/assembly/gantry.md).",
+      "claim": {
+        "kind": "part-in-assembly",
+        "partName": "M5 x 10mm Screw",
+        "chapterPath": "v1.7/assembly/gantry.md"
+      }
+    },
+    {
+      "id": "uc2-wrong-conclusion-fail",
+      "useCase": "wrong-conclusion",
+      "expectedVerdict": "rejected",
+      "title": "UC2 Fail: False R1 quantity match",
+      "agentAnswer": "40mm Nut Bar (standard) has matching quantities across the part page and packing list (24 vs 24, diff 0).",
+      "claim": {
+        "kind": "r1-quantity-check",
+        "rule": "R1",
+        "partName": "40mm Nut Bar",
+        "variant": "standard",
+        "packingQuantity": 24,
+        "partQuantity": 24,
+        "quantityDifference": 0
+      }
+    },
+    {
+      "id": "uc2-wrong-conclusion-pass",
+      "useCase": "wrong-conclusion",
+      "expectedVerdict": "confirmed",
+      "title": "UC2 Pass: Accurate R1 quantity mismatch",
+      "agentAnswer": "40mm Nut Bar (standard) has an R1 packing mismatch: packing lists 28 vs 24 on the part page (diff +4).",
+      "claim": {
+        "kind": "r1-quantity-check",
+        "rule": "R1",
+        "partName": "40mm Nut Bar",
+        "variant": "standard",
+        "packingQuantity": 28,
+        "partQuantity": 24,
+        "quantityDifference": 4
+      }
+    },
+    {
+      "id": "uc3-missed-change-impact-fail",
+      "useCase": "missed-change-impact",
+      "expectedVerdict": "rejected",
+      "title": "UC3 Fail: False all-clear on Power Supply change",
+      "agentAnswer": "The v1.7 Change Log update to Power Supply has no remaining downstream references in assembly, packing, or service docs.",
+      "claim": {
+        "kind": "r6-change-impact",
+        "rule": "R6",
+        "partName": "Power Supply",
+        "downstreamImpact": false,
+        "affectedFiles": []
+      }
+    },
+    {
+      "id": "uc3-missed-change-impact-pass",
+      "useCase": "missed-change-impact",
+      "expectedVerdict": "confirmed",
+      "title": "UC3 Pass: Accurate R6 downstream impact report",
+      "agentAnswer": "The v1.7 Change Log update to Power Supply still appears in v1.7/assembly/electronics.md, v1.7/manufacturing/packing/power-supply.md, and v1.7/extras/maintenance/storing-farmbot-for-winter.md.",
+      "claim": {
+        "kind": "r6-change-impact",
+        "rule": "R6",
+        "partName": "Power Supply",
+        "downstreamImpact": true,
+        "affectedFiles": [
+          "v1.7/assembly/electronics.md",
+          "v1.7/extras/maintenance/storing-farmbot-for-winter.md",
+          "v1.7/manufacturing/packing/power-supply.md"
+        ]
+      }
+    }
+  ]
+}

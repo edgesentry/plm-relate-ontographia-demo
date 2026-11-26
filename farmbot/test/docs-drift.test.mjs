@@ -1197,16 +1197,20 @@ test('a cited gitignored build output may be absent from the checkout', () => {
   );
 });
 
-// --- opening beat and spoken budget (#117) -----------------------------------
+// --- opening beat and screen budget (#117) -----------------------------------
 //
 // Both demo documents must open the take with a 10 to 15 second Beat 0
 // (background, purpose, and a visual overview of the flow) before any Beat 1
-// screen operation, the named beat durations must stay inside the 90 to 110
-// second envelope both documents promise, the trim that makes room for the
-// opening must be named and agree with the documented durations, and the
-// Beat 7 closing line must stay verbatim.
+// screen operation, the named beat durations must sum to the documented
+// screen-and-caption total both documents promise, the trims that set the
+// pace must be named and agree with the documented durations, and the Beat 8
+// closing line must stay verbatim.
 
 const CLOSING_LINE = 'the model only routes; it never writes Cypher';
+// The nine named beats (0 through 8) sum to the documented screen-and-caption
+// total: the accepted 119 second filming pace plus the 10 second claim
+// verification beat (#132).
+const SCREEN_CAPTION_TOTAL_SECONDS = 129;
 
 /**
  * The beats the recording guide documents, in document order. Each beat is a
@@ -1267,7 +1271,7 @@ function demoScriptSteps(text) {
 
 /**
  * One named trim entry, such as "Beat 6 is trimmed by 3 seconds (12 to 9
- * seconds)" or "step 7 by 5 seconds (12 to 7 seconds)". The "to" value must
+ * seconds)" or "step 8 by 5 seconds (12 to 7 seconds)". The "to" value must
  * equal the beat's documented duration, so the note cannot drift from the
  * shot list.
  *
@@ -1296,8 +1300,8 @@ test('the demo documents open with a 10 to 15 second Beat 0 before Beat 1', () =
   ]) {
     assert.deepEqual(
       beats.map((beat) => beat.n),
-      [0, 1, 2, 3, 4, 5, 6, 7],
-      `${label} must document exactly beats 0 through 7 in order; found ` +
+      [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      `${label} must document exactly beats 0 through 8 in order; found ` +
         `${beats.map((beat) => beat.n).join(', ')}`,
     );
     const opening = beats[0];
@@ -1311,11 +1315,11 @@ test('the demo documents open with a 10 to 15 second Beat 0 before Beat 1', () =
     );
     assert.ok(
       /do not click|no click/i.test(opening.body),
-      `${label} Beat 0 does not state the no-operation rule; the opening is spoken ` +
-        'before any Beat 1 screen operation',
+      `${label} Beat 0 does not state the no-operation rule; the opening is a ` +
+        'silent hold before any Beat 1 screen operation',
     );
   }
-  for (let n = 0; n <= 7; n += 1) {
+  for (let n = 0; n <= 8; n += 1) {
     assert.equal(
       guideBeats.find((beat) => beat.n === n).seconds,
       scriptSteps.find((step) => step.n === n).seconds,
@@ -1324,12 +1328,13 @@ test('the demo documents open with a 10 to 15 second Beat 0 before Beat 1', () =
   }
 });
 
-test('the documented spoken durations sum inside the 90 to 110 second envelope', () => {
+test('the documented durations sum to the screen-and-caption total', () => {
   for (const [label, path, read] of [
     ['farmbot/docs/recording-guide.md', RECORDING_GUIDE, recordingGuideBeats],
     ['farmbot/docs/demo-script.md', DEMO_SCRIPT, demoScriptSteps],
   ]) {
-    const beats = read(readFileSync(path, 'utf8'));
+    const text = readFileSync(path, 'utf8');
+    const beats = read(text);
     for (const beat of beats) {
       assert.ok(
         Number.isInteger(beat.seconds) && beat.seconds > 0,
@@ -1337,13 +1342,16 @@ test('the documented spoken durations sum inside the 90 to 110 second envelope',
       );
     }
     const total = beats.reduce((sum, beat) => sum + beat.seconds, 0);
-    assert.ok(
-      total <= 110,
-      `${label} documents ${total} spoken seconds; the named beats must sum to at most 110 seconds`,
+    assert.equal(
+      total,
+      SCREEN_CAPTION_TOTAL_SECONDS,
+      `${label} documents ${total} seconds; the named beats must sum to the ` +
+        `documented ${SCREEN_CAPTION_TOTAL_SECONDS} second screen-and-caption total`,
     );
     assert.ok(
-      total >= 90,
-      `${label} documents ${total} spoken seconds, below the 90 to 110 second envelope the document promises`,
+      text.includes(`${SCREEN_CAPTION_TOTAL_SECONDS} seconds`),
+      `${label} does not state the documented ` +
+        `${SCREEN_CAPTION_TOTAL_SECONDS} second total`,
     );
   }
 });
@@ -1385,21 +1393,21 @@ test('the named trim agrees with the documented beat durations', () => {
   }
 });
 
-test('the Beat 7 closing line stays verbatim in both demo documents', () => {
+test('the Beat 8 closing line stays verbatim in both demo documents', () => {
   const guideBeats = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8'));
   const scriptSteps = demoScriptSteps(readFileSync(DEMO_SCRIPT, 'utf8'));
-  const guideBeat7 = guideBeats.find((beat) => beat.n === 7);
-  const scriptStep7 = scriptSteps.find((step) => step.n === 7);
-  assert.ok(guideBeat7, 'the recording guide has no Beat 7');
-  assert.ok(scriptStep7, 'the demo script has no step 7');
+  const guideBeat8 = guideBeats.find((beat) => beat.n === 8);
+  const scriptStep8 = scriptSteps.find((step) => step.n === 8);
+  assert.ok(guideBeat8, 'the recording guide has no Beat 8');
+  assert.ok(scriptStep8, 'the demo script has no step 8');
   assert.ok(
-    guideBeat7.body.includes(CLOSING_LINE),
-    'the recording guide Beat 7 voiceover lost the closing line ' +
+    guideBeat8.body.includes(CLOSING_LINE),
+    'the recording guide Beat 8 caption lost the closing line ' +
       `"${CLOSING_LINE}"`,
   );
   assert.ok(
-    scriptStep7.body.includes(CLOSING_LINE),
-    'the demo script step 7 narration lost the closing line ' +
+    scriptStep8.body.includes(CLOSING_LINE),
+    'the demo script step 8 caption lost the closing line ' +
       `"${CLOSING_LINE}"`,
   );
 });
@@ -1411,7 +1419,7 @@ test('the Beat 7 closing line stays verbatim in both demo documents', () => {
 // category label and the part-page versus packing-list wording, and the
 // checks document must keep naming the three categories. The SBOM narration
 // is covered by the beat tests above; these checks pin the on-screen wording
-// and the parsed 12-second budget.
+// and the parsed 17-second budget.
 
 test('Beat 4 and step 4 record the on-screen reconciliation labels for the R1 shot', () => {
   const guideBeat4 = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8')).find(
@@ -1424,13 +1432,13 @@ test('Beat 4 and step 4 record the on-screen reconciliation labels for the R1 sh
   assert.ok(scriptStep4, 'farmbot/docs/demo-script.md has no step 4');
   assert.equal(
     guideBeat4.seconds,
-    12,
-    'farmbot/docs/recording-guide.md Beat 4 does not keep its 12-second budget',
+    17,
+    'farmbot/docs/recording-guide.md Beat 4 does not keep its 17-second budget',
   );
   assert.equal(
     scriptStep4.seconds,
-    12,
-    'farmbot/docs/demo-script.md step 4 does not keep its 12-second budget',
+    17,
+    'farmbot/docs/demo-script.md step 4 does not keep its 17-second budget',
   );
   for (const [label, body] of [
     ['farmbot/docs/recording-guide.md Beat 4', guideBeat4.body],

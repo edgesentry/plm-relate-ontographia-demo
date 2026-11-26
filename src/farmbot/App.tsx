@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { CheckRoutingPanel } from './CheckRoutingPanel';
+import {
+  ClaimVerificationPanel,
+  type AgentClaimFixture,
+  type ClaimVerdict,
+} from './ClaimVerificationPanel';
+import { verifyAgentClaim } from './claim-verifier.mjs';
 import type {
   CheckProposal,
   CheckRunResult,
@@ -531,6 +537,37 @@ export function App() {
       });
     }
     return { proposal, intents: executed, digest: session.digest };
+  };
+
+  const verifyClaim = async (fixture: AgentClaimFixture): Promise<ClaimVerdict> => {
+    if (engine.status !== 'ready') {
+      throw new Error('Ontographia compiler is not ready');
+    }
+    const verifyEngine = engine.engine;
+    let session: RelateSession;
+    try {
+      session = await ensureSession();
+    } catch (openError) {
+      sessionFailure(openError);
+      throw openError;
+    }
+
+    try {
+      return verifyAgentClaim(fixture as unknown as Record<string, unknown>, {
+        engine: verifyEngine,
+        ontology: farmbotOntology,
+        intents: intents as unknown as Record<string, Record<string, unknown>>,
+        checkIntents: checkIntents as Record<string, Record<string, unknown>>,
+        execute(query: string, params: Record<string, unknown>) {
+          const envelope = session.execute(query, params);
+          if (envelope.error) throw new Error(envelope.error);
+          return envelope.rows ?? [];
+        },
+      }) as unknown as ClaimVerdict;
+    } catch (verifyError) {
+      if (session.isTrap(verifyError)) trapSession(session, verifyError, () => {});
+      throw verifyError;
+    }
   };
 
   /**
@@ -1076,6 +1113,11 @@ export function App() {
           </>
         )}
       </details>
+
+      <ClaimVerificationPanel
+        disabled={engine.status !== 'ready' || relate.status === 'trapped'}
+        onVerify={verifyClaim}
+      />
 
       {selectedFinding && (
         <section className="panel farmbot-finding" data-testid="finding-view">

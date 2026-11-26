@@ -2,7 +2,7 @@
 
 Single-source-of-truth production guide for filming the v2 live `/farmbot/` demo video: **102 seconds (`1:42`)**, with **English voiceover narration (TTS or live voice)**, **targeted UI zoom-ins**, and **short non-overlapping captions** cut directly from the narration text.
 
-- **Live URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Live URL:** `https://demo.edgesentry.io/farmbot/`
 - **Target Length:** `102 seconds` (`1:42`), inside the 1:35 to 1:45 pacing target and Devpost's 2-minute (`120s`) limit with zero dead air.
 - **Audio & Caption Contract:** Narration stays at or below 2.5 words/s per beat. Captions equal the narration text split into non-overlapping cues at or below 17 characters/s in a dedicated bottom safe band. No background music is tracked in this guide.
 
@@ -38,7 +38,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 0: Opening Hook and 3-Step Flow Strip
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
   1. Open `/farmbot/` in a fresh English tab and let the landing frame settle.
   2. Do not click, scroll, or type during this opening beat.
@@ -57,7 +57,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 1: Sample Notification Card to Deep Link
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
   1. Keep viewport at `y = 0` so all sample cards (`sampleHeading`: "Sample emails", `sampleIntro`) are visible.
   2. Hover the `R6-power-supply` card (`sampleScenarioDesignChange`, `sampleSummaryR6PowerSupply`) and click `Open R6-power-supply` (`sampleOpenFinding`).
@@ -75,7 +75,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 2: Relate Embedded Value (Part A): SHA-256 Seed Load and Downstream Evidence (`R6-power-supply`)
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/#finding=R6-power-supply`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/#finding=R6-power-supply`
 - **Click Sequence:**
   1. Capture the first-Run in-memory load settling on `R6-power-supply` and highlight `findingsMatch` ("The browser result matches the committed findings").
   2. Sweep cursor down the `evidenceHeading` ("Evidence") rows (`design-change`, `part`, `structure`, `reference`, `packing-line`, `service`) showing source files and line numbers (`electronics.md:146`, `storing-farmbot-for-winter.md`, `power-supply.md`).
@@ -94,7 +94,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 3: Relate Embedded Value (Part B): Graph Traversal, Process Lanes, and Cypher Provenance (`R6-power-supply`)
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/#finding=R6-power-supply`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/#finding=R6-power-supply`
 - **Click Sequence:**
   1. Frame `[data-testid="process-lanes"]` (`processLanesHeading`) showing the five active lanes: `laneDesignChange` ("Design change"), `laneEbomPart` ("EBOM part"), `laneBop` ("BOP (instructions)"), `lanePacking` ("Packing"), and `laneService` ("Service"), plus legend (`lanesLegendProblem`, `lanesLegendPath`, `lanesLegendMissing`).
   2. Click diagram node `Power Supply` to highlight its evidence row, then click `Select node` (`evidenceSelect`) on a packing row to reciprocally highlight the graph.
@@ -115,7 +115,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 4: SBOM (Materials) Lane and Quantity Reconciliation (`R1-40mm-nut-bar-standard`)
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/#finding=R1-40mm-nut-bar-standard`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/#finding=R1-40mm-nut-bar-standard`
 - **Click Sequence:**
   1. Navigate directly to `#finding=R1-40mm-nut-bar-standard`.
   2. Frame the finding header with `reconciliationCategoryR1` ("Quantity difference") and `reconciliationR1Note` ("Part page versus packing list"), then hover `Stainless Steel` in `laneSbom` ("SBOM (materials)").
@@ -134,8 +134,8 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 
 ### Beat 5: BOP (Instructions) Lane and PDF-Only Audit Boundary (`R2-barb` to `R5`)
 - **Target URLs:**
-  - Part A (5s): `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/#finding=R2-barb`
-  - Part B (8s): `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/#finding=R5-v1-7-manufacturing-pre-assembly-cable-carrier-md`
+  - Part A (5s): `https://demo.edgesentry.io/farmbot/#finding=R2-barb`
+  - Part B (8s): `https://demo.edgesentry.io/farmbot/#finding=R5-v1-7-manufacturing-pre-assembly-cable-carrier-md`
 - **Click Sequence:**
   1. Open `#finding=R2-barb` and point to `laneBop` ("BOP (instructions)"), confirming no PDF-only marker appears.
   2. Cut to `#finding=R5-v1-7-manufacturing-pre-assembly-cable-carrier-md` and point directly at `[data-testid="process-node-pdf-only"]` ("PDF only").
@@ -155,7 +155,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 6: Deterministic Cypher-Output Rejection Guard
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
   1. Open `checkRoutingHeading` ("Check routing") disclosure and scroll to `checkFreeTextHeading` ("Free-text check routing").
   2. Click `Show a rejected routing output` (`checkRejectionDemoButton`, `[data-testid="farmbot-rejection-demo-button"]`).
@@ -174,7 +174,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 7: Deterministic Claim Verification Panel (`REJECTED` then `CONFIRMED`)
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
   1. Scroll down past the findings panel to the claim verification panel (`data-testid="claim-verifier-panel"`, summary heading "Deterministic claim verification", id `claim-verifier-heading`) and open it.
   2. Keep the default fixture `uc1-hallucinated-part-fail` selected ("Titanium Servo Coupling is used in the gantry assembly chapter (v1.7/assembly/gantry.md)."). Click `Verify claim` (`data-testid="verify-claim-run"`) and scroll `data-testid="claim-verdict"` into view; badge is `REJECTED` with missing-node or claimed-versus-actual evidence (`data-testid="claim-missing-evidence"` / `claim-actual-evidence`).
@@ -196,7 +196,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 ---
 
 ### Beat 8: Closed-Routing Bound and Closing Line
-- **Target URL:** `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/`
+- **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
   1. Return to `checkFreeTextHeading` and frame `checkModelNoCypher` (`"The model only routes; it never writes Cypher."`) alongside the rejected Cypher sample.
 - **On-Screen Requirements:**
@@ -213,7 +213,7 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
 
 ## 3. Retake Checklist
 
-1. Reload `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/` in a fresh tab (`en` active, `y = 0`).
+1. Reload `https://demo.edgesentry.io/farmbot/` in a fresh tab (`en` active, `y = 0`).
 2. Confirm no WebLLM model download was initiated and consent card is declined or unconsented.
 3. Confirm clean browser chrome (no DevTools, bookmarks, or OS notifications).
 4. Verify Beat 6 uses only `data-testid="farmbot-rejection-demo-button"` (no live typing).

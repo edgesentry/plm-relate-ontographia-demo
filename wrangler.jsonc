@@ -2,6 +2,12 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ontographia-plm-demo",
   "compatibility_date": "2026-11-10",
+  // Custom domain route: after the maintainer deploys, the Worker is also
+  // served at https://demo.edgesentry.io. The workers.dev host stays enabled
+  // (no `workers_dev` key; the default remains on), so both origins work.
+  "routes": [
+    { "pattern": "demo.edgesentry.io", "custom_domain": true }
+  ],
   // The static site is still served by Workers Assets. `main` adds a small
   // script for the owner-only notification endpoint and the hourly digest
   // cron; it never runs WASM and never reads findings from a request.
@@ -49,7 +55,7 @@
   // Leaving NOTIFY_TO/NOTIFY_FROM unset disables sending (cron skips, the
   // endpoint returns 503).
   "vars": {
-    "PUBLIC_BASE_URL": "https://ontographia-plm-demo.egdesentry.workers.dev",
+    "PUBLIC_BASE_URL": "https://demo.edgesentry.io",
     "NOTIFY_DAILY_CAP": "10"
   }
 }

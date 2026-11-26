@@ -22,6 +22,7 @@ const AGENTS_MD = resolve(ROOT, 'AGENTS.md');
 const ORACLE_DIR = resolve(ROOT, 'farmbot/oracle');
 const FINDINGS_DOC = resolve(ROOT, 'farmbot/dist/farmbot.findings.json');
 const PACKAGE_JSON = resolve(ROOT, 'package.json');
+const WRANGLER_JSONC = resolve(ROOT, 'wrangler.jsonc');
 const SPIKE_DOC = join(DOCS_DIR, 'relate-spike.md');
 const DEVPOST_DOC = join(DOCS_DIR, 'devpost-submission.md');
 const DEVPOST_SKIP = existsSync(DEVPOST_DOC)
@@ -443,6 +444,54 @@ test('documented npm run commands exist in package.json', () => {
       );
     }
   }
+});
+
+test('live demo links and deploy vars use the custom demo domain', () => {
+  const origin = 'https://demo.edgesentry.io';
+  const farmBotUrl = `${origin}/farmbot/`;
+  const staleOrigin = 'https://ontographia-plm-demo.egdesentry.workers.dev';
+  const docs = [
+    ['README.md', README],
+    ['AGENTS.md', AGENTS_MD],
+    ['farmbot/docs/recording-guide.md', RECORDING_GUIDE],
+    ['farmbot/docs/devpost-submission.md', DEVPOST_DOC],
+  ];
+  for (const [label, path] of docs) {
+    const text = readFileSync(path, 'utf8');
+    assert.ok(
+      text.includes(farmBotUrl),
+      `${label} does not link the live FarmBot demo at ${farmBotUrl}`,
+    );
+    assert.ok(
+      !text.includes(staleOrigin),
+      `${label} still names the retired workers.dev deploy origin ${staleOrigin}`,
+    );
+  }
+  assert.ok(
+    readFileSync(README, 'utf8').includes(`<${origin}/>`),
+    `README.md does not link the desk-fan fixture at ${origin}/`,
+  );
+
+  const wrangler = readFileSync(WRANGLER_JSONC, 'utf8');
+  assert.ok(
+    wrangler.includes(`"PUBLIC_BASE_URL": "${origin}"`),
+    'wrangler.jsonc does not set PUBLIC_BASE_URL to the bare custom-domain origin',
+  );
+  assert.ok(
+    !wrangler.includes(staleOrigin),
+    `wrangler.jsonc still names the retired deploy origin ${staleOrigin}`,
+  );
+
+  const pkg = JSON.parse(readFileSync(PACKAGE_JSON, 'utf8'));
+  const smokeLive = pkg.scripts['smoke:live'];
+  assert.ok(
+    typeof smokeLive === 'string' && smokeLive.includes(`SMOKE_BASE_URL=${origin}/`),
+    'the package.json smoke:live script does not smoke the custom-domain origin',
+  );
+  assert.ok(
+    !JSON.stringify(pkg).includes(staleOrigin),
+    `package.json still names the retired deploy origin ${staleOrigin}`,
+  );
 });
 
 test('the Genesis submodule pin agrees across README, provenance, extract and release manifest', () => {

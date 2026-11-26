@@ -6,8 +6,8 @@ Static, in-browser PLM graph audit with Ontographia and **Relate, Neo4j's lightw
 
 ## Live demo
 
-- **FarmBot PLM Audit (primary):** <https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/> (cross-document inconsistency checks over FarmBot Genesis v1.7 with process-lane diagrams, executed Cypher provenance, and deterministic claim verification).
-- **Desk-fan fixture (secondary / pre-contest):** <https://ontographia-plm-demo.egdesentry.workers.dev/> (static EOL / ECO Intent-compilation screen at `/`).
+- **FarmBot PLM Audit (primary):** <https://demo.edgesentry.io/farmbot/> (cross-document inconsistency checks over FarmBot Genesis v1.7 with process-lane diagrams, executed Cypher provenance, and deterministic claim verification).
+- **Desk-fan fixture (secondary / pre-contest):** <https://demo.edgesentry.io/> (static EOL / ECO Intent-compilation screen at `/`).
 
 ## Use case
 
@@ -66,7 +66,7 @@ Live deployment smoke:
 
 ```bash
 npm run smoke:live
-SMOKE_BASE_URL=https://ontographia-plm-demo.egdesentry.workers.dev/ node scripts/smoke-farmbot.mjs
+SMOKE_BASE_URL=https://demo.edgesentry.io/ node scripts/smoke-farmbot.mjs
 ```
 
 ## Data, digests, and reproducible builds

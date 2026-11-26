@@ -30,7 +30,7 @@ Relate, Neo4j, Cypher, Ontographia, WebAssembly, React, TypeScript, Vite, WebLLM
 
 ## Try It Out / Links
 
-- **Working demo URL:** https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/
+- **Working demo URL:** https://demo.edgesentry.io/farmbot/
 - **Code repository URL:** https://github.com/edgesentry/plm-relate-ontographia-demo
 
 ---

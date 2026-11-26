@@ -32,7 +32,7 @@ Keep each concern in one file to avoid drift:
 ## Environment & URL Invariants
 
 - **Node 22 required for FarmBot tests**: `npm run test:farmbot` and `npm run smoke:farmbot` enforce a Node 22 preflight. Place Node 22 first on `PATH` and run `node` / `npm` directly without `npx`.
-- **Live deployment URL**: `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/` (verified HTTP/2 200; `edgesentry.workers.dev` does not resolve). The Cloudflare Workers account subdomain is literally **`egdesentry`**; do not "fix" this spelling.
+- **Live deployment URL**: `https://demo.edgesentry.io/farmbot/` (Wrangler custom-domain route declared in `wrangler.jsonc`; it serves traffic after the maintainer deploys). The Worker's `workers.dev` URL remains enabled: `workers_dev` is not set to false. The Workers account subdomain is literally **`egdesentry`**; do not "fix" that spelling when citing the `workers.dev` host, and note that the bare `edgesentry.workers.dev` host does not resolve.
 - **GitHub repository**: `https://github.com/edgesentry/plm-relate-ontographia-demo` (must carry the `relate` topic).
 
 ## Architectural & Positioning Invariants

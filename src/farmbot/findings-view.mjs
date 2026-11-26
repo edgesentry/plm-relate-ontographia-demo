@@ -434,6 +434,7 @@ function r6Kinds(finding) {
  * @returns {string}
  */
 function joinAnd(kinds) {
+  if (kinds.length === 0) return '';
   if (kinds.length === 1) return kinds[0];
   if (kinds.length === 2) return `${kinds[0]} and ${kinds[1]}`;
   return `${kinds.slice(0, -1).join(', ')}, and ${kinds[kinds.length - 1]}`;
@@ -543,9 +544,11 @@ export function displaySummaryLine(finding, lang) {
     const verb = values.inferred ? 'Change Log removal statement names' : 'Change Log links';
     const kinds = r6Kinds(finding);
     const still =
-      kinds.length === 1
-        ? `the ${kinds[0]} page still lists it`
-        : `${joinAnd(kinds)} pages still list it`;
+      kinds.length === 0
+        ? 'it is not listed anywhere'
+        : kinds.length === 1
+          ? `the ${kinds[0]} page still lists it`
+          : `${joinAnd(kinds)} pages still list it`;
     return `The ${verb} "${values.name}", but ${still}.`;
   }
   if (rule === 'R7') {

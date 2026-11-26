@@ -187,6 +187,33 @@ test('displaySummaryLine keeps the facts and drops the full paths', () => {
     'the R1 Japanese display summary changed beyond the packing-file basename',
   );
 
+  // An R6 finding with no downstream evidence must not interpolate
+  // "undefined" in either language.
+  const noDownstream = {
+    ...hero,
+    id: 'R6-synthetic-no-downstream',
+    evidence: hero.evidence.filter(
+      (row) =>
+        row.role !== 'structure' &&
+        row.role !== 'packing-structure' &&
+        row.role !== 'service',
+    ),
+  };
+  assert.equal(
+    displaySummaryLine(noDownstream, 'en'),
+    'The Change Log links "Power Supply", but it is not listed anywhere.',
+    'the empty-kinds English R6 display summary is unguarded',
+  );
+  assert.equal(
+    displaySummaryLine(noDownstream, 'ja'),
+    '変更ログは "Power Supply" を挙げていますが、どこにも残っています。',
+    'the empty-kinds Japanese R6 display summary changed wording',
+  );
+  assert.ok(
+    !displaySummaryLine(noDownstream, 'en').includes('undefined'),
+    'the empty-kinds English R6 display summary interpolates undefined',
+  );
+
   // An unsupported language is rejected like summaryLine.
   assert.throws(() => displaySummaryLine(nutBar, 'fr'), /lang ja or en/);
   assert.throws(() => displaySummaryLine(null, 'en'), /needs a finding/);

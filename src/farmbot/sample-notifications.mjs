@@ -1,7 +1,7 @@
 // Sample notification-email cards for the /farmbot/ landing.
 //
 // Each card cites one finding id from farmbot/dist/farmbot.findings.json, the
-// same way farmbot/docs/demo-script.md cites R6-power-supply, so a reviewer's
+// same way farmbot/docs/recording-guide.md cites R6-power-supply, so a reviewer's
 // first click opens a committed finding. The scenario names group the rules by
 // the `direction` field already declared on `CHECKS` in
 // src/farmbot/agent/checks.mjs; no product category beyond that grouping is

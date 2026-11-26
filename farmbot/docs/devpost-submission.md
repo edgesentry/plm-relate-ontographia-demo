@@ -1,12 +1,11 @@
-# Devpost Submission Text: FarmBot B1 (`/farmbot/`)
+# Devpost Submission Text: FarmBot PLM Graph Audit (`/farmbot/`)
 
-> Paste-ready sections below are written for `#61` (`Update Devpost submission text for FarmBot B1`) in the **Relate by Neo4j Hackathon**. Reader-facing prose contains no repository file paths, no hardcoded inventory counts, and no restated code tables.
+> Paste-ready sections for the **Relate by Neo4j Hackathon**. Reader-facing prose contains no repository file paths, no hardcoded inventory counts, and no internal ticket numbers.
 
 ---
 
 ## Project Title
 
-> **Field limit:** Unverified. Official Devpost Help does not state a character limit for the Project / Submission name. A third-party claim of 60 characters is unverified and conflicts with official documentation (which confirms a 140-character tagline). The accepted 76-character title is preserved below, flagging the unverified limit risk.  
 > **Measured length:** 76 characters (11 words).
 
 Cross-Process PLM Graph Audit on FarmBot Genesis with Ontographia and Relate
@@ -15,8 +14,7 @@ Cross-Process PLM Graph Audit on FarmBot Genesis with Ontographia and Relate
 
 ## Short Description (Tagline)
 
-> **Field limit:** 140 characters (verified). Source: Devpost Help, "Step 12: How do I set up the Submission Period?", https://help.devpost.com/article/145-how-do-i-set-up-the-submission-period (last updated 2026-11-12).  
-> **Measured length:** 140 characters (17 words). Fits verified limit.
+> **Field limit:** 140 characters (verified). **Measured length:** 140 characters (17 words).
 
 In-browser cross-document BOM checks on Relate, Neo4j's lightweight graph database: deterministic Intents compile to Cypher with provenance.
 
@@ -24,16 +22,13 @@ In-browser cross-document BOM checks on Relate, Neo4j's lightweight graph databa
 
 ## Built With
 
-> **Field limit:** 25 tags maximum (verified). Source: Devpost Help, "Know Your Submission Steps", https://help.devpost.com/article/126-know-your-submission-steps (last updated 2026-08-12).  
-> **Measured count:** 18 tags (derived strictly from tools named in disclosures; no invented tools).
+> **Field limit:** 25 tags maximum. **Measured count:** 18 tags.
 
 Relate, Neo4j, Cypher, Ontographia, WebAssembly, React, TypeScript, Vite, WebLLM, WebGPU, Llama 3.2, DuckDB, YAML, Playwright, Cloudflare Workers, Wrangler, Git, Node.js
 
 ---
 
 ## Try It Out / Links
-
-> **Field requirements:** Verified. Official Rules section 4 (https://relate.devpost.com/rules) requires a link to the public GitHub repository tagged with the topic `relate` and a link to a working demo.
 
 - **Working demo URL:** https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/
 - **Code repository URL:** https://github.com/edgesentry/plm-relate-ontographia-demo
@@ -42,32 +37,19 @@ Relate, Neo4j, Cypher, Ontographia, WebAssembly, React, TypeScript, Vite, WebLLM
 
 ## Video Demo Link
 
-> **Field limit:** Public YouTube or Vimeo URL, video of up to 2 minutes (verified). Sources: Devpost Help, "Know Your Submission Steps", article 126; Official Rules section 4 (https://relate.devpost.com/rules).  
-> **Status:** Published for #60 (1:58 silent walkthrough with burned-in English captions).
+> **Field limit:** Public YouTube or Vimeo URL, up to 2 minutes. Replace with the v2 narrated video URL once uploaded.
 
 https://youtu.be/YbGLU2pqlC0
 
 ---
 
-## Reference Media and Upload Limits (Non-Paste)
-
-> Reference limits from Devpost Help for media and file attachments:
-> - **Thumbnail:** JPG, PNG, or GIF, 5 MB maximum, 3:2 recommended (verified, Devpost Help article 126).
-> - **File upload:** 35 MB maximum (verified, Devpost Help articles 126 and 145).
-> - **Image Gallery (`farmbot/docs/devpost-image-gallery/`):**
->   - `01-landing-sample-cards.png`
->   - `02-r6-process-lanes.png`
->   - `03-r1-sbom-reconciliation.png`
->   - `04-r5-bop-pdf-only.png`
->   - `05-cypher-rejection-guard.png`
->   - `06-claim-verifier-rejected.png`
-
----
-
 ## Long Description
 
-> **Field limit:** Unverified. Devpost Help specifies no official character or word limit for the Project Story / Text Description. (Contest-specific suggestions such as "500 words or less" are not platform limits). Flagged as unverified; no invented caps. Four-idea contrast with `jexp/relate-ideas` preserved.  
-> **Measured length:** 7115 characters (971 words).
+### At a glance (30-second summary)
+
+- **The problem:** In hardware product lifecycle management (PLM), real engineering and manufacturing documents—part pages, Change Logs, assembly/pre-assembly instructions (BOP), packing lists, and service guides—drift out of sync. Catching disagreements manually across hundreds of markdown files is slow and error-prone.
+- **How Relate solves it:** Built on **Relate, Neo4j's lightweight graph database**, this app runs in two complementary modes: zero-server in-browser WebAssembly (`:memory:`, with Web Crypto SHA-256 seed verification) and an inspectable offline persistent directory store in Node. Ontographia compiles ontology-constrained Intents into parameter-bound Cypher that executes directly in Relate, preserving full provenance (Intent, Cypher, bound parameters, and source line numbers) for every finding.
+- **Try it in 30 seconds:** Open the live demo URL, click any sample finding deep link to traverse the multi-lane evidence graph and inspect its executed Cypher, test the deterministic Cypher-output rejection guard and claim verifier, or clone the public repository to inspect the persistent Relate directory store offline.
 
 ### What it does
 
@@ -77,9 +59,9 @@ This submission is a working `/farmbot/` web application built on real open-sour
 
 - **Cross-process disagreement checks:** Compares engineering documentation (part pages and the Change Log) against assembly, pre-assembly, packing, and service documentation to surface quantity mismatches, unresolved part references, unreferenced or unreached parts, unreadable pre-assembly tables, and stale names after design changes. The tool shows that two documents disagree and presents the evidence path; it does not decide which document is right.
 - **Process-lane visualization and evidence provenance:** Opening a finding displays a rule summary, a hand-built SVG process-lane diagram (spanning Design change, EBOM part, SBOM (materials), BOP (instructions), Packing, and Service lanes), and an evidence table. Which lanes appear is decided by the opened finding's evidence rows; no single finding shows every lane. Problem nodes and impacted paths are highlighted, unconfirmed links are drawn dashed toward a lane-level placeholder, and quantity comparisons show the variant and signed difference. Selecting a node highlights its evidence rows and vice versa. Every evidence row carries the exact Intent, executed Cypher, and bound parameters that produced it, alongside `fact` / `inferred` labels for causes and name matches.
-- **SBOM (materials) lane:** Where the opened finding cites a part whose page documents `specs.material`, the diagram shows a constructed view of those documented material values next to the part. It is hidden on findings that cite no such material. It is not a software bill of materials, not a CAS-level substance list, and not copied from the fictional desk-fan fixtures.
-- **BOP (instructions) lane:** Where the opened finding cites assembly-chapter or pre-assembly nodes and their usage or reference evidence, the diagram shows a constructed view of that existing instruction structure. It is hidden on findings that cite no such evidence, and it is not factory routing; the FarmBot model has no WorkCenter or Operation class. A pre-assembly page recorded as `pdf-only` shows a PDF-only marker on the diagram, which records that the page has no machine-readable component list and is not a claim that the page was parsed.
-- **Deterministic Cypher-output rejection:** A labelled control feeds a fixed sample through the same closed-routing validator used for model output. If the routing output contains Cypher or a markdown fence, the screen rejects it and nothing new is compiled or executed. It is a reproducible demonstration of the validator, not a live model roll.
+- **SBOM (materials) lane:** Where the opened finding cites a part whose page documents `specs.material`, the diagram shows a constructed view of those documented material values next to the part. It is hidden on findings that cite no such material. It is not a software bill of materials, not a CAS-level substance list, and not copied from the fictional desk-fan fixtures. Scoping the lane strictly to documented part-page attributes keeps every rendered material node traceable to a committed source with zero fabricated substance claims.
+- **BOP (instructions) lane:** Where the opened finding cites assembly-chapter or pre-assembly nodes and their usage or reference evidence, the diagram shows a constructed view of that existing instruction structure. It is hidden on findings that cite no such evidence, and it is not factory routing; the FarmBot model has no WorkCenter or Operation class. A pre-assembly page recorded as `pdf-only` shows a PDF-only marker on the diagram, which records that the page has no machine-readable component list and is not a claim that the page was parsed. Surfacing `pdf-only` explicitly as an audit boundary rather than guessing unparsed contents keeps the graph strictly evidence-backed and reproducible.
+- **Deterministic Cypher-output rejection and claim verification:** A labelled control feeds a fixed Cypher sample through the same closed-routing validator used for model output. If the routing output contains Cypher or a markdown fence, the screen rejects it and nothing new is compiled or executed. It is a reproducible demonstration of the validator, not a live model roll; replaying a fixed payload makes the safety guardrail deterministic and verifiable on demand, proving malformed or query-writing output is blocked before compilation or execution. A companion claim-verification panel replays fixed agent claims as Intent queries against Relate and returns `REJECTED` (with missing-node or claimed-versus-actual evidence) or `CONFIRMED`.
 - **Preset graph questions and parameter selectors:** Alongside the full check suite, the screen provides preset questions with committed allowed-value selectors (for example, filtering by part or category) and deep links to individual findings (`/farmbot/#finding=<id>`).
 - **Deterministic verification:** The browser verifies the committed seed graph's SHA-256 digest with Web Crypto before loading it into memory, and compares the browser-computed findings against the committed findings document by canonical-JSON SHA-256. Findings can also be regenerated and compared offline.
 - **Bilingual UI:** All screen headings, labels, rule summaries, and controls support both English and Japanese.
@@ -104,9 +86,6 @@ This submission is a shipped, inspectable `/farmbot/` demo, not a design sketch.
 
 ## Official Rules Disclosures (Relate by Neo4j Hackathon)
 
-> **Field limit:** Unverified custom form fields. Hackathon-specific custom Additional Info questions and their character limits are not published on the public Relate contest pages; flagged as unverified custom fields.  
-> **Measured length:** 3945 characters (512 words).
-
 ### 1. Product Capabilities Used (Relate)
 
 - **Product:** Relate, Neo4j's lightweight graph database.
@@ -126,7 +105,7 @@ This submission is a shipped, inspectable `/farmbot/` demo, not a design sketch.
   - Ontographia desk-fan fixture provenance: Apache-2.0.
 - **Pre-event vs. Contest Period Work:**
   - The repository was created prior to the Contest Period start with the Vite/React/TypeScript scaffold, `@edgesentry/ontographia-wasm`, the desk-fan EOL/ECO screen at `/` (which compiles Intents for audit display without executing Cypher on Relate), Cloudflare Workers static-assets deploy configuration, and the desk-fan WebLLM path.
-  - All FarmBot / Relate work submitted for the **Relate by Neo4j Hackathon** was developed during the Contest Period: the FarmBot Genesis v1.7 submodule integration, DuckDB canonical extract, standalone FarmBot ontology, `/farmbot/` screen, committed seed graph, preset questions, cross-process BOM check engine, process-lane diagram with its SBOM (materials) and BOP (instructions) lanes, closed-routing WebLLM check path, deterministic Cypher-output rejection demonstration, and persistent Relate directory store.
+  - All FarmBot / Relate work submitted for the **Relate by Neo4j Hackathon** was developed during the Contest Period: the FarmBot Genesis v1.7 submodule integration, DuckDB canonical extract, standalone FarmBot ontology, `/farmbot/` screen, committed seed graph, preset questions, cross-process BOM check engine, process-lane diagram with its SBOM (materials) and BOP (instructions) lanes, closed-routing WebLLM check path, deterministic Cypher-output rejection demonstration, claim verification panel, and persistent Relate directory store.
 
 ### 3. AI Tools Used in the Shipped Demo
 
@@ -137,18 +116,3 @@ This submission is a shipped, inspectable `/farmbot/` demo, not a design sketch.
   - **Closed routing only:** The model may emit only a closed `{check, parameter}` JSON routing object. Its output is strictly validated against the closed schema and committed allowed-values before Ontographia compiles the expanded Intents, and the user must review and confirm the proposal before Relate executes anything.
   - **No Cypher or finding generation:** The model never writes Cypher and never detects, explains, scores, or proposes countermeasures for any finding. Finding detection, evidence collection, severity scoring, and cause/countermeasure templates are handled deterministically by the check engine.
   - **Deterministic rejection demonstration:** A labelled control feeds a fixed sample through the same closed-routing validator. Output that contains Cypher or a markdown fence is rejected, and nothing new is compiled or executed. No live model roll is used to obtain the sample.
-
----
-
-## Positioning decisions (#69)
-
-This section records accepted positioning for the Devpost text (#61), the GitHub About description (#64), and the demo video (#74, #70, #60). It is not part of the Devpost paste. Judging-score weights are not stated in submission text.
-
-1. **Relate naming.** Submission prose uses "Relate, Neo4j's lightweight graph database", matching Official Rules §1. The contest title remains "Relate by Neo4j Hackathon".
-2. **Title.** Keep the project title above: "Cross-Process PLM Graph Audit on FarmBot Genesis with Ontographia and Relate".
-3. **Tagline.** Keep the short description above.
-4. **Demo video spine.** The demo script draft follows the accepted spine. Open with a sample notification-email card (a sample, not sent mail), follow its `#finding=` deep link to show the design-change to packing to service evidence path and the assembly-chapter (BOP) usage that still names the changed part, then show the process-lane diagram with each evidence row's Intent, executed Cypher, and bound parameters. Switch to a finding that shows the SBOM (materials) lane and its documented material, then to findings that show the BOP (instructions) lane and the PDF-only marker. Then keep a short deterministic Cypher-output rejection beat: a labelled button feeds a fixed sample through the same closed-routing validator, and if the routing output contains Cypher or a markdown fence the screen rejects it and nothing new is compiled or executed. Close with the words "the model only routes; it never writes Cypher" as the last spoken line: the optional local model only routes a closed `{check, parameter}` object and never detects, explains, or scores a finding. The SBOM lane, the BOP lane, and the rejection beat are shipped on `/farmbot/`. The rejection beat is a validator demonstration with a button and a fixed sample, not a live model roll. Suggested spoken timings are in the demo script draft. The public demo video URL is filled in after recording (#70, #60) and is not known yet.
-5. **GitHub About description (#64).** This is a repository setting changed only by the maintainer. Accepted text: "In-browser cross-document BOM checks for FarmBot Genesis on Relate, Neo4j's lightweight graph database." Leave the homepage and topics unchanged.
-6. **Contrast with relate-ideas.** Keep the four-idea contrast in the long description. The main axis is a shipped, inspectable cross-document audit on FarmBot Genesis documentation, not a free-text query demo. InstantCypher is a tighter bound (ontology-constrained Intents, closed routing, always-shown Cypher), not the product's primary purpose.
-
-The desk-fan screen at `/` is pre-contest work on a different graph and is not the `/farmbot/` process-lane diagram; its EBOM / MBOM / SBOM / BOP swimlanes must not be described as shipped `/farmbot/` behaviour. `/farmbot/` now uses Design change, EBOM part, SBOM (materials), BOP (instructions), Packing, and Service lanes. The SBOM (materials) lane, the BOP (instructions) lane, and the deterministic Cypher-output rejection beat are shipped `/farmbot/` behaviour, with each lane shown only on findings whose evidence supports it and the rejection beat driven by a button and a fixed sample. Do not describe desk-fan SBOM or BOP, or a rejection filmed from a live model roll, as shipped `/farmbot/` behaviour.

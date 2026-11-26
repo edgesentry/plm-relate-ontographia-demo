@@ -31,8 +31,8 @@ Keep each concern in one file to avoid drift:
 
 ## Environment & URL Invariants
 
-- **Node 22 required for FarmBot tests**: `npm run test:farmbot` and `npm run smoke:farmbot` enforce a Node 22 preflight. If the default shell Node differs, run with `npx -y node@22` or place Node 22 first on `PATH`.
-- **Live deployment URL**: `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/` — the Workers account subdomain is literally **`egdesentry`** (not `edgesentry`). Do not "fix" this spelling.
+- **Node 22 required for FarmBot tests**: `npm run test:farmbot` and `npm run smoke:farmbot` enforce a Node 22 preflight. Place Node 22 first on `PATH` and run `node` / `npm` directly without `npx`.
+- **Live deployment URL**: `https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/` (verified HTTP/2 200; `edgesentry.workers.dev` does not resolve). The Cloudflare Workers account subdomain is literally **`egdesentry`**; do not "fix" this spelling.
 - **GitHub repository**: `https://github.com/edgesentry/plm-relate-ontographia-demo` (must carry the `relate` topic).
 
 ## Architectural & Positioning Invariants
@@ -54,7 +54,7 @@ Any edit to `README.md`, `AGENTS.md`, or `farmbot/docs/*.md` must satisfy these 
 - **Valid repo paths only**: Every backtick-quoted repository path in `farmbot/docs/` must resolve to an existing file/directory or a `.gitignore`d build output.
 - **Valid npm scripts only**: Every `npm run <script>` cited in docs must exist in `package.json`.
 - **No `Editor Notes` heading** in `farmbot/docs/devpost-submission.md`, and keep internal issue numbers (`#60`, `#61`, `#69`, etc.) out of submission prose.
-- **Video budget sync**: `farmbot/docs/recording-guide.md` must keep Beats 0–8 in order summing to the documented `100 seconds` (`1:40`) budget, with Beat 0 (`data-testid="flow-strip"`, no-click opening), Beat 4 (`R1-40mm-nut-bar-standard` reconciliation labels), Beat 8 verbatim closing line, and per-beat voiceover and zoom cues.
+- **Video budget sync**: `farmbot/docs/recording-guide.md` must keep Beats 0 to 8 in order summing to the documented `102 seconds` (`1:42`) budget, with Beat 0 (`data-testid="flow-strip"`, no-click opening), Beat 4 (`R1-40mm-nut-bar-standard` reconciliation labels), Beat 7 (claim verification panel `REJECTED` then `CONFIRMED`), Beat 8 verbatim closing line (`"In short, the model only routes; it never writes Cypher."`), speakable narration (`<= 2.5` words/s), and non-overlapping caption cues (`<= 17` chars/s).
 
 ## Verification Commands
 

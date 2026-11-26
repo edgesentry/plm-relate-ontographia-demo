@@ -1200,39 +1200,106 @@ test('a cited gitignored build output may be absent from the checkout', () => {
 // --- v2 demo video guide budget and single-source-of-truth checks ------------
 //
 // farmbot/docs/recording-guide.md is the single source of truth for the v2
-// narrated + zoomed demo video: Beats 0 through 8 sum to 100 seconds (1:40),
+// narrated + zoomed demo video: Beats 0 through 8 sum to 102 seconds (1:42),
 // Beat 0 opens with a 6 to 10 second no-click overview over the flow strip,
-// every beat specifies voiceover and zoom cues, Beat 4 records the R1
-// reconciliation labels, and Beat 8 keeps the closing line verbatim.
+// narration stays at or below 2.5 words/s per beat, captions match the
+// narration text in non-overlapping cues at or below 17 chars/s, Beat 4
+// records the R1 reconciliation labels, Beat 7 covers the claim verification
+// panel (REJECTED then CONFIRMED), and Beat 8 keeps the exact closing line.
 
-const CLOSING_LINE = 'the model only routes; it never writes Cypher';
-const VIDEO_TOTAL_SECONDS = 100;
+const CLOSING_LINE = 'In short, the model only routes; it never writes Cypher.';
+const VIDEO_TOTAL_SECONDS = 102;
+const MAX_WORDS_PER_SECOND = 2.5;
+const MAX_CAPTION_CHARS_PER_SECOND = 17;
+
+/**
+ * Parse `M:SS` into integer seconds.
+ *
+ * @param {string} stamp
+ * @returns {number}
+ */
+function parseTimestamp(stamp) {
+  const [minutes, seconds] = stamp.split(':').map(Number);
+  return minutes * 60 + seconds;
+}
 
 /**
  * The beats the recording guide documents, in document order. Each beat is a
  * "### Beat N: ..." section that states one "**Target Timing:** N seconds"
- * line. Any other heading ends the section.
+ * line, a quoted "**English Voiceover:**" block, and "**Caption Cues:**" items.
+ * Any other heading ends the section.
  *
  * @param {string} text
- * @returns {{ n: number, seconds: number | null, body: string }[]}
+ * @returns {{
+ *   n: number,
+ *   seconds: number | null,
+ *   range: [number, number] | null,
+ *   voiceover: string | null,
+ *   cues: { start: number, end: number, text: string }[],
+ *   body: string,
+ * }[]}
  */
 function recordingGuideBeats(text) {
   const beats = [];
   let current = null;
+  let expectingVoiceover = false;
+  let inCues = false;
   for (const line of text.split(/\r?\n/)) {
     const heading = /^### Beat (\d+):\s/.exec(line);
     if (heading) {
-      current = { n: Number(heading[1]), seconds: null, body: [] };
+      current = {
+        n: Number(heading[1]),
+        seconds: null,
+        range: null,
+        voiceover: null,
+        cues: [],
+        body: [],
+      };
       beats.push(current);
+      expectingVoiceover = false;
+      inCues = false;
       continue;
     }
     if (!current) continue;
     if (/^#{1,3}\s/.test(line)) {
       current = null;
+      expectingVoiceover = false;
+      inCues = false;
       continue;
     }
-    const timing = /^[-*]\s*\*\*Target Timing:\*\*\s*(\d+)\s*seconds\b/.exec(line);
-    if (timing && current.seconds === null) current.seconds = Number(timing[1]);
+    const timing =
+      /^[-*]\s*\*\*Target Timing:\*\*\s*(\d+)\s*seconds\s*\((\d+:\d{2})\s+to\s+(\d+:\d{2})\)/.exec(
+        line,
+      );
+    if (timing && current.seconds === null) {
+      current.seconds = Number(timing[1]);
+      current.range = [parseTimestamp(timing[2]), parseTimestamp(timing[3])];
+    }
+    if (/^[-*]\s*\*\*English Voiceover:\*\*/.test(line)) {
+      expectingVoiceover = true;
+      inCues = false;
+    } else if (expectingVoiceover) {
+      const quote = /^\s*>\s*"(.+)"\s*$/.exec(line);
+      if (quote) {
+        current.voiceover = quote[1];
+        expectingVoiceover = false;
+      }
+    }
+    if (/^[-*]\s*\*\*Caption Cues:\*\*/.test(line)) {
+      inCues = true;
+      expectingVoiceover = false;
+    } else if (inCues) {
+      const cue = /^\s*[-*]\s*`(\d+:\d{2})-(\d+:\d{2})`:\s*"(.+)"\s*$/.exec(line);
+      if (cue) {
+        current.cues.push({
+          start: parseTimestamp(cue[1]),
+          end: parseTimestamp(cue[2]),
+          text: cue[3],
+        });
+      } else if (/^[-*]\s*\*\*/.test(line)) {
+        inCues = false;
+      }
+    }
     current.body.push(line);
   }
   return beats.map((beat) => ({ ...beat, body: beat.body.join('\n') }));
@@ -1261,37 +1328,97 @@ test('the recording guide opens with a 6 to 10 second Beat 0 before Beat 1', () 
   );
 });
 
-test('the documented durations sum to the v2 100-second video budget', () => {
+test('the documented durations sum to the v2 102-second video budget', () => {
   const text = readFileSync(RECORDING_GUIDE, 'utf8');
   const beats = recordingGuideBeats(text);
+  let cursor = 0;
   for (const beat of beats) {
     assert.ok(
       Number.isInteger(beat.seconds) && beat.seconds > 0,
       `farmbot/docs/recording-guide.md beat ${beat.n} has no documented duration`,
     );
+    assert.ok(
+      beat.range && beat.range[0] === cursor && beat.range[1] === cursor + beat.seconds,
+      `farmbot/docs/recording-guide.md beat ${beat.n} range does not match contiguous ${cursor}..${cursor + beat.seconds}`,
+    );
+    cursor += beat.seconds;
   }
-  const total = beats.reduce((sum, beat) => sum + beat.seconds, 0);
   assert.equal(
-    total,
+    cursor,
     VIDEO_TOTAL_SECONDS,
-    `farmbot/docs/recording-guide.md documents ${total} seconds; the named beats must sum to ${VIDEO_TOTAL_SECONDS} seconds`,
+    `farmbot/docs/recording-guide.md documents ${cursor} seconds; the named beats must sum to ${VIDEO_TOTAL_SECONDS} seconds`,
   );
   assert.ok(
     text.includes(`${VIDEO_TOTAL_SECONDS} seconds`),
     `farmbot/docs/recording-guide.md does not state the documented ${VIDEO_TOTAL_SECONDS} second total`,
   );
+  assert.ok(
+    !/\bBGM\b/i.test(text),
+    'farmbot/docs/recording-guide.md must not include BGM instructions (added later on YouTube)',
+  );
 });
 
-test('every beat in the recording guide specifies English voiceover and zoom cues', () => {
+test('every beat specifies speakable narration, zoom cues, and non-overlapping captions <= 17 chars/s', () => {
   const beats = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8'));
   for (const beat of beats) {
     assert.ok(
-      beat.body.includes('**English Voiceover:**'),
-      `farmbot/docs/recording-guide.md Beat ${beat.n} is missing an English Voiceover cue`,
-    );
-    assert.ok(
       beat.body.includes('**Zoom / Framing:**'),
       `farmbot/docs/recording-guide.md Beat ${beat.n} is missing a Zoom / Framing cue`,
+    );
+    assert.ok(
+      beat.voiceover && beat.voiceover.length > 0,
+      `farmbot/docs/recording-guide.md Beat ${beat.n} is missing a quoted English Voiceover line`,
+    );
+    const words = beat.voiceover.trim().split(/\s+/).length;
+    const wordsPerSecond = words / beat.seconds;
+    assert.ok(
+      wordsPerSecond <= MAX_WORDS_PER_SECOND,
+      `Beat ${beat.n} narration is ${wordsPerSecond.toFixed(2)} words/s (${words} words in ${beat.seconds}s), exceeding ${MAX_WORDS_PER_SECOND} words/s`,
+    );
+    assert.ok(
+      beat.cues.length > 0,
+      `farmbot/docs/recording-guide.md Beat ${beat.n} has no Caption Cues`,
+    );
+    let cueCursor = beat.range[0];
+    for (const cue of beat.cues) {
+      assert.ok(
+        cue.start >= cueCursor && cue.end > cue.start && cue.end <= beat.range[1],
+        `Beat ${beat.n} has overlapping or out-of-range caption cue ${cue.start}-${cue.end}`,
+      );
+      const duration = cue.end - cue.start;
+      const charsPerSecond = cue.text.length / duration;
+      assert.ok(
+        charsPerSecond <= MAX_CAPTION_CHARS_PER_SECOND,
+        `Beat ${beat.n} cue "${cue.text}" is ${charsPerSecond.toFixed(2)} chars/s, exceeding ${MAX_CAPTION_CHARS_PER_SECOND} chars/s`,
+      );
+      cueCursor = cue.end;
+    }
+    const joined = beat.cues.map((cue) => cue.text).join(' ');
+    assert.equal(
+      joined,
+      beat.voiceover,
+      `Beat ${beat.n} caption cues do not match the narration text verbatim`,
+    );
+  }
+});
+
+test('Beat 7 documents the claim verification panel (REJECTED then CONFIRMED)', () => {
+  const beat7 = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8')).find(
+    (beat) => beat.n === 7,
+  );
+  assert.ok(beat7, 'farmbot/docs/recording-guide.md has no Beat 7');
+  assert.equal(beat7.seconds, 13, 'Beat 7 must keep its 13-second budget');
+  for (const needle of [
+    'claim-verifier-panel',
+    'uc1-hallucinated-part-fail',
+    'REJECTED',
+    'uc1-hallucinated-part-pass',
+    'CONFIRMED',
+    'verify-claim-run',
+  ]) {
+    assert.ok(
+      beat7.body.includes(needle),
+      `farmbot/docs/recording-guide.md Beat 7 is missing ${needle}`,
     );
   }
 });
@@ -1301,10 +1428,21 @@ test('the Beat 8 closing line stays verbatim in the recording guide', () => {
     (beat) => beat.n === 8,
   );
   assert.ok(guideBeat8, 'the recording guide has no Beat 8');
-  assert.ok(
-    guideBeat8.body.includes(CLOSING_LINE),
-    `the recording guide Beat 8 lost the closing line "${CLOSING_LINE}"`,
+  assert.equal(
+    guideBeat8.voiceover,
+    CLOSING_LINE,
+    `the recording guide Beat 8 voiceover must be verbatim "${CLOSING_LINE}"`,
   );
+});
+
+test('no doc references the removed demo-script.md file', () => {
+  for (const path of [README, AGENTS_MD, ...markdownFiles(DOCS_DIR)]) {
+    const text = readFileSync(path, 'utf8');
+    assert.ok(
+      !text.includes('demo-script.md'),
+      `${path} still references the removed demo-script.md`,
+    );
+  }
 });
 
 test('Beat 4 records the on-screen reconciliation labels for the R1 shot', () => {

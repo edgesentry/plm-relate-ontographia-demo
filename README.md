@@ -6,17 +6,17 @@ Static, in-browser PLM graph audit with Ontographia and **Relate, Neo4j's lightw
 
 ## Live demo
 
-- **FarmBot PLM Audit (primary):** <https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/> — cross-document inconsistency checks over FarmBot Genesis v1.7 with process-lane diagrams, executed Cypher provenance, and deterministic claim verification.
-- **Desk-fan fixture (secondary / pre-contest):** <https://ontographia-plm-demo.egdesentry.workers.dev/> — static EOL / ECO Intent-compilation screen at `/`.
+- **FarmBot PLM Audit (primary):** <https://ontographia-plm-demo.egdesentry.workers.dev/farmbot/> (cross-document inconsistency checks over FarmBot Genesis v1.7 with process-lane diagrams, executed Cypher provenance, and deterministic claim verification).
+- **Desk-fan fixture (secondary / pre-contest):** <https://ontographia-plm-demo.egdesentry.workers.dev/> (static EOL / ECO Intent-compilation screen at `/`).
 
 ## Use case
 
 Hardware product lifecycle management (PLM) documents drift over time across engineering bills of materials (EBOM), assembly and pre-assembly instructions (BOP), packing lists, the Change Log, and service procedures. This app audits the open-source [FarmBot Genesis v1.7](https://github.com/FarmBot-Docs/farmbot-genesis) documentation in a browser tab so a reviewer can trace disagreements straight to source files and line numbers:
 
 - **Cross-process disagreement checks:** Surfaces packing quantity mismatches, unresolved part references, unreferenced or unreached parts, `pdf-only` pre-assembly pages, and stale names after design changes. The tool reports disagreements with evidence paths; it does not decide which document is right.
-- **Process-lane visualization & provenance:** Opening a finding renders a dynamic SVG process-lane diagram (`Design change`, `EBOM part`, `SBOM (materials)`, `BOP (instructions)`, `Packing`, `Service` — shown only when cited by that finding's evidence) alongside an evidence table where every row carries the exact Intent, executed Cypher, and bound parameters. Deep links open any finding directly at `/farmbot/#finding=<id>`.
+- **Process-lane visualization & provenance:** Opening a finding renders a dynamic SVG process-lane diagram (`Design change`, `EBOM part`, `SBOM (materials)`, `BOP (instructions)`, `Packing`, `Service`, shown only when cited by that finding's evidence) alongside an evidence table where every row carries the exact Intent, executed Cypher, and bound parameters. Deep links open any finding directly at `/farmbot/#finding=<id>`.
 - **Preset graph questions:** Parameterized Ontographia Intents (packing differences, assembly chapters for a part, reachable structures, kit parts by category, unmatched references) compile to parameter-bound Cypher and run in Relate. Definitions live in `farmbot/intents/`, `src/farmbot/i18n.ts`, and `farmbot/oracle/default-results.gold.json` (with a post-compile `RETURN DISTINCT` step in `src/farmbot/distinct-return.mjs` where needed).
-- **Closed-routing AI bound & claim verification:** An optional, consent-gated local WebLLM (`Llama-3.2-1B-Instruct-q4f16_1-MLC`) may only emit a closed `{check, parameter}` routing object — it never writes Cypher or scores findings. A deterministic rejection button and claim verification panel demonstrate these guardrails on demand.
+- **Closed-routing AI bound & claim verification:** An optional, consent-gated local WebLLM (`Llama-3.2-1B-Instruct-q4f16_1-MLC`) may only emit a closed `{check, parameter}` routing object; it never writes Cypher or scores findings. A deterministic rejection button and claim verification panel demonstrate these guardrails on demand.
 
 ## How it uses Relate
 
@@ -101,10 +101,10 @@ npm run release:verify -- release-assets
 ## Hackathon disclosures and pre-event code
 
 - **Hackathon:** Relate by Neo4j Hackathon (<https://relate.devpost.com/>, [Official Rules](https://relate.devpost.com/rules))
-- **Contest Period:** 2026-11-11 18:00 PST – 2026-12-11 18:00 PST (2026-11-12 10:00 – 2026-12-12 10:00 Asia/Singapore)
+- **Contest Period:** 2026-11-11 18:00 PST to 2026-12-11 18:00 PST (2026-11-12 10:00 to 2026-12-12 10:00 Asia/Singapore)
 - **Public repository:** <https://github.com/edgesentry/plm-relate-ontographia-demo> (topics: `relate`, `relate-neo4j-hackathon`, `ontographia`)
 - **Pre-event code:** Repository created 2026-11-05 22:27 UTC (`1c07d8e`). 16 commits reached `main` before the Contest Period: the Vite/React/TypeScript scaffold, `@edgesentry/ontographia-wasm`, the desk-fan EOL/ECO screen at `/`, Cloudflare Workers deploy config, and the desk-fan WebLLM path.
-- **Contest Period work:** All FarmBot / Relate work was built during the Contest Period — the FarmBot Genesis v1.7 submodule, DuckDB extract, standalone ontology, `/farmbot/` screen, committed seed, preset Intents and oracles, cross-process check engine, process-lane diagram, deterministic rejection and claim verification panels, and persistent Relate store.
+- **Contest Period work:** All FarmBot / Relate work was built during the Contest Period: the FarmBot Genesis v1.7 submodule, DuckDB extract, standalone ontology, `/farmbot/` screen, committed seed, preset Intents and oracles, cross-process check engine, process-lane diagram, deterministic rejection and claim verification panels, and persistent Relate store.
 
 ### Desk-fan demo (`/`)
 

@@ -47,7 +47,7 @@ https://youtu.be/YbGLU2pqlC0
 
 ### At a glance (30-second summary)
 
-- **The problem:** In hardware product lifecycle management (PLM), real engineering and manufacturing documents—part pages, Change Logs, assembly/pre-assembly instructions (BOP), packing lists, and service guides—drift out of sync. Catching disagreements manually across hundreds of markdown files is slow and error-prone.
+- **The problem:** In hardware product lifecycle management (PLM), real engineering and manufacturing documents (part pages, Change Logs, assembly/pre-assembly instructions (BOP), packing lists, and service guides) drift out of sync. Catching disagreements manually across hundreds of markdown files is slow and error-prone.
 - **How Relate solves it:** Built on **Relate, Neo4j's lightweight graph database**, this app runs in two complementary modes: zero-server in-browser WebAssembly (`:memory:`, with Web Crypto SHA-256 seed verification) and an inspectable offline persistent directory store in Node. Ontographia compiles ontology-constrained Intents into parameter-bound Cypher that executes directly in Relate, preserving full provenance (Intent, Cypher, bound parameters, and source line numbers) for every finding.
 - **Try it in 30 seconds:** Open the live demo URL, click any sample finding deep link to traverse the multi-lane evidence graph and inspect its executed Cypher, test the deterministic Cypher-output rejection guard and claim verifier, or clone the public repository to inspect the persistent Relate directory store offline.
 

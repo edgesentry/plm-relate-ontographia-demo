@@ -28,8 +28,8 @@ Single-source-of-truth production guide for filming the v2 live `/farmbot/` demo
 
 ```
 Beat 0 (10s) -> Beat 1 (7s) -> Beat 2 (15s) -> Beat 3 (18s) -> Beat 4 (11s) -> Beat 5 (13s) -> Beat 6 (9s) -> Beat 7 (13s) -> Beat 8 (6s)
-Opening         Sample Card    Relate WASM     Graph Lanes &   SBOM Lane       BOP & PDF       Cypher Guard   Claim Panel     Closing Bound
-& Flow Strip    Click R6       SHA-256 + Evid. Cypher Zoom     R1 Reconcile    R2 -> R5        Reject Demo    FAIL -> PASS    "Never Cypher"
+Opening         Sample Card    Relate Graph    Graph Lanes &   SBOM Lane       BOP & PDF       Cypher Guard   Claim Panel     Closing Hold
+& Flow Strip    Click R6       & Broken Link   Cypher Zoom     R1 Reconcile    R2 -> R5        Reject Demo    FAIL -> PASS    "Never Cypher"
                                                                                                (102s / 1:42 Total)
 ```
 
@@ -83,11 +83,11 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
   - Finding header (`R6-power-supply`, `severityReview`), `findingsMatch` verification banner, and multi-source evidence table with file and line citations.
 - **Zoom / Framing:** 1.4x zoom on the `findingsMatch` banner (2s), then pan down to the evidence rows citing `electronics.md`, packing, and `storing-farmbot-for-winter.md`.
 - **English Voiceover:**
-  > "On first run, Web Crypto checks the seed SHA-256 and loads it into in-memory Relate WASM. Local Cypher traces Power Supply across assembly, packing, and service files down to the line."
+  > "Your browser holds a Relate graph linking design, manufacturing, process, packing, and service documents, backed by a SHA-256-verified WASM seed. Here, it traces Power Supply straight to the broken links."
 - **Caption Cues:**
-  - `0:17-0:23`: "On first run, Web Crypto checks the seed SHA-256 and loads it into in-memory Relate WASM."
-  - `0:23-0:27`: "Local Cypher traces Power Supply across assembly,"
-  - `0:27-0:32`: "packing, and service files down to the line."
+  - `0:17-0:22`: "Your browser holds a Relate graph linking design, manufacturing, process,"
+  - `0:22-0:28`: "packing, and service documents, backed by a SHA-256-verified WASM seed."
+  - `0:28-0:32`: "Here, it traces Power Supply straight to the broken links."
 - **Target Timing:** 15 seconds (0:17 to 0:32)
 - **Cut Point:** Right after the cursor sweeps the cited source file lines.
 
@@ -103,12 +103,12 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
   - Reciprocal node/row selection (`aria-pressed="true"`), dashed missing-link legend visible, and expanded query provenance block (`executedCypherLabel` showing `CYPHER 25 ...` and `paramsLabel` bound JSON).
 - **Zoom / Framing:** Full lane traversal shot (7s) showing `Design change -> EBOM part -> BOP -> Packing -> Service`, then **1.6x zoom-in** directly on the expanded Intent, `CYPHER 25` query, and Bound parameters box (11s).
 - **English Voiceover:**
-  > "This is a graph traversal, not a table diff. Relate walks from design change through EBOM part, instructions, packing, and service, flagging missing links dashed. Clicking any node shows its Intent, executed Cypher, and bound parameters."
+  > "Relate walks from the design change through EBOM part, instructions, packing, and service, marking missing links dashed. Clicking a row opens the exact Intent, executed Cypher, and bound parameters that proved it."
 - **Caption Cues:**
-  - `0:32-0:36`: "This is a graph traversal, not a table diff."
-  - `0:36-0:41`: "Relate walks from design change through EBOM part, instructions, packing,"
-  - `0:41-0:45`: "and service, flagging missing links dashed."
-  - `0:45-0:50`: "Clicking any node shows its Intent, executed Cypher, and bound parameters."
+  - `0:32-0:37`: "Relate walks from the design change through EBOM part, instructions,"
+  - `0:37-0:41`: "packing, and service, marking missing links dashed."
+  - `0:41-0:46`: "Clicking a row opens the exact Intent, executed Cypher,"
+  - `0:46-0:50`: "and bound parameters that proved it."
 - **Target Timing:** 18 seconds (0:32 to 0:50)
 - **Cut Point:** Hold 1.5s on the zoomed `CYPHER 25` and bound parameters block, then cut cleanly to `R1-40mm-nut-bar-standard`.
 
@@ -191,23 +191,23 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
   - `1:29-1:32`: "and rejected with the missing node."
   - `1:32-1:36`: "A valid part in the graph is confirmed."
 - **Target Timing:** 13 seconds (1:23 to 1:36)
-- **Cut Point:** Hold 1s on `CONFIRMED`, then return to the free-text section for Beat 8.
+- **Cut Point:** Hold on `CONFIRMED` and transition directly into Beat 8 without scrolling.
 
 ---
 
-### Beat 8: Closed-Routing Bound and Closing Line
+### Beat 8: Claim Verdict Hold and Closing Line
 - **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
-  1. Return to `checkFreeTextHeading` and frame `checkModelNoCypher` (`"The model only routes; it never writes Cypher."`) alongside the rejected Cypher sample.
+  1. Do not scroll or click; hold on the `CONFIRMED` result in `data-testid="claim-verifier-panel"` from Beat 7.
 - **On-Screen Requirements:**
-  - `checkModelNoCypher` ("The model only routes; it never writes Cypher.") clearly legible in frame.
-- **Zoom / Framing:** **1.7x zoom-in** centered on `"The model only routes; it never writes Cypher."` with a clean end hold.
+  - `data-testid="claim-verdict"` (`CONFIRMED` badge) and `data-testid="claim-actual-evidence"` clearly legible in frame.
+- **Zoom / Framing:** Hold the **1.6x zoom-in** on `data-testid="claim-verdict"` (`CONFIRMED` badge) with no scroll.
 - **English Voiceover:**
   > "In short, the model only routes; it never writes Cypher."
 - **Caption Cues:**
   - `1:36-1:42`: "In short, the model only routes; it never writes Cypher."
 - **Target Timing:** 6 seconds (1:36 to 1:42)
-- **Cut Point:** Hold 1 second of clean pause after `"it never writes Cypher."` and fade out.
+- **Cut Point:** Hold cleanly on `CONFIRMED` after `"it never writes Cypher."` and end.
 
 ---
 

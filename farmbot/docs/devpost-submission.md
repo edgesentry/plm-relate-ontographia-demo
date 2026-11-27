@@ -47,19 +47,11 @@ https://youtu.be/YbGLU2pqlC0
 
 ### At a glance (30-second summary)
 
-- **The problem:** Hardware engineering and manufacturing documents (part pages, Change Logs, assembly/pre-assembly instructions, packing lists, and service guides) drift out of sync, and catching mismatches by hand is slow and error-prone.
-- **How Relate solves it:** Built on **Relate, Neo4j's lightweight graph database**, `/farmbot/` verifies a committed seed graph by SHA-256 and runs Ontographia-compiled, parameter-bound Cypher in-memory via WebAssembly (or offline in Node) to surface cross-process disagreements with line-level provenance. An optional local model only routes `{check, parameter}` and never writes Cypher.
-- **Try it in 30 seconds at https://demo.edgesentry.io/farmbot/ (no install):**
-  1. Open [Power Supply (`#finding=R6-power-supply`)](https://demo.edgesentry.io/farmbot/#finding=R6-power-supply), inspect the process-lane diagram, and expand `Intent, Cypher and parameters` on an evidence row.
-  2. Expand `Check routing` and press `Show a rejected routing output` to see the closed-routing validator block raw Cypher (`MATCH (part:Part) RETURN part`) before compilation or execution.
-  3. Expand `Deterministic claim verification` and click `Verify claim` on `uc1-hallucinated-part-fail` (`REJECTED`) and then on `uc1-hallucinated-part-pass` (`CONFIRMED`).
-- **Local and offline runs:** See the repository README to run the same checks or inspect the persistent Relate directory store offline in Node.
-
-### Why Relate?
-
-- Runs in the browser tab with no backend via `@relate/relate-wasm` (`:memory:`), or offline in a persistent Node store (`@relate/relate`).
-- Verifies the committed FarmBot Genesis seed graph by SHA-256 before loading so every run starts from identical state.
-- Executes deterministic, parameter-bound Cypher compiled from Intents, giving every finding a reproducible query audit trail.
+- **The problem:** Hardware engineering, assembly, packing, and service documents drift out of sync, and catching mismatches by hand is slow and error-prone.
+- **What it does:** `/farmbot/` audits real FarmBot Genesis v1.7 docs in your browser tab, tracing mismatches like `Power Supply` (`R6-power-supply`) and `40mm Nut Bar` (`R1-40mm-nut-bar-standard`) to exact file lines and interactive process lanes.
+- **Why Relate:** Built on **Relate, Neo4j's lightweight graph database**, it verifies a committed seed graph by SHA-256 and runs deterministic, parameter-bound Cypher in-memory via WebAssembly (`@relate/relate-wasm`, no backend) or offline in Node (`@relate/relate`).
+- **The model never writes Cypher:** An optional, consent-gated local model only routes `{check, parameter}` and never writes Cypher or detects/scores findings.
+- **Try it in 30 seconds at https://demo.edgesentry.io/farmbot/ (no install):** (1) open `#finding=R6-power-supply` and expand `Intent, Cypher and parameters`, (2) expand `Check routing` and press `Show a rejected routing output`, (3) expand `Deterministic claim verification` and click `Verify claim` on `uc1-hallucinated-part-fail` (`REJECTED`) then `uc1-hallucinated-part-pass` (`CONFIRMED`).
 
 ### What it does
 

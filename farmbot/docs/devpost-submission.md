@@ -48,12 +48,18 @@ https://youtu.be/YbGLU2pqlC0
 ### At a glance (30-second summary)
 
 - **The problem:** Hardware engineering and manufacturing documents (part pages, Change Logs, assembly/pre-assembly instructions, packing lists, and service guides) drift out of sync, and catching mismatches by hand is slow and error-prone.
-- **How Relate solves it:** Built on **Relate, Neo4j's lightweight graph database**, the `/farmbot/` app verifies a committed seed graph by SHA-256 and runs Ontographia-compiled, parameter-bound Cypher in-memory via WebAssembly (or offline in a persistent Node Relate store) to surface cross-process disagreements with full query and line-level provenance.
+- **How Relate solves it:** Built on **Relate, Neo4j's lightweight graph database**, `/farmbot/` verifies a committed seed graph by SHA-256 and runs Ontographia-compiled, parameter-bound Cypher in-memory via WebAssembly (or offline in Node) to surface cross-process disagreements with line-level provenance. An optional local model only routes `{check, parameter}` and never writes Cypher.
 - **Try it in 30 seconds at https://demo.edgesentry.io/farmbot/ (no install):**
   1. Open [Power Supply (`#finding=R6-power-supply`)](https://demo.edgesentry.io/farmbot/#finding=R6-power-supply), inspect the process-lane diagram, and expand `Intent, Cypher and parameters` on an evidence row.
   2. Expand `Check routing` and press `Show a rejected routing output` to see the closed-routing validator block raw Cypher (`MATCH (part:Part) RETURN part`) before compilation or execution.
   3. Expand `Deterministic claim verification` and click `Verify claim` on `uc1-hallucinated-part-fail` (`REJECTED`) and then on `uc1-hallucinated-part-pass` (`CONFIRMED`).
 - **Local and offline runs:** See the repository README to run the same checks or inspect the persistent Relate directory store offline in Node.
+
+### Why Relate?
+
+- Runs in the browser tab with no backend via `@relate/relate-wasm` (`:memory:`), or offline in a persistent Node store (`@relate/relate`).
+- Verifies the committed FarmBot Genesis seed graph by SHA-256 before loading so every run starts from identical state.
+- Executes deterministic, parameter-bound Cypher compiled from Intents, giving every finding a reproducible query audit trail.
 
 ### What it does
 
@@ -87,10 +93,7 @@ This submission ships a live `/farmbot/` audit on FarmBot Genesis docs (tracing 
 
 ### 1. Product Capabilities Used (Relate)
 
-- **Product:** Relate, Neo4j's lightweight graph database.
-- **Capabilities used:**
-  - In-browser `:memory:` graph database via `@relate/relate-wasm` for loading the SHA-256-verified FarmBot Genesis seed graph and executing compiled Cypher queries in the browser tab.
-  - Persistent directory store via `@relate/relate` in Node (with the JSON snapshot codec) for reproducible offline builds, canonical logical-dump digest verification, and read-only store inspection.
+- **Relate, Neo4j's lightweight graph database:** Runs in-browser `:memory:` (`@relate/relate-wasm`) on the SHA-256-verified FarmBot Genesis seed graph, and builds a persistent Node directory store (`@relate/relate`, JSON snapshot codec) for reproducible offline inspection and digest verification.
 
 ### 2. Third-Party Tools, Libraries, Data, and Pre-Event Code
 
@@ -98,10 +101,7 @@ This submission ships a live `/farmbot/` audit on FarmBot Genesis docs (tracing 
 - **Frontend & Build:** React, React DOM, TypeScript, Vite.
 - **In-Browser Local Model Runtime:** `@mlc-ai/web-llm` (optional, WebGPU-only, consent-gated).
 - **Offline Extract, Verification & Hosting:** `@duckdb/node-api` (canonical extract and SQL oracles), `yaml`, Playwright (headless browser smoke tests), Cloudflare Workers / Workers Assets / Wrangler (static hosting and optional digest-checked owner notification endpoint and hourly cron).
-- **Data Provenance & Licenses:**
-  - Repository license: Apache-2.0.
-  - FarmBot Genesis v1.7 documentation: vendored git submodule (`FarmBot-Docs/farmbot-genesis`) with MIT third-party notice.
-  - Ontographia desk-fan fixture provenance: Apache-2.0.
+- **Data Provenance & Licenses:** Repository is Apache-2.0; FarmBot Genesis v1.7 docs (`FarmBot-Docs/farmbot-genesis`) carry an MIT third-party notice; Ontographia desk-fan fixture is Apache-2.0.
 - **Pre-event vs. Contest Period Work:**
   - The repository was created prior to the Contest Period start with the Vite/React/TypeScript scaffold, `@edgesentry/ontographia-wasm`, the desk-fan EOL/ECO screen at `/` (which compiles Intents for audit display without executing Cypher on Relate), Cloudflare Workers static-assets deploy configuration, and the desk-fan WebLLM path.
   - All FarmBot / Relate work submitted for the **Relate by Neo4j Hackathon** was developed during the Contest Period: the FarmBot Genesis v1.7 submodule integration, DuckDB canonical extract, standalone FarmBot ontology, `/farmbot/` screen, committed seed graph, preset questions, cross-process BOM check engine, process-lane diagram with its SBOM (materials) and BOP (instructions) lanes, closed-routing WebLLM check path, deterministic Cypher-output rejection demonstration, claim verification panel, and persistent Relate directory store.

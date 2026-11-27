@@ -47,28 +47,28 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
   - `data-testid="how-it-works"` (`howItWorksLabel`) stays closed.
 - **Zoom / Framing:** Full `1280x800` frame, gentle 1.15x push-in toward `data-testid="flow-strip"`.
 - **English Voiceover:**
-  > "Hardware docs drift across BOMs, packing lists, and service guides. This audit runs live in your tab on Relate, Neo4j's lightweight graph database."
+  > "Change-log edits that skip the BOM, packing list, or service guide ship wrong. Relate, Neo4j's lightweight graph database, traces the gap in your browser."
 - **Caption Cues:**
-  - `0:00-0:05`: "Hardware docs drift across BOMs, packing lists, and service guides."
-  - `0:05-0:10`: "This audit runs live in your tab on Relate, Neo4j's lightweight graph database."
+  - `0:00-0:05`: "Change-log edits that skip the BOM, packing list, or service guide ship wrong."
+  - `0:05-0:10`: "Relate, Neo4j's lightweight graph database, traces the gap in your browser."
 - **Target Timing:** 10 seconds (0:00 to 0:10)
-- **Cut Point:** Immediately after `"graph database."` as cursor moves onto the sample cards.
+- **Cut Point:** Immediately after `"in your browser."` as cursor moves onto the sample cards.
 
 ---
 
 ### Beat 1: Sample Notification Card to Deep Link
 - **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
-  1. Keep viewport at `y = 0` so all sample cards (`sampleHeading`: "Sample emails", `sampleIntro`) are visible.
-  2. Hover the `R6-power-supply` card (`sampleScenarioDesignChange`, `sampleSummaryR6PowerSupply`) and click `Open R6-power-supply` (`sampleOpenFinding`).
+  1. Start at `y = 0` so the sample cards (`sampleHeading`: "Sample emails", `sampleIntro`) are visible.
+  2. Hover the `R6-power-supply` card (`sampleScenarioDesignChange`, `sampleSummaryR6PowerSupply`) and click `Open R6-power-supply` (`sampleOpenFinding`), which scrolls `[data-testid="finding-view"]` into view and moves the sample cards out of frame.
 - **On-Screen Requirements:**
-  - `sampleCardLabel` ("Sample") badge visible so reviewers see these are sample cards, not sent mail.
-- **Zoom / Framing:** 1.25x zoom onto the `R6-power-supply` card as the click ripple fires.
+  - `sampleCardLabel` ("Sample") badge visible before the click so reviewers see these are sample cards, not sent mail.
+- **Zoom / Framing:** 1.25x zoom onto the `R6-power-supply` card as the click ripple fires, easing back out as the page scrolls to `[data-testid="finding-view"]`.
 - **English Voiceover:**
-  > "A reviewer opens a sample alert link and jumps straight to the evidence, with no backend."
+  > "A reviewer opens a sample alert, jumping straight to the finding. The model never writes Cypher."
 - **Caption Cues:**
-  - `0:10-0:13`: "A reviewer opens a sample alert link"
-  - `0:13-0:17`: "and jumps straight to the evidence, with no backend."
+  - `0:10-0:14`: "A reviewer opens a sample alert, jumping straight to the finding."
+  - `0:14-0:17`: "The model never writes Cypher."
 - **Target Timing:** 7 seconds (0:10 to 0:17)
 - **Cut Point:** Right as the click triggers the in-browser run and scrolls to `R6-power-supply`.
 

@@ -1484,6 +1484,25 @@ test('the Beat 8 closing line stays verbatim in the recording guide', () => {
   );
 });
 
+test('the first Relate mention in voiceover and captions uses the full product phrasing', () => {
+  const required = "Relate, Neo4j's lightweight graph database";
+  const beats = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8'));
+  const firstVoiceover = beats.find((beat) => /\bRelate\b/i.test(beat.voiceover ?? ''));
+  assert.ok(firstVoiceover, 'no beat voiceover mentions Relate');
+  assert.ok(
+    firstVoiceover.voiceover.includes(required),
+    `first voiceover mentioning Relate (Beat ${firstVoiceover.n}) must include "${required}"`,
+  );
+  const firstCue = beats
+    .flatMap((beat) => beat.cues.map((cue) => ({ beat: beat.n, text: cue.text })))
+    .find((cue) => /\bRelate\b/i.test(cue.text));
+  assert.ok(firstCue, 'no caption cue mentions Relate');
+  assert.ok(
+    firstCue.text.includes(required),
+    `first caption cue mentioning Relate (Beat ${firstCue.beat}) must include "${required}"`,
+  );
+});
+
 test('no doc references the removed demo-script.md file', () => {
   for (const path of [README, AGENTS_MD, ...markdownFiles(DOCS_DIR)]) {
     const text = readFileSync(path, 'utf8');

@@ -47,12 +47,12 @@ Pacing rule: Cut or speed-ramp any idle wait where the screen is static; every b
   - `data-testid="how-it-works"` (`howItWorksLabel`) stays closed.
 - **Zoom / Framing:** Full `1280x800` frame, gentle 1.15x push-in toward `data-testid="flow-strip"`.
 - **English Voiceover:**
-  > "Change-log edits skipping BOM, packing, or service get built, shipped, and serviced wrong. A browser Relate graph, no backend, traces and proves the gap."
+  > "Change-log edits that skip the BOM, packing list, or service guide ship wrong. Relate, Neo4j's lightweight graph database, traces the gap in your browser."
 - **Caption Cues:**
-  - `0:00-0:06`: "Change-log edits skipping BOM, packing, or service get built, shipped, and serviced wrong."
-  - `0:06-0:10`: "A browser Relate graph, no backend, traces and proves the gap."
+  - `0:00-0:05`: "Change-log edits that skip the BOM, packing list, or service guide ship wrong."
+  - `0:05-0:10`: "Relate, Neo4j's lightweight graph database, traces the gap in your browser."
 - **Target Timing:** 10 seconds (0:00 to 0:10)
-- **Cut Point:** Immediately after `"proves the gap."` as cursor moves onto the sample cards.
+- **Cut Point:** Immediately after `"in your browser."` as cursor moves onto the sample cards.
 
 ---
 

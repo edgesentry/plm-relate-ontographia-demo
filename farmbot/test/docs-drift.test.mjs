@@ -1553,3 +1553,40 @@ test('checks.md names the three reconciliation categories and keeps the R1 compa
     'farmbot/docs/checks.md must not add an intentional-difference category',
   );
 });
+
+function walkSourceText(dir) {
+  let out = '';
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out += walkSourceText(full);
+    else if (/\.(ts|tsx|mjs|js)$/.test(entry.name)) out += readFileSync(full, 'utf8') + '\n';
+  }
+  return out;
+}
+
+test('every data-testid and #finding hash in recording-guide and devpost-submission exists in src or findings', () => {
+  const srcText = walkSourceText(resolve(ROOT, 'src'));
+  const findingIds = new Set(
+    JSON.parse(readFileSync(FINDINGS_DOC, 'utf8')).findings.map((f) => f.id),
+  );
+  for (const [label, path] of [
+    ['farmbot/docs/recording-guide.md', RECORDING_GUIDE],
+    ['farmbot/docs/devpost-submission.md', DEVPOST_DOC],
+  ]) {
+    const text = readFileSync(path, 'utf8');
+    for (const match of text.matchAll(/data-testid="([a-z0-9-]+)"/g)) {
+      const id = match[1];
+      assert.ok(
+        srcText.includes(`data-testid="${id}"`),
+        `${label} cites data-testid="${id}" which does not exist in src/`,
+      );
+    }
+    for (const match of text.matchAll(/#finding=([a-zA-Z0-9-]+)/g)) {
+      const id = match[1];
+      assert.ok(
+        findingIds.has(id),
+        `${label} cites #finding=${id} which does not exist in farmbot/dist/farmbot.findings.json`,
+      );
+    }
+  }
+});

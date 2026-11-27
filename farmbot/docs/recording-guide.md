@@ -3,7 +3,7 @@
 Single-source-of-truth production guide for filming the live `/farmbot/` demo video, paced to actual narration length (under Devpost's `120s` limit), with **English narration**, **hard-cut fixed framings at key moments**, and **short non-overlapping captions** cut directly from the single narration block per beat.
 
 - **Live URL:** `https://demo.edgesentry.io/farmbot/`
-- **Target Length:** Sum of beat durations (`88 seconds` / `1:28` at current narration length, inside Devpost's `120s` limit). Beat durations match actual narration length with `<= 1.0 s` idle time after each beat's line, removed by trimming.
+- **Target Length:** Derived from actual narration length (under Devpost's `120s` limit; `82.7s` as last measured in v5). Beat durations match actual narration length with `<= 1.0 s` idle time after each beat's line, removed by trimming.
 - **Audio & Caption Contract:** Narration stays at or below 2.5 words/s per beat. Captions live in one place per beat (`Narration & Caption Cues`), split into non-overlapping cues at or below 17 characters/s in a dedicated bottom safe band. No background music is tracked in this guide.
 
 ---
@@ -24,18 +24,18 @@ Single-source-of-truth production guide for filming the live `/farmbot/` demo vi
 
 ---
 
-## 2. Beat-by-Beat Shot List (`88 seconds` / `1:28`)
+## 2. Beat-by-Beat Shot List (Narration-Derived Timing)
 
 ```
-Beat 0 (3s) -> Beat 1 (7s) -> Beat 2 (14s) -> Beat 3 (15s) -> Beat 4 (10s) -> Beat 5 (13s) -> Beat 6 (9s) -> Beat 7 (13s) -> Beat 8 (4s)
-Opening        Sample Card    Relate Graph    Graph Lanes &   SBOM Lane       BOP & PDF       Cypher Guard   Claim Panel     Closing Hold
-& Flow Strip   Click R6       & Broken Link   Cypher Cut      R1 Reconcile    R2 -> R5        Reject Demo    FAIL -> PASS    "Never Cypher"
+Beat 0 -> Beat 1 -> Beat 2 -> Beat 3 -> Beat 4 -> Beat 5 -> Beat 6 -> Beat 7 -> Beat 8
+Opening   Sample    Relate    Lanes &   SBOM      BOP &     Cypher    Claim     Closing
+& Strip   Click R6  & Links   Cypher    R1 Match  PDF Only  Guard     Panel     Hold
 ```
 
 Camera and pacing rules:
 - The frame changes only on a real UI action or a hard cut; a still frame while narration plays is correct.
-- Zoom is a hard cut to a fixed framing at key moments only (`CYPHER 25`, `PDF only`, `REJECTED -> CONFIRMED`).
-- Idle time after a beat's narration ends is `<= 1.0 s`, removed by trimming.
+- Zoom is a hard cut to a fixed framing at key moments only (`CYPHER 25`, `PDF only`, `REJECTED -> CONFIRMED`); zoom crops must not cut text or lanes at the edges, and after a hard cut the target is already fully in frame (no settle scroll).
+- The rejected-routing beat shows the click and the red panel appearing; idle time after a beat's narration ends is `<= 1.0 s`, removed by trimming.
 
 ---
 
@@ -43,15 +43,15 @@ Camera and pacing rules:
 - **Target URL:** `https://demo.edgesentry.io/farmbot/`
 - **Click Sequence:**
   1. Open `/farmbot/` in a fresh English tab at `y = 0`.
-  2. Do not click, scroll, or type during this opening beat; the first action starts by `0:03`.
+  2. Do not click, scroll, or type during this opening beat; the first action starts by `0:04`.
 - **On-Screen Requirements:**
   - Compact 3-step flow strip (`data-testid="flow-strip"`): `flowStepAgent` ("Agent finds the drift"), `flowStepEmail` ("Email link"), `flowStepAnalysis` ("Graph analysis in the browser").
   - `data-testid="how-it-works"` (`howItWorksLabel`) stays closed.
 - **Zoom / Framing:** Full `1280x800` fixed frame (still frame while narration plays).
 - **Narration & Caption Cues:**
-  - `0:00-0:03`: "Change-log edits skip BOMs and ship wrong."
-- **Target Timing:** 3 seconds (0:00 to 0:03)
-- **Cut Point:** Immediately at `0:03` as the cursor selects `R6-power-supply`.
+  - `0:00-0:04`: "Design changes missing from BOMs cause wrong builds and shipments."
+- **Target Timing:** 4 seconds (0:00 to 0:04)
+- **Cut Point:** Immediately at `0:04` as the cursor selects `R6-power-supply`.
 
 ---
 
@@ -64,9 +64,9 @@ Camera and pacing rules:
   - `sampleCardLabel` ("Sample") badge visible before the click so reviewers see these are sample cards, not sent mail.
 - **Zoom / Framing:** Full `1280x800` frame; frame changes only on the click and scroll to `[data-testid="finding-view"]`.
 - **Narration & Caption Cues:**
-  - `0:03-0:07`: "A reviewer opens a sample alert, jumping to the finding."
-  - `0:07-0:10`: "The model never writes Cypher."
-- **Target Timing:** 7 seconds (0:03 to 0:10)
+  - `0:04-0:08`: "A reviewer opens a sample alert, jumping to the finding."
+  - `0:08-0:10`: "The model never writes Cypher."
+- **Target Timing:** 6 seconds (0:04 to 0:10)
 - **Cut Point:** Trim idle tail `<= 1.0 s` after `"Cypher."` and transition to Beat 2.
 
 ---
@@ -98,12 +98,12 @@ Camera and pacing rules:
   - Reciprocal node/row selection (`aria-pressed="true"`), dashed missing-link legend visible, and expanded query provenance block (`executedCypherLabel` showing `CYPHER 25 ...` and `paramsLabel` bound JSON).
 - **Zoom / Framing:** Full lane shot on `Design change -> EBOM part -> BOP -> Packing -> Service` (`0:24-0:31`), then one hard cut to a fixed `1.6x` framing on the expanded Intent, `CYPHER 25` query, and Bound parameters box (`0:31-0:39`), held only as long as its line.
 - **Narration & Caption Cues:**
-  - `0:24-0:28`: "Relate walks from the design change through EBOM part,"
-  - `0:28-0:31`: "instructions, packing, and service."
-  - `0:31-0:35`: "Clicking a row opens the Intent, executed Cypher,"
-  - `0:35-0:39`: "and bound parameters that proved it."
+  - `0:24-0:28`: "Relate walks from design change through EBOM, packing, and service."
+  - `0:28-0:32`: "The model only routes; Ontographia compiles the validated Intent"
+  - `0:32-0:36`: "into a deterministic, parameter-bound query,"
+  - `0:36-0:39`: "and Relate executes it against the graph."
 - **Target Timing:** 15 seconds (0:24 to 0:39)
-- **Cut Point:** End the `CYPHER 25` hold `<= 1.0 s` after `"proved it."` with a hard cut to `R1-40mm-nut-bar-standard`.
+- **Cut Point:** End the `CYPHER 25` hold `<= 1.0 s` after `"against the graph."` with a hard cut to `R1-40mm-nut-bar-standard`.
 
 ---
 
@@ -151,7 +151,7 @@ Camera and pacing rules:
 - **On-Screen Requirements:**
   - Fixed sample input `MATCH (part:Part) RETURN part` (`checkRejectionDemoSampleLabel`).
   - Rejection alert banner: `checkRoutingRejected` ("The routing output was rejected."), `checkRoutingRejectedBody` ("Nothing new was compiled or executed."), and validator reason `routing output contains Cypher or a markdown fence`.
-- **Zoom / Framing:** Full `1280x800` fixed framing on the open `Check routing` disclosure and red rejection alert banner.
+- **Zoom / Framing:** Full `1280x800` fixed framing on `Check routing` showing the click and the red rejection alert banner appearing.
 - **Narration & Caption Cues:**
   - `1:02-1:07`: "If routing output contains raw Cypher or a markdown fence, the validator blocks it."
   - `1:07-1:11`: "Nothing new is compiled or executed."

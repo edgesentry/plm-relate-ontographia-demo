@@ -1257,6 +1257,8 @@ test('a cited gitignored build output may be absent from the checkout', () => {
 // and Beat 8 keeps the exact closing line.
 
 const CLOSING_LINE = 'In short, the model only routes; it never writes Cypher.';
+const ROLE_SPLIT_LINE =
+  'The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph.';
 const MAX_VIDEO_TOTAL_SECONDS = 120;
 const MAX_WORDS_PER_SECOND = 2.5;
 const MAX_CAPTION_CHARS_PER_SECOND = 17;
@@ -1390,9 +1392,11 @@ test('the documented durations are contiguous and match the guide total under 12
     cursor <= MAX_VIDEO_TOTAL_SECONDS,
     `farmbot/docs/recording-guide.md documents ${cursor} seconds, exceeding Devpost's ${MAX_VIDEO_TOTAL_SECONDS}s limit`,
   );
-  assert.ok(
-    text.includes(`${cursor} seconds`),
-    `farmbot/docs/recording-guide.md does not state the summed ${cursor} second total`,
+  assert.equal(
+    /\*\*Target Length:\*\*[^.\n]*\b\d+\s*seconds\b/i.test(text) ||
+      /^## 2\. Beat-by-Beat Shot List.*\b\d+\s*seconds\b/im.test(text),
+    false,
+    'farmbot/docs/recording-guide.md must not state a fixed total duration target in the header or shot-list heading',
   );
   assert.ok(
     !/\bBGM\b/i.test(text),
@@ -1608,6 +1612,54 @@ function walkSourceText(dir) {
   }
   return out;
 }
+
+test('the role-split sentence appears in recording-guide narration and Devpost', { skip: DEVPOST_SKIP }, () => {
+  const beats = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8'));
+  assert.ok(
+    beats.some((beat) => (beat.voiceover ?? '').includes(ROLE_SPLIT_LINE)),
+    `farmbot/docs/recording-guide.md narration must include "${ROLE_SPLIT_LINE}"`,
+  );
+  const devpost = readFileSync(DEVPOST_DOC, 'utf8');
+  assert.ok(
+    devpost.includes(ROLE_SPLIT_LINE),
+    `farmbot/docs/devpost-submission.md must include "${ROLE_SPLIT_LINE}"`,
+  );
+  const howSection = devpost.split('### How it uses Relate & Ontographia')[1] ?? '';
+  assert.ok(
+    howSection.trimStart().startsWith(ROLE_SPLIT_LINE),
+    'farmbot/docs/devpost-submission.md "How it uses Relate & Ontographia" must open with the role-split sentence',
+  );
+});
+
+const DEVPOST_VIDEO_TODO_MARKER = 'TODO: replace with the final narrated YouTube URL';
+const DEVPOST_VIDEO_TODO_SKIP =
+  DEVPOST_SKIP ||
+  (readFileSync(DEVPOST_DOC, 'utf8').includes(DEVPOST_VIDEO_TODO_MARKER)
+    ? 'Devpost Video Demo Link still has a TODO placeholder; remove the TODO once the final narrated YouTube URL is uploaded'
+    : false);
+
+test('the Devpost Video Demo Link note is updated from the v2 placeholder', { skip: DEVPOST_SKIP }, () => {
+  const devpost = readFileSync(DEVPOST_DOC, 'utf8');
+  assert.equal(
+    /Replace with the v2 narrated video URL/i.test(devpost),
+    false,
+    'farmbot/docs/devpost-submission.md must not retain the stale "Replace with the v2 narrated video URL" note',
+  );
+});
+
+test('the Devpost Video Demo Link has no TODO placeholder once the final YouTube URL is set', { skip: DEVPOST_VIDEO_TODO_SKIP }, () => {
+  const devpost = readFileSync(DEVPOST_DOC, 'utf8');
+  const videoSection = (devpost.split('## Video Demo Link')[1] ?? '').split(/^##\s/m)[0] ?? '';
+  assert.equal(
+    /\bTODO\b/i.test(videoSection),
+    false,
+    'farmbot/docs/devpost-submission.md Video Demo Link still contains a TODO placeholder',
+  );
+  assert.ok(
+    /https:\/\/(?:youtu\.be\/|www\.youtube\.com\/watch\?v=)[A-Za-z0-9_-]{6,}/.test(videoSection),
+    'farmbot/docs/devpost-submission.md Video Demo Link must include a public YouTube URL',
+  );
+});
 
 test('every data-testid and #finding hash in recording-guide and devpost-submission exists in src or findings', () => {
   const srcText = walkSourceText(resolve(ROOT, 'src'));

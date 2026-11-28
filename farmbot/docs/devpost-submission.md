@@ -71,41 +71,80 @@ https://youtu.be/Z9mzhPbKBn0
 
 ---
 
-## Long Description
+## About the project
 
-### At a glance (30-second summary)
+### Inspiration
 
-- **Versus unconstrained LLM-to-Cypher:** Unconstrained LLM-to-Cypher can invent labels or edges silently; here the model only routes, Ontographia compiles a deterministic parameter-bound query, Relate executes it, and every answer has provenance or a hard boundary (PDF only, REJECTED).
-- **The problem:** Hardware engineering, assembly, packing, and service documents drift out of sync, leading to wrong builds and wrong shipments.
-- **What it does:** `/farmbot/` audits FarmBot Genesis v1.7 docs in your browser tab, tracing mismatches (`R6-power-supply`, `R1-40mm-nut-bar-standard`) to file lines and interactive process lanes.
-- **Why Relate:** Runs on **Relate, Neo4j's lightweight graph database** with no backend.
-- **Try it at https://demo.edgesentry.io/farmbot/ (no install):** (1) open `#finding=R6-power-supply` and expand `Intent, Cypher and parameters`, (2) expand `Check routing` and press `Show a rejected routing output`, (3) expand `Deterministic claim verification` and click `Verify claim` on `uc1-hallucinated-part-fail` (`REJECTED`) then `uc1-hallucinated-part-pass` (`CONFIRMED`).
+Hardware product lifecycle management (PLM) documentation drifts silently across engineering bills of materials (EBOM), materials lists (SBOM), assembly and pre-assembly instructions (BOP), packing lists, change logs, and service procedures. Missing packing or service updates cause wrong builds and shipments.
+
+While auditing open-source hardware documentation such as **FarmBot Genesis v1.7**, we saw how easily cross-document disagreements hide across markdown tables, part references, and `pdf-only` pre-assembly links. At the same time, giving an LLM free-form Text-to-Cypher access to a graph database introduces a subtle reliability risk: **syntactically valid queries that silently miss edges, hallucinate labels, or fabricate evidence**.
+
+We were inspired to build a deterministic, auditable alternative powered by **Relate, Neo4j's lightweight graph database**, and **Ontographia**: an in-browser PLM graph audit where the AI model only routes to validated checks, never writes Cypher, and every finding exposes its exact `CYPHER 25` provenance.
 
 ### What it does
 
-The `/farmbot/` web application audits FarmBot Genesis v1.7 documentation in your browser tab, graphing only what the documents state so every finding is reproducible. Opening `#finding=R6-power-supply` traces a Change Log entry for `Power Supply` across assembly (`electronics.md`), packing (`power-supply.md`), and service (`storing-farmbot-for-winter.md`) files down to line numbers, while `#finding=R1-40mm-nut-bar-standard` flags a quantity difference of `4` between the `40mm Nut Bar` part page and packing list alongside `Stainless Steel` in `SBOM (materials)`.
-- **Cross-process checks & process lanes:** Compares part pages and the Change Log against assembly, pre-assembly, packing, and service docs to surface quantity mismatches, unresolved references, unreached parts, unreadable tables, and stale names in an interactive SVG process-lane diagram with reciprocal node/row selection, dashed missing-link placeholders, and `fact` / `inferred` labels.
-- **Query provenance, controls & bilingual verification:** Every evidence row exposes its Intent, executed Cypher, and bound parameters. Preset questions, `#finding=<id>` links, `Show a rejected routing output`, and `Deterministic claim verification` (`REJECTED` or `CONFIRMED`) run with canonical-JSON findings verification in English and Japanese.
+**PLM Graph Audit on FarmBot with Ontographia and Relate** (`https://demo.edgesentry.io/farmbot/`) audits cross-document consistency across FarmBot Genesis v1.7 directly inside a browser tab—with zero server-side secrets or data uploads:
 
-### How it uses Relate & Ontographia
+- **Cross-Process Disagreement Detection**: Surfaces packing quantity mismatches (`R1`), unresolved part references (`R2`), unreferenced or unreached parts, `pdf-only` pre-assembly boundaries (`R5`), and stale names after design changes (`R6`).
+- **Evidence-Driven Process-Lane Diagrams**: Renders a dynamic SVG process-lane diagram (`Design change`, `EBOM part`, `SBOM (materials)`, `BOP (instructions)`, `Packing`, `Service`) where lanes appear *only* when cited by a finding's evidence, linked bidirectionally to source files and line numbers.
+- **Full Cypher Provenance**: Every evidence row expands to reveal the compiled Ontographia Intent, the executed `CYPHER 25` query, and its bound JSON parameters (e.g., `{"param_0": "unmatched"}`).
+- **Closed-Routing Guardrails & Claim Verification**: An optional, consent-gated local WebLLM (`Llama-3.2-1B-Instruct-q4f16_1-MLC`) can route free-text questions to preset checks, while a deterministic validator rejects any output containing raw Cypher or markdown fences. A Claim Verification panel replays claims as Intent queries to mark hallucinated parts `REJECTED` (with missing-node evidence) and valid graph facts `CONFIRMED`.
 
-The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph. **Relate, Neo4j's lightweight graph database**, runs identical parameter-bound queries across two modes:
-1. **In-browser `:memory:` execution (`/farmbot/`):** Relate WebAssembly (`@relate/relate-wasm`) loads lazily on first Run, verifies the committed seed JSON's SHA-256 digest with Web Crypto, loads the graph in-memory, and runs Ontographia-compiled (`@edgesentry/ontographia-wasm`) Cypher.
-2. **Inspectable persistent directory store (offline / Node):** The same seed compiles into a persistent Relate directory store via `@relate/relate` with the JSON snapshot codec for read-only Node inspection without a browser or daemon.
+### How we built it
 
-### Positioning against `jexp/relate-ideas`
+#### 1. DuckDB Extraction & Dual-Mode Relate Graph Architecture
+We pinned **FarmBot Genesis v1.7** as a git submodule, extracted EBOM, SBOM, BOP, packing, and service records with **DuckDB**, and mapped them into a property graph of $678$ nodes and $1{,}194$ relationships using a declarative YAML ontology (`farmbot/ontology/farmbot.native.yaml`).
 
-This submission ships a live `/farmbot/` audit turning four `jexp/relate-ideas` concepts into a working run:
-- **[InstantCypher](https://github.com/jexp/relate-ideas/blob/main/Project/instantcypher.md):** Ontology-constrained Intents compile to parameter-bound Cypher with Intent, Cypher, and parameters shown; an optional consent-gated local model may only emit `{check, parameter}`.
-- **[LEGO Assembly Graphs](https://github.com/jexp/relate-ideas/blob/main/Project/lego-assembly-graphs.md) & [Configuration Misconvergence](https://github.com/jexp/relate-ideas/blob/main/Project/configuration-misconvergence.md):** Surfaces cross-document configuration misconvergence across engineering, assembly, pre-assembly, packing, and service sources for the same hardware.
-- **[The Fact-Check Engine](https://github.com/jexp/relate-ideas/blob/main/Project/the-fact-check-engine.md):** Implements missing-edge detection with provenance via unresolved-reference checks, dashed lane placeholders, and `REJECTED` / `CONFIRMED` claim verification.
+We run **Relate** in two complementary modes:
+- **In-browser `:memory:` (`@relate/relate-wasm`)**: Lazily loads Relate WASM on the first audit run, fetches `farmbot.seed.json`, verifies its integrity via Web Crypto SHA-256, and executes all queries inside a tab-scoped `:memory:` database.
+- **Persistent directory store (`@relate/relate` v1.0.1)**: Compiles the same seed into a JSON-snapshot Relate directory store (`farmbot.relate-store/`) for offline verification and reproducible CI builds.
 
-### Scope
+Browser-computed findings are checked against the committed findings sidecar (`farmbot.findings.json`) by canonical-JSON SHA-256:
 
-- **Surfaces disagreements without arbitrating:** Shows that two documents disagree and presents the evidence path; it does not decide which document is right.
-- **Evidence-bounded lanes:** `SBOM (materials)` renders only documented `specs.material` attributes (not a software BOM or CAS substance list); `BOP (instructions)` renders documented assembly/pre-assembly structure (not factory routing, `WorkCenter`, or `Operation` classes) and marks `pdf-only` pages explicitly as unparsed audit boundaries without guessing contents.
-- **Closed routing & fixed rejection sample:** `Show a rejected routing output` replays a fixed payload through the validator rather than a live model roll.
-- **Tab-local execution:** Checks run in-browser or offline with no live email delivery or exposed credentials.
+$$
+\operatorname{SHA256}\!\left(\operatorname{canonical}(\mathcal{F}_{\text{browser}})\right) = \operatorname{SHA256}\!\left(\operatorname{canonical}(\mathcal{F}_{\text{committed}})\right)
+$$
+
+#### 2. Ontographia Intent Compilation & Closed-Routing Bound
+Instead of Text-to-Cypher, every preset graph question is an **Ontographia Intent** compiled via `@edgesentry/ontographia-wasm`. When natural-language routing is used, the model may only emit a closed routing pair $(c, p)$:
+
+$$
+\text{LLM}(x) \mapsto (c, p) \in \mathcal{C} \times \mathcal{P}_c, \qquad \mathcal{Q} = \operatorname{Compile}_{\text{Ontographia}}(c, p)
+$$
+
+where $\mathcal{C}$ is the finite set of audited check intents and $\mathcal{P}_c$ is the validated parameter domain for intent $c$. Any routing output containing raw `MATCH`/`RETURN` Cypher or a markdown code fence is blocked before compilation or execution.
+
+#### 3. Static Client & Automated Verification
+The frontend is built with **React, TypeScript, and Vite** and deployed as static assets on **Cloudflare Workers**. An automated test suite (`test:farmbot`, `smoke:farmbot`, and `default-results.gold.json` oracle checks) verifies parity between offline Node/Relate execution and in-browser Relate WASM execution.
+
+### Challenges we ran into
+
+1. **Running a Graph Database Inside a Stateless Browser Tab**:
+   A browser tab has no local filesystem for traditional database persistence. Loading `@relate/relate-wasm` lazily into `:memory:` while verifying both the incoming seed and the resulting findings with Web Crypto SHA-256 digests kept first paint fast and execution 100% client-side.
+2. **Eliminating LLM Query Hallucination**:
+   Small local models frequently misspell relationship types or invent Cypher clauses. Enforcing a strict `{check, parameter}` routing contract—backed by a deterministic rejection guard—eliminated query hallucination without sacrificing natural-language triage.
+3. **Representing Incomplete Real-World Documentation Honestly**:
+   Pre-assembly pages that only link external PDFs cannot be parsed as markdown tables. Rather than guessing missing steps, we modeled `pdf-only` as an explicit audit boundary in the graph and surfaced a `PDF only` badge directly in the BOP lane.
+4. **Cross-Process Schema Alignment**:
+   Aligning identifiers across design changes, EBOM tables, SBOM materials, BOP chapters, packing lists, and service guides required careful normalization in DuckDB and strict golden-oracle testing to ensure zero drift between offline and browser results.
+
+### Accomplishments that we're proud of
+
+- **Zero-Server Verifiable Graph Audit**: Packaged a full $678$-node, $1{,}194$-relationship PLM knowledge graph and Relate WASM execution engine into a static browser app whose outputs cryptographically match the committed findings SHA-256 digest.
+- **Strict "Model Only Routes" Safety Invariant**: Demonstrated both deterministic Cypher-injection rejection (`MATCH (part:Part) RETURN part`) and live graph-backed Claim Verification (`REJECTED` vs. `CONFIRMED`) without letting an LLM touch query syntax.
+- **Readable Visual Provenance for Hardware Teams**: Connected interactive SVG process lanes, source file/line citations, and parameter-bound `CYPHER 25` queries so engineers can trace any inconsistency in seconds.
+
+### What we learned
+
+- **Separate Routing from Query Generation**: LLMs excel at mapping user intent onto a bounded catalog $\mathcal{C}$, while deterministic compilers like Ontographia guarantee safe, parameter-bound `CYPHER 25` execution.
+- **Cryptographic Digests Build Confidence in Client-Side Tools**: Verifying browser-computed results against a committed canonical-JSON SHA-256 digest turns a static web demo into a reproducible audit artifact.
+- **Explicit Audit Boundaries Matter**: Showing where automation stops (such as `PDF only` pre-assembly chapters) is just as important as showing what the graph proves.
+
+### What's next for PLM Graph Audit on FarmBot with Ontographia and Relate
+
+- **PDF & CAD BOM Ingestion**: Extend the DuckDB extraction pipeline to parse `pdf-only` pre-assembly sheets and structured STEP/CAD BOM exports so those audit boundaries become full graph edges.
+- **CI/CD Pull-Request Gate for Hardware Docs**: Run the persistent `@relate/relate` store and Ontographia checks as a GitHub Action on hardware documentation PRs to catch packing, EBOM, and service drift before release tags are cut.
+- **Multi-Revision Diffing**: Compare Relate snapshots across hardware revisions (e.g., FarmBot Genesis v1.6 vs. v1.7) to highlight newly introduced or resolved cross-process disagreements automatically.
 
 ---
 

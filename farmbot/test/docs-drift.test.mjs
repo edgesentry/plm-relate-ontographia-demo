@@ -1263,7 +1263,7 @@ const BEAT0_HOOK_LINE =
   'Missing packing or service updates cause wrong builds and shipments.';
 const LLM_CYPHER_CONTRAST_LINE =
   'Unconstrained LLM-to-Cypher can invent labels or edges silently; here the model only routes, Ontographia compiles a deterministic parameter-bound query, Relate executes it, and every answer has provenance or a hard boundary (PDF only, REJECTED).';
-const DEVPOST_VIDEO_URL = 'https://youtu.be/IgR-6KPS2Pc';
+const DEVPOST_VIDEO_URL = 'https://youtu.be/Z9mzhPbKBn0';
 const MAX_VIDEO_TOTAL_SECONDS = 120;
 const MAX_WORDS_PER_SECOND = 2.5;
 const MAX_CAPTION_CHARS_PER_SECOND = 17;
@@ -1673,6 +1673,24 @@ test('Devpost At a glance opens with the LLM-to-Cypher contrast bullet', { skip:
     bullets[0].includes(LLM_CYPHER_CONTRAST_LINE),
     'farmbot/docs/devpost-submission.md "At a glance" first bullet must be the unconstrained LLM-to-Cypher contrast',
   );
+});
+
+test('Beat 3 frames the r9-service-unmatched query with non-empty Bound parameters', () => {
+  const beat3 = recordingGuideBeats(readFileSync(RECORDING_GUIDE, 'utf8')).find(
+    (beat) => beat.n === 3,
+  );
+  assert.ok(beat3, 'farmbot/docs/recording-guide.md has no Beat 3');
+  const flat = beat3.body.replace(/\s+/g, ' ');
+  for (const needle of [
+    'evidence-queries-rest',
+    'farmbot/checks/r9-service-unmatched.json',
+    '{"param_0": "unmatched"}',
+  ]) {
+    assert.ok(
+      flat.includes(needle),
+      `farmbot/docs/recording-guide.md Beat 3 is missing ${needle}`,
+    );
+  }
 });
 
 test('every data-testid and #finding hash in recording-guide and devpost-submission exists in src or findings', () => {

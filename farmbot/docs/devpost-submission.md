@@ -58,14 +58,16 @@ https://youtu.be/Z9mzhPbKBn0
 
 ## Image gallery
 
-1. **01 — Landing view & sample alert cards:** Three-step in-browser workflow strip (`Agent finds the drift -> Email link -> Graph analysis in the browser`) and sample finding cards (`R6-power-supply`, `R1-40mm-nut-bar-standard`, `R8-shaft-coupler`, `R3-fuse`).
-2. **02 — Cross-process lane diagram (`R6-power-supply`):** Interactive SVG process lanes (`Design change -> EBOM part -> BOP (instructions) -> Packing -> Service`) tracing `Power Supply` across downstream documents alongside its evidence table.
-3. **03 — SBOM (materials) & quantity reconciliation (`R1-40mm-nut-bar-standard`):** Quantity difference (`28 -> 24`, `+4`) between the part page and packing list, with the `SBOM (materials)` lane showing `Stainless Steel` strictly from documented evidence.
-4. **04 — BOP (instructions) & `PDF only` audit boundary (`R5`):** Pre-assembly page `cable-carrier.md` marked explicitly as `PDF only` in `BOP (instructions)` to show the unparsed audit boundary without guessing contents.
-5. **05 — Deterministic Cypher-output rejection guard:** Fixed sample `MATCH (part:Part) RETURN part` blocked by the closed-routing validator (`The routing output was rejected. Nothing new was compiled or executed.`).
-6. **06 — Claim verification (`REJECTED`):** Replaying an invented `Titanium Servo Coupling` claim as compiled Intent queries returns `REJECTED` with `missing_part_node`, missing edge, and actual graph evidence.
-7. **07 — Parameter-bound `CYPHER 25` provenance:** Expanded `Intent` and compiled `CYPHER 25` query (`FILTER usage.match_method = $param_0`) with non-empty bound parameters (`{"param_0": "unmatched"}`).
-8. **08 — Claim verification (`CONFIRMED`):** Replaying a valid `M5 x 10mm Screw` claim in `v1.7/assembly/gantry.md` returns `CONFIRMED` with matching chapter and structure evidence.
+> **Field limit:** 140 characters per caption.
+
+1. **01 — Landing view & sample cards (131 chars):** Three-step in-browser workflow strip and sample alert cards (R6-power-supply, R1-40mm-nut-bar-standard, R8-shaft-coupler, R3-fuse).
+2. **02 — Cross-process lanes (130 chars):** Interactive SVG process lanes (Design change to Service) tracing Power Supply across downstream docs alongside the evidence table.
+3. **03 — SBOM & quantity mismatch (129 chars):** Quantity mismatch (28 to 24, +4) between part page and packing list, with SBOM (materials) showing Stainless Steel from evidence.
+4. **04 — BOP & PDF-only boundary (123 chars):** Pre-assembly page cable-carrier.md marked explicitly as PDF only in BOP (instructions) to show the unparsed audit boundary.
+5. **05 — Cypher rejection guard (120 chars):** Fixed sample MATCH (part:Part) RETURN part blocked by the closed-routing validator: nothing new is compiled or executed.
+6. **06 — Claim verification REJECTED (133 chars):** Replaying an invented Titanium Servo Coupling claim returns REJECTED with missing_part_node, missing edge, and actual graph evidence.
+7. **07 — Parameter-bound CYPHER 25 (132 chars):** Expanded Intent (r9-service-unmatched.json) and compiled CYPHER 25 query with non-empty bound parameters ({"param_0": "unmatched"}).
+8. **08 — Claim verification CONFIRMED (116 chars):** Replaying a valid M5 x 10mm Screw claim in gantry.md returns CONFIRMED with matching chapter and structure evidence.
 
 ---
 

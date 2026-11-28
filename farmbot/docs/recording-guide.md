@@ -93,9 +93,9 @@ Camera and pacing rules:
 - **Click Sequence:**
   1. Show `[data-testid="process-lanes"]` (`processLanesHeading`) with `laneDesignChange` ("Design change"), `laneEbomPart` ("EBOM part"), `laneBop` ("BOP (instructions)"), `lanePacking` ("Packing"), and `laneService` ("Service"), plus legend (`lanesLegendProblem`, `lanesLegendPath`, `lanesLegendMissing`).
   2. Click diagram node `Power Supply`, then click `Select node` (`evidenceSelect`) on a packing row (`aria-pressed="true"`).
-  3. Expand "Intent, Cypher and parameters" (`evidenceQueriesLabel`) on that row and hard-cut to its fixed framing.
+  3. Expand "Intent, Cypher and parameters" (`evidenceQueriesLabel`) on that row, then "Show all check Intents" (`data-testid="evidence-queries-rest"`), open `farmbot/checks/r9-service-unmatched.json` (`{"param_0": "unmatched"}`), and hard-cut to that framing.
 - **On-Screen Requirements:**
-  - Reciprocal node/row selection (`aria-pressed="true"`), dashed missing-link legend visible, and expanded query provenance block (`executedCypherLabel` showing `CYPHER 25 ...` and `paramsLabel` bound JSON).
+  - Reciprocal node/row selection (`aria-pressed="true"`), dashed missing-link legend visible, and expanded `farmbot/checks/r9-service-unmatched.json` (`executedCypherLabel` showing `CYPHER 25 ...` and `paramsLabel` `{"param_0": "unmatched"}`).
 - **Zoom / Framing:** Full lane shot on `Design change -> EBOM part -> BOP -> Packing -> Service` (`0:24-0:31`), then one hard cut to a fixed `1.6x` framing on the expanded Intent, `CYPHER 25` query, and Bound parameters box (`0:31-0:39`), held only as long as its line.
 - **Narration & Caption Cues:**
   - `0:24-0:28`: "Relate walks from design change through EBOM, packing, and service."
@@ -208,7 +208,7 @@ Camera and pacing rules:
 
 - **Sharp Fixed Framings:** Capture Playwright video at `1280x800` with `deviceScaleFactor: 2` (`2560x1600` canvas) so hard-cut `1.6x` to `1.7x` fixed framings on `CYPHER 25`, `PDF only`, and `REJECTED -> CONFIRMED` stay sharp on export.
 - **Pre-Beat & Tail Trimming:** Record from context creation and trim initial page-load frames and any post-line idle tail `> 1.0 s` with `ffmpeg`.
-- **Reliable Interactions:** Scroll `<summary>` elements to viewport center before clicking and assert the parent `<details>` has `open` (Beat 3 `details.evidence-queries`, Beat 7 `claim-verifier-panel`). After clicking `verify-claim-run`, scroll `[data-testid="claim-verdict"]` into view.
+- **Reliable Interactions:** Scroll `<summary>` elements to viewport center before clicking and assert the parent `<details>` has `open` (Beat 3 `details.evidence-queries` then `[data-testid="evidence-queries-rest"]`, Beat 7 `claim-verifier-panel`). After clicking `verify-claim-run`, scroll `[data-testid="claim-verdict"]` into view.
 - **CSP-Safe Cursor Overlay:** When recording headless Playwright, intercept `/farmbot/*` HTML via `page.route` and append `'unsafe-inline'` to `style-src` for the recording session only, so a subtle pointer and click ripple render without touching app code or `connect-src`.
 - **Voiceover & Caption Export:**
   - Synthesize or record each beat from `Narration & Caption Cues`, size each beat to its actual narration length (`<= 1.0 s` idle tail), and place captions in a dedicated lower safe band that never covers active Cypher blocks, verdict badges, or buttons.

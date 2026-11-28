@@ -73,9 +73,17 @@ https://youtu.be/Z9mzhPbKBn0
 
 ## About the project
 
+### At a glance (30-second summary)
+
+- **Versus unconstrained LLM-to-Cypher:** Unconstrained LLM-to-Cypher can invent labels or edges silently; here the model only routes, Ontographia compiles a deterministic parameter-bound query, Relate executes it, and every answer has provenance or a hard boundary (PDF only, REJECTED).
+- **The problem:** Hardware engineering, assembly, packing, and service documents drift out of sync, leading to wrong builds and wrong shipments.
+- **What it does:** `/farmbot/` audits FarmBot Genesis v1.7 docs in your browser tab, tracing mismatches (`R6-power-supply`, `R1-40mm-nut-bar-standard`) to file lines and interactive process lanes.
+- **Why Relate:** Runs on **Relate, Neo4j's lightweight graph database** with no backend.
+- **Try it at https://demo.edgesentry.io/farmbot/ (no install):** (1) open `#finding=R6-power-supply` and expand `Intent, Cypher and parameters`, (2) expand `Check routing` and press `Show a rejected routing output`, (3) expand `Deterministic claim verification` and click `Verify claim` on `uc1-hallucinated-part-fail` (`REJECTED`) then `uc1-hallucinated-part-pass` (`CONFIRMED`).
+
 ### Inspiration
 
-Hardware product lifecycle management (PLM) documentation drifts silently across engineering bills of materials (EBOM), materials lists (SBOM), assembly and pre-assembly instructions (BOP), packing lists, change logs, and service procedures. Missing packing or service updates cause wrong builds and shipments.
+Hardware product lifecycle management (PLM) documentation drifts silently across engineering bills of materials (EBOM), materials lists (SBOM), assembly and pre-assembly instructions (BOP), packing lists, change logs, and service procedures. Out-of-sync packing or service updates lead to assembly errors and incorrect shipments.
 
 While auditing open-source hardware documentation such as **FarmBot Genesis v1.7**, we saw how easily cross-document disagreements hide across markdown tables, part references, and `pdf-only` pre-assembly links. At the same time, giving an LLM free-form Text-to-Cypher access to a graph database introduces a subtle reliability risk: **syntactically valid queries that silently miss edges, hallucinate labels, or fabricate evidence**.
 
@@ -97,7 +105,7 @@ We pinned **FarmBot Genesis v1.7** as a git submodule, extracted EBOM, SBOM, BOP
 
 We run **Relate** in two complementary modes:
 - **In-browser `:memory:` (`@relate/relate-wasm`)**: Lazily loads Relate WASM on the first audit run, fetches `farmbot.seed.json`, verifies its integrity via Web Crypto SHA-256, and executes all queries inside a tab-scoped `:memory:` database.
-- **Persistent directory store (`@relate/relate` v1.0.1)**: Compiles the same seed into a JSON-snapshot Relate directory store (`farmbot.relate-store/`) for offline verification and reproducible CI builds.
+- **Persistent directory store (`@relate/relate`)**: Compiles the same seed into a JSON-snapshot Relate directory store (`farmbot.relate-store/`) for offline verification and reproducible CI builds.
 
 Browser-computed findings are checked against the committed findings sidecar (`farmbot.findings.json`) by canonical-JSON SHA-256:
 
@@ -106,7 +114,7 @@ $$
 $$
 
 #### 2. Ontographia Intent Compilation & Closed-Routing Bound
-Instead of Text-to-Cypher, every preset graph question is an **Ontographia Intent** compiled via `@edgesentry/ontographia-wasm`. When natural-language routing is used, the model may only emit a closed routing pair $(c, p)$:
+The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph. Instead of Text-to-Cypher, every preset graph question is an **Ontographia Intent** compiled via `@edgesentry/ontographia-wasm`. When natural-language routing is used, the model may only emit a closed routing pair $(c, p)$:
 
 $$
 \text{LLM}(x) \mapsto (c, p) \in \mathcal{C} \times \mathcal{P}_c, \qquad \mathcal{Q} = \operatorname{Compile}_{\text{Ontographia}}(c, p)

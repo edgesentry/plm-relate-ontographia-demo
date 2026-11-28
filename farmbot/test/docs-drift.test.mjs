@@ -1259,6 +1259,11 @@ test('a cited gitignored build output may be absent from the checkout', () => {
 const CLOSING_LINE = 'In short, the model only routes; it never writes Cypher.';
 const ROLE_SPLIT_LINE =
   'The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph.';
+const BEAT0_HOOK_LINE =
+  'Missing packing or service updates cause wrong builds and shipments.';
+const LLM_CYPHER_CONTRAST_LINE =
+  'Unconstrained LLM-to-Cypher can invent labels or edges silently; here the model only routes, Ontographia compiles a deterministic parameter-bound query, Relate executes it, and every answer has provenance or a hard boundary (PDF only, REJECTED).';
+const DEVPOST_VIDEO_URL = 'https://youtu.be/IgR-6KPS2Pc';
 const MAX_VIDEO_TOTAL_SECONDS = 120;
 const MAX_WORDS_PER_SECOND = 2.5;
 const MAX_CAPTION_CHARS_PER_SECOND = 17;
@@ -1370,6 +1375,11 @@ test('the recording guide opens with a short (<= 4s) Beat 0 before Beat 1', () =
   assert.ok(
     /do not click|no click/i.test(opening.body),
     'farmbot/docs/recording-guide.md Beat 0 does not state the no-operation rule',
+  );
+  assert.equal(
+    opening.voiceover,
+    BEAT0_HOOK_LINE,
+    `farmbot/docs/recording-guide.md Beat 0 narration must be verbatim "${BEAT0_HOOK_LINE}"`,
   );
 });
 
@@ -1631,33 +1641,37 @@ test('the role-split sentence appears in recording-guide narration and Devpost',
   );
 });
 
-const DEVPOST_VIDEO_TODO_MARKER = 'TODO: replace with the final narrated YouTube URL';
-const DEVPOST_VIDEO_TODO_SKIP =
-  DEVPOST_SKIP ||
-  (readFileSync(DEVPOST_DOC, 'utf8').includes(DEVPOST_VIDEO_TODO_MARKER)
-    ? 'Devpost Video Demo Link still has a TODO placeholder; remove the TODO once the final narrated YouTube URL is uploaded'
-    : false);
-
-test('the Devpost Video Demo Link note is updated from the v2 placeholder', { skip: DEVPOST_SKIP }, () => {
+test('the Devpost Video Demo Link is the final narrated YouTube URL with no TODO', { skip: DEVPOST_SKIP }, () => {
   const devpost = readFileSync(DEVPOST_DOC, 'utf8');
   assert.equal(
     /Replace with the v2 narrated video URL/i.test(devpost),
     false,
     'farmbot/docs/devpost-submission.md must not retain the stale "Replace with the v2 narrated video URL" note',
   );
-});
-
-test('the Devpost Video Demo Link has no TODO placeholder once the final YouTube URL is set', { skip: DEVPOST_VIDEO_TODO_SKIP }, () => {
-  const devpost = readFileSync(DEVPOST_DOC, 'utf8');
   const videoSection = (devpost.split('## Video Demo Link')[1] ?? '').split(/^##\s/m)[0] ?? '';
   assert.equal(
     /\bTODO\b/i.test(videoSection),
     false,
     'farmbot/docs/devpost-submission.md Video Demo Link still contains a TODO placeholder',
   );
+  const urls = [...videoSection.matchAll(/https:\/\/(?:youtu\.be\/|www\.youtube\.com\/watch\?v=)[A-Za-z0-9_-]{6,}/g)].map(
+    (match) => match[0],
+  );
+  assert.deepEqual(
+    urls,
+    [DEVPOST_VIDEO_URL],
+    `farmbot/docs/devpost-submission.md Video Demo Link must equal ${DEVPOST_VIDEO_URL}`,
+  );
+});
+
+test('Devpost At a glance opens with the LLM-to-Cypher contrast bullet', { skip: DEVPOST_SKIP }, () => {
+  const devpost = readFileSync(DEVPOST_DOC, 'utf8');
+  const glance = (devpost.split('### At a glance')[1] ?? '').split(/^###\s/m)[0] ?? '';
+  const bullets = [...glance.matchAll(/^[-*]\s+(.+)$/gm)].map((match) => match[1]);
+  assert.ok(bullets.length > 0, 'farmbot/docs/devpost-submission.md "At a glance" has no bullets');
   assert.ok(
-    /https:\/\/(?:youtu\.be\/|www\.youtube\.com\/watch\?v=)[A-Za-z0-9_-]{6,}/.test(videoSection),
-    'farmbot/docs/devpost-submission.md Video Demo Link must include a public YouTube URL',
+    bullets[0].includes(LLM_CYPHER_CONTRAST_LINE),
+    'farmbot/docs/devpost-submission.md "At a glance" first bullet must be the unconstrained LLM-to-Cypher contrast',
   );
 });
 

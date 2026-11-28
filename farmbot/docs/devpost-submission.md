@@ -37,9 +37,9 @@ Relate, Neo4j, Cypher, Ontographia, WebAssembly, React, TypeScript, Vite, WebLLM
 
 ## Video Demo Link
 
-> **Field limit:** Public YouTube or Vimeo URL, up to 2 minutes. TODO: replace with the final narrated YouTube URL once uploaded.
+> **Field limit:** Public YouTube or Vimeo URL, up to 2 minutes.
 
-https://youtu.be/YbGLU2pqlC0
+https://youtu.be/IgR-6KPS2Pc
 
 ---
 
@@ -47,10 +47,10 @@ https://youtu.be/YbGLU2pqlC0
 
 ### At a glance (30-second summary)
 
+- **Versus unconstrained LLM-to-Cypher:** Unconstrained LLM-to-Cypher can invent labels or edges silently; here the model only routes, Ontographia compiles a deterministic parameter-bound query, Relate executes it, and every answer has provenance or a hard boundary (PDF only, REJECTED).
 - **The problem:** Hardware engineering, assembly, packing, and service documents drift out of sync, leading to wrong builds and wrong shipments.
 - **What it does:** `/farmbot/` audits FarmBot Genesis v1.7 docs in your browser tab, tracing mismatches (`R6-power-supply`, `R1-40mm-nut-bar-standard`) to file lines and interactive process lanes.
 - **Why Relate:** Runs on **Relate, Neo4j's lightweight graph database** with no backend.
-- **Role split:** The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph.
 - **Try it at https://demo.edgesentry.io/farmbot/ (no install):** (1) open `#finding=R6-power-supply` and expand `Intent, Cypher and parameters`, (2) expand `Check routing` and press `Show a rejected routing output`, (3) expand `Deterministic claim verification` and click `Verify claim` on `uc1-hallucinated-part-fail` (`REJECTED`) then `uc1-hallucinated-part-pass` (`CONFIRMED`).
 
 ### What it does

@@ -51,9 +51,7 @@ FILL_ME
 ## Constraints
 
 - Do not merge; the maintainer merges.
-- Do not run git or gh; the kit adapter or the calling script does that after
-  the scope check (see
-  [Coding agents change files only](https://github.com/yohei1126/agent-ops-kit/blob/main/docs/shared-rules.md#coding-agents-change-files-only)).
+- Do not run git or gh; the calling script does that after the scope check.
 - Do not change secrets or credentials.
 - Work in a separate worktree.
 

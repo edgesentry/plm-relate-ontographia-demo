@@ -49,7 +49,7 @@ Camera and pacing rules:
   - `data-testid="how-it-works"` (`howItWorksLabel`) stays closed.
 - **Zoom / Framing:** Full `1280x800` fixed frame (still frame while narration plays).
 - **Narration & Caption Cues:**
-  - `0:00-0:04`: "Design changes missing from BOMs cause wrong builds and shipments."
+  - `0:00-0:04`: "Missing packing or service updates cause wrong builds and shipments."
 - **Target Timing:** 4 seconds (0:00 to 0:04)
 - **Cut Point:** Immediately at `0:04` as the cursor selects `R6-power-supply`.
 

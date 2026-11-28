@@ -110,17 +110,17 @@ We run **Relate** in two complementary modes:
 Browser-computed findings are checked against the committed findings sidecar (`farmbot.findings.json`) by canonical-JSON SHA-256:
 
 $$
-\operatorname{SHA256}\!\left(\operatorname{canonical}(\mathcal{F}_{\text{browser}})\right) = \operatorname{SHA256}\!\left(\operatorname{canonical}(\mathcal{F}_{\text{committed}})\right)
+\operatorname{SHA256}\left(\operatorname{canonical}(\mathcal{F}\sb{\text{browser}})\right) = \operatorname{SHA256}\left(\operatorname{canonical}(\mathcal{F}\sb{\text{committed}})\right)
 $$
 
 #### 2. Ontographia Intent Compilation & Closed-Routing Bound
 Instead of Text-to-Cypher, every preset graph question is an **Ontographia Intent** compiled via `@edgesentry/ontographia-wasm`. When natural-language routing is used, the model may only emit a closed routing pair $(c, p)$:
 
 $$
-\text{LLM}(x) \mapsto (c, p) \in \mathcal{C} \times \mathcal{P}_c, \qquad \mathcal{Q} = \operatorname{Compile}_{\text{Ontographia}}(c, p)
+\text{LLM}(x) \mapsto (c, p) \in \mathcal{C} \times \mathcal{P}\sb{c}, \qquad \mathcal{Q} = \operatorname{Compile}\sb{\text{Ontographia}}(c, p)
 $$
 
-where $\mathcal{C}$ is the finite set of audited check intents and $\mathcal{P}_c$ is the validated parameter domain for intent $c$. Any routing output containing raw `MATCH`/`RETURN` Cypher or a markdown code fence is blocked before compilation or execution.
+where $\mathcal{C}$ is the finite set of audited check intents and $\mathcal{P}\sb{c}$ is the validated parameter domain for intent $c$. Any routing output containing raw `MATCH`/`RETURN` Cypher or a markdown code fence is blocked before compilation or execution.
 
 #### 3. Static Client & Automated Verification
 The frontend is built with **React, TypeScript, and Vite** and deployed as static assets on **Cloudflare Workers**. An automated test suite (`test:farmbot`, `smoke:farmbot`, and `default-results.gold.json` oracle checks) verifies parity between offline Node/Relate execution and in-browser Relate WASM execution.

@@ -101,7 +101,7 @@ We were inspired to build a deterministic, auditable alternative powered by **Re
 ### How we built it
 
 #### 1. DuckDB Extraction & Dual-Mode Relate Graph Architecture
-We pinned **FarmBot Genesis v1.7** as a git submodule, extracted EBOM, SBOM, BOP, packing, and service records with **DuckDB**, and mapped them into a property graph of $678$ nodes and $1{,}194$ relationships using a declarative YAML ontology (`farmbot/ontology/farmbot.native.yaml`).
+We pinned **FarmBot Genesis v1.7** as a git submodule, extracted EBOM, SBOM, BOP, packing, and service records with **DuckDB**, and mapped them into the extracted FarmBot property graph using a declarative YAML ontology (`farmbot/ontology/farmbot.native.yaml`).
 
 We run **Relate** in two complementary modes:
 - **In-browser `:memory:` (`@relate/relate-wasm`)**: Lazily loads Relate WASM on the first audit run, fetches `farmbot.seed.json`, verifies its integrity via Web Crypto SHA-256, and executes all queries inside a tab-scoped `:memory:` database.
@@ -114,7 +114,7 @@ $$
 $$
 
 #### 2. Ontographia Intent Compilation & Closed-Routing Bound
-The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph. Instead of Text-to-Cypher, every preset graph question is an **Ontographia Intent** compiled via `@edgesentry/ontographia-wasm`. When natural-language routing is used, the model may only emit a closed routing pair $(c, p)$:
+Instead of Text-to-Cypher, every preset graph question is an **Ontographia Intent** compiled via `@edgesentry/ontographia-wasm`. When natural-language routing is used, the model may only emit a closed routing pair $(c, p)$:
 
 $$
 \text{LLM}(x) \mapsto (c, p) \in \mathcal{C} \times \mathcal{P}_c, \qquad \mathcal{Q} = \operatorname{Compile}_{\text{Ontographia}}(c, p)
@@ -124,6 +124,10 @@ where $\mathcal{C}$ is the finite set of audited check intents and $\mathcal{P}_
 
 #### 3. Static Client & Automated Verification
 The frontend is built with **React, TypeScript, and Vite** and deployed as static assets on **Cloudflare Workers**. An automated test suite (`test:farmbot`, `smoke:farmbot`, and `default-results.gold.json` oracle checks) verifies parity between offline Node/Relate execution and in-browser Relate WASM execution.
+
+### How it uses Relate & Ontographia
+
+The model only routes; Ontographia compiles the validated Intent into a deterministic, parameter-bound query, and Relate executes it against the graph. **Relate, Neo4j's lightweight graph database**, runs identical parameter-bound queries across `:memory:` WebAssembly (`@relate/relate-wasm`) in the browser and an inspectable persistent directory store (`@relate/relate`) offline.
 
 ### Challenges we ran into
 
@@ -138,7 +142,7 @@ The frontend is built with **React, TypeScript, and Vite** and deployed as stati
 
 ### Accomplishments that we're proud of
 
-- **Zero-Server Verifiable Graph Audit**: Packaged a full $678$-node, $1{,}194$-relationship PLM knowledge graph and Relate WASM execution engine into a static browser app whose outputs cryptographically match the committed findings SHA-256 digest.
+- **Zero-Server Verifiable Graph Audit**: Packaged the full PLM knowledge graph and Relate WASM execution engine into a static browser app whose outputs cryptographically match the committed findings SHA-256 digest.
 - **Strict "Model Only Routes" Safety Invariant**: Demonstrated both deterministic Cypher-injection rejection (`MATCH (part:Part) RETURN part`) and live graph-backed Claim Verification (`REJECTED` vs. `CONFIRMED`) without letting an LLM touch query syntax.
 - **Readable Visual Provenance for Hardware Teams**: Connected interactive SVG process lanes, source file/line citations, and parameter-bound `CYPHER 25` queries so engineers can trace any inconsistency in seconds.
 
